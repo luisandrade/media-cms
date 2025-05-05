@@ -19,5 +19,6 @@ export const TagsPage: React.FC<TagsPageProps> = ({ id = 'tags', title = transla
         </MediaListWrapper>
       )}
     </ApiUrlConsumer>
+    
   </Page>
 );

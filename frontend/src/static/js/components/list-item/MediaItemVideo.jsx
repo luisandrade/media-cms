@@ -8,6 +8,7 @@ import { MediaItemVideoPlayer, MediaItemDuration, MediaItemVideoPreviewer, Media
 import { MediaItem } from './MediaItem';
 
 export function MediaItemVideo(props) {
+
   const type = props.type;
 
   const [titleComponent, descriptionComponent, thumbnailUrl, UnderThumbWrapper, editMediaComponent, metaComponents] =

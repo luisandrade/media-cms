@@ -11,6 +11,7 @@ import {
   extractDefaultVideoResolution,
 } from './functions';
 import { VideoPlayer, VideoPlayerError } from '../../video-player/VideoPlayer';
+import { VideoPlayerEmbed } from '../../video-player/VideoPlayerEmbed';
 
 import '../VideoViewer.scss';
 
@@ -40,6 +41,8 @@ export default class VideoViewer extends React.PureComponent {
     };
 
     this.videoSources = [];
+
+    console.log("this.props.data",this.props)
 
     filterVideoEncoding(this.props.data.encoding_status);
 
@@ -106,7 +109,7 @@ export default class VideoViewer extends React.PureComponent {
       // console.log( supportedFormats );
       // console.log( this.videoInfo );
       // console.log( defaultVideoResolution );
-      // console.log( this.videoSources );
+      console.log( "this.videoSources",this.videoSources );
     }
 
     if (this.videoSources.length) {
@@ -406,7 +409,7 @@ export default class VideoViewer extends React.PureComponent {
     }
 
     if (!this.props.inEmbed) {
-      this.playerElem.parentNode.focus(); // Focus on player.
+      this.playerElem.parentNode.focus();
     }
 
     if (null !== this.recommendedMedia) {
@@ -516,56 +519,80 @@ export default class VideoViewer extends React.PureComponent {
         }
       : null;
 
-    return (
-      <div
-        key={(this.props.inEmbed ? 'embed-' : '') + 'player-container'}
-        className={'player-container' + (this.videoSources.length ? '' : ' player-container-error')}
-        style={this.props.containerStyles}
-        ref="playerContainer"
-      >
-        <div className="player-container-inner" ref="playerContainerInner" style={this.props.containerStyles}>
-          {this.state.displayPlayer && null !== MediaPageStore.get('media-load-error-type') ? (
-            <VideoPlayerError errorMessage={MediaPageStore.get('media-load-error-message')} />
-          ) : null}
-
-          {this.state.displayPlayer && null == MediaPageStore.get('media-load-error-type') ? (
-            <div className="video-player" ref="videoPlayerWrapper" key="videoPlayerWrapper">
-              <SiteConsumer>
-                {(site) => (
-                  <VideoPlayer
-                    playerVolume={this.browserCache.get('player-volume')}
-                    playerSoundMuted={this.browserCache.get('player-sound-muted')}
-                    videoQuality={this.browserCache.get('video-quality')}
-                    videoPlaybackSpeed={parseInt(this.browserCache.get('video-playback-speed'), 10)}
-                    inTheaterMode={this.browserCache.get('in-theater-mode')}
-                    siteId={site.id}
-                    siteUrl={site.url}
-                    info={this.videoInfo}
-                    cornerLayers={this.cornerLayers}
-                    sources={this.videoSources}
-                    poster={this.videoPoster}
-                    previewSprite={previewSprite}
-                    subtitlesInfo={this.props.data.subtitles_info}
-                    enableAutoplay={!this.props.inEmbed}
-                    inEmbed={this.props.inEmbed}
-                    hasTheaterMode={!this.props.inEmbed}
-                    hasNextLink={!!nextLink}
-                    hasPreviousLink={!!previousLink}
-                    errorMessage={MediaPageStore.get('media-load-error-message')}
-                    onClickNextCallback={this.onClickNext}
-                    onClickPreviousCallback={this.onClickPrevious}
-                    onStateUpdateCallback={this.onStateUpdate}
-                    onPlayerInitCallback={this.onPlayerInit}
-                  />
-                )}
-              </SiteConsumer>
-            </div>
-          ) : null}
+      return (
+        <div
+          key={(this.props.inEmbed ? 'embed-' : '') + 'player-container'}
+          className={'player-container' + (this.videoSources.length ? '' : ' player-container-error')}
+          style={this.props.containerStyles}
+          ref="playerContainer"
+        >
+          <div className="player-container-inner" ref="playerContainerInner" style={this.props.containerStyles}>
+            {this.state.displayPlayer && MediaPageStore.get('media-load-error-type') !== null ? (
+              <VideoPlayerError errorMessage={MediaPageStore.get('media-load-error-message')} />
+            ) : null}
+      
+            {this.state.displayPlayer && MediaPageStore.get('media-load-error-type') === null ? (
+              this.props.inEmbed ? (
+                <div className="video-player" ref="videoPlayerWrapper" key="videoPlayerWrapper">
+                  <SiteConsumer>
+                    {(site) => (
+                      <VideoPlayerEmbed
+                        info={this.videoInfo}
+                        sources={this.videoSources}
+                        enableAutoplay={!this.props.inEmbed}
+                        hasTheaterMode={!this.props.inEmbed}
+                        videoPlaybackSpeed={parseInt(this.browserCache.get('video-playback-speed'), 10)}
+                        inEmbed={this.props.inEmbed}
+                        siteId={site.id}
+                        siteUrl={site.url}
+                        adsTag={this.props.data.ads_tag}
+                        hls_file={this.props.data.hls_file}
+                      />
+                    )}
+                  </SiteConsumer>
+                </div>
+              ) : (
+                <div className="video-player" ref="videoPlayerWrapper" key="videoPlayerWrapper">
+                  <SiteConsumer>
+                    {(site) => (
+                      <VideoPlayer
+                        playerVolume={this.browserCache.get('player-volume')}
+                        playerSoundMuted={this.browserCache.get('player-sound-muted')}
+                        videoQuality={this.browserCache.get('video-quality')}
+                        videoPlaybackSpeed={parseInt(this.browserCache.get('video-playback-speed'), 10)}
+                        inTheaterMode={this.browserCache.get('in-theater-mode')}
+                        siteId={site.id}
+                        siteUrl={site.url}
+                        hls_file={this.props.data.hls_file}
+                        adsTag={this.props.data.ads_tag}
+                        info={this.videoInfo}
+                        cornerLayers={this.cornerLayers}
+                        sources={this.videoSources}
+                        poster={this.videoPoster}
+                        previewSprite={previewSprite}
+                        subtitlesInfo={this.props.data.subtitles_info}
+                        enableAutoplay={!this.props.inEmbed}
+                        inEmbed={this.props.inEmbed}
+                        hasTheaterMode={!this.props.inEmbed}
+                        hasNextLink={!!nextLink}
+                        hasPreviousLink={!!previousLink}
+                        errorMessage={MediaPageStore.get('media-load-error-message')}
+                        onClickNextCallback={this.onClickNext}
+                        onClickPreviousCallback={this.onClickPrevious}
+                        onStateUpdateCallback={this.onStateUpdate}
+                        onPlayerInitCallback={this.onPlayerInit}
+                      />
+                    )}
+                  </SiteConsumer>
+                </div>
+              )
+            ) : null}
+          </div>
         </div>
-      </div>
-    );
+      );
+    }
   }
-}
+    
 
 VideoViewer.defaultProps = {
   inEmbed: !0,

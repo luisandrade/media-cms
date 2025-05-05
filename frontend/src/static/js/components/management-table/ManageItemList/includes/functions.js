@@ -5,6 +5,9 @@ import { ManageCommentsItem } from '../../ManageItem/ManageCommentsItem';
 import { ManageMediaItemHeader } from '../../ManageItem/ManageMediaItemHeader';
 import { ManageUsersItemHeader } from '../../ManageItem/ManageUsersItemHeader';
 import { ManageCommentsItemHeader } from '../../ManageItem/ManageCommentsItemHeader';
+import { ManageAdsItem } from '../../ManageItem/ManageAdsItem';
+import { ManageAdsItemHeader } from '../../ManageItem/ManageAdsItemHeader';
+import { ManageCategoryItem } from '../../ManageItem/ManageCategoryItem';
 
 function useManageItem(props) {
   const itemData = props.item;
@@ -92,6 +95,37 @@ function ListManageCommentItem(props) {
   return <ManageCommentsItem {...args} />;
 }
 
+function ListManageAdsItem(props) {
+  const [itemData, itemProps] = useManageItem(props);
+
+  const args = {
+    ...itemProps,
+    id : itemData.id,
+    name: itemData.name,
+    url: itemData.url,
+    onCheckRow: props.onCheckRow,
+  };
+
+  return <ManageAdsItem {...args} selectedRow={itemData.id} />;
+}
+
+function ListManageCategoryItem(props) {
+  const [itemData, itemProps] = useManageItem(props);
+
+  console.log("itemData",props);
+
+  const args = {
+    ...itemProps,
+    id : itemData.id,
+    title: itemData.title,
+    uid: itemData.uid,
+    onCheckRow: props.onCheckRow,
+  };
+
+
+  return <ManageCategoryItem {...args} selectedRow={itemData.id} />;
+}
+
 function ListManageItem(props) {
   const args = {
     item: props.item,
@@ -111,6 +145,14 @@ function ListManageItem(props) {
 
   if ('comments' === props.type) {
     return <ListManageCommentItem {...args} selectedRow={-1 < props.selectedItems.indexOf(props.item.uid)} />;
+  }
+
+  if ('ads' === props.type) {
+    return <ListManageAdsItem {...args} selectedRow={-1 < props.selectedItems.indexOf(props.item.id)}/>;
+  }
+
+  if ('category-ads' === props.type) {
+    return <ListManageCategoryItem {...args} selectedRow={-1 < props.selectedItems.indexOf(props.item.id)}/>;
   }
 
   return null;
@@ -139,6 +181,10 @@ function ListManageItemHeader(props) {
 
   if ('comments' === props.type) {
     return <ManageCommentsItemHeader {...args} />;
+  }
+
+  if ('ads' === props.type) {
+    return <ManageAdsItemHeader {...args} />;
   }
 
   return null;

@@ -23,13 +23,9 @@ urlpatterns = [
     re_path(r"^liked$", views.liked_media, name="liked_media"),
     re_path(r"^latest$", views.latest_media),
     re_path(r"^members", views.members, name="members"),
+    re_path(r"^ads", views.create_add_ads_tag, name="ads"),
     re_path(
         r"^playlist/(?P<friendly_token>[\w]*)$",
-        views.view_playlist,
-        name="get_playlist",
-    ),
-    re_path(
-        r"^playlists/(?P<friendly_token>[\w]*)$",
         views.view_playlist,
         name="get_playlist",
     ),
@@ -63,7 +59,12 @@ urlpatterns = [
     ),
     re_path(r"^api/v1/categories$", views.CategoryList.as_view()),
     re_path(r"^api/v1/tags$", views.TagList.as_view()),
+    re_path(r"^api/v1/ads$", views.AdsList.as_view()),
+    re_path(r"^api/v1/category-ads$", views.CategoryAdsList.as_view()),
+    re_path(r"^api/assign-ad-to-all-media/$", views.AssignAdToAllMedia.as_view()),
+    re_path(r'^api/assign-ad-to-media-by-category/$', views.AssignAdToMediaByCategory.as_view()),
     re_path(r"^api/v1/comments$", views.CommentList.as_view()),
+    re_path(r"^api/v1/live$", views.LiveList.as_view()),
     re_path(
         r"^api/v1/media/(?P<friendly_token>[\w]*)/comments$",
         views.CommentDetail.as_view(),

@@ -268,7 +268,6 @@ export default function ViewerInfoContent(props) {
           ) : null}
         </div>
       </div>
-
       <CommentsList />
     </div>
   );

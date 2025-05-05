@@ -17,7 +17,7 @@ CAN_ADD_MEDIA = "all"
 
 # who can comment
 # valid options include 'all', 'email_verified', 'advancedUser'
-CAN_COMMENT = "all"
+CAN_COMMENT = "advancedUser"
 
 # valid choices here are 'public', 'private', 'unlisted
 PORTAL_WORKFLOW = "public"
@@ -34,14 +34,14 @@ LOAD_FROM_CDN = False
 LOGIN_ALLOWED = True  # whether the login button appears
 REGISTER_ALLOWED = True  # whether the register button appears
 UPLOAD_MEDIA_ALLOWED = True  # whether the upload media button appears
-CAN_LIKE_MEDIA = True  # whether the like media appears
-CAN_DISLIKE_MEDIA = True  # whether the dislike media appears
-CAN_REPORT_MEDIA = True  # whether the report media appears
-CAN_SHARE_MEDIA = True  # whether the share media appears
+CAN_LIKE_MEDIA = False  # whether the like media appears
+CAN_DISLIKE_MEDIA = False  # whether the dislike media appears
+CAN_REPORT_MEDIA = False  # whether the report media appears
+CAN_SHARE_MEDIA = True   # whether the share media appears
 # how many times an item need be reported
 # to get to private state automatically
 REPORTED_TIMES_THRESHOLD = 10
-ALLOW_ANONYMOUS_ACTIONS = ["report", "like", "dislike", "watch"]  # need be a list
+ALLOW_ANONYMOUS_ACTIONS = ["watch"]  # need be a list
 
 # experimental functionality for user ratings - does not work
 ALLOW_RATINGS = False
@@ -431,7 +431,7 @@ LOCAL_INSTALL = False
 
 # this is an option to make the whole portal available to logged in users only
 # it is placed here so it can be overrided on local_settings.py
-GLOBAL_LOGIN_REQUIRED = False
+GLOBAL_LOGIN_REQUIRED = True
 
 # TODO: separate settings on production/development more properly, for now
 # this should be ok

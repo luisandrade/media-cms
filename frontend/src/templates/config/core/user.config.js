@@ -31,5 +31,6 @@ module.exports = {
     about: './profile-about.html',
     media: './profile-media.html',
     playlists: './profile-playlists.html',
+    live: './profile-live.html',
   },
 };

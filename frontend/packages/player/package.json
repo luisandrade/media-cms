@@ -30,7 +30,8 @@
     "video.js": "^7.12.3"
   },
   "dependencies": {
-    "mediacms-vjs-plugin": "file:../vjs-plugin"
+    "mediacms-vjs-plugin": "file:../vjs-plugin",
+    "videojs-ima": "^2.3.0"
   },
   "devDependencies": {
     "@babel/core": "^7.14.5",

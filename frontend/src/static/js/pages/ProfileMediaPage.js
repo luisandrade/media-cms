@@ -70,6 +70,8 @@ export class ProfileMediaPage extends Page {
       }
     }
 
+    console.log("requestUrl",requestUrl);
+
     this.setState({
       author: author,
       requestUrl: requestUrl,
@@ -119,6 +121,8 @@ export class ProfileMediaPage extends Page {
     } else {
       requestUrl = ApiUrlContext._currentValue.media + '?author=' + this.state.author.id;
     }
+
+    console.log("requestUrl",requestUrl);
 
     let title = this.state.title;
 

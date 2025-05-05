@@ -20,6 +20,8 @@ export function config(glbl) {
     return DATA;
   }
 
+  console.log("glbl",glbl);
+
   pages.init({ ...glbl.site.pages, ...glbl.site.userPages });
   optionsPages.init(glbl.pages.home, glbl.pages.search, glbl.pages.media, glbl.pages.profile, pages.settings());
 
@@ -47,9 +49,11 @@ export function config(glbl) {
           media: glbl.user.pages.media,
           about: glbl.user.pages.about,
           playlists: glbl.user.pages.playlists,
+          live: glbl.user.pages.live,
         }
       : {
           media: glbl.site.url.replace(/\/$/, '') + '/user/' + glbl.profileId,
+          live: glbl.site.url.replace(/\/$/, '') + '/user/' + glbl.profileId + '/live',
           about: glbl.site.url.replace(/\/$/, '') + '/user/' + glbl.profileId + '/about',
           playlists: glbl.site.url.replace(/\/$/, '') + '/user/' + glbl.profileId + '/playlists',
         },
@@ -63,6 +67,8 @@ export function config(glbl) {
     archive: {
       tags: glbl.url.tags,
       categories: glbl.url.categories,
+      ads: '/ads',
+      category_ads: '/category-ads'
     },
     manage: {
       media: !glbl.user.is.anonymous ? glbl.url.manageMedia : '',

@@ -325,6 +325,12 @@ class NavMenuInlineTabs extends React.PureComponent {
               label={translateString('Media')}
               link={LinksContext._currentValue.profile.media}
             />
+            <InlineTab
+              id="live"
+              isActive={'live' === this.props.type}
+              label={translateString('Live')}
+              link={LinksContext._currentValue.profile.live}
+            />
 
             {MemberContext._currentValue.can.saveMedia ? (
               <InlineTab

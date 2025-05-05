@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Category, Comment, EncodeProfile, Media, Playlist, Tag
+from .models import Category, Comment, EncodeProfile, Media, Playlist, Tag, Ads
 
 # TODO: put them in a more DRY way
 
@@ -49,6 +49,7 @@ class MediaSerializer(serializers.ModelSerializer):
             "size",
             "is_reviewed",
             "featured",
+            "ad_tag"
         )
         fields = (
             "friendly_token",
@@ -76,15 +77,27 @@ class MediaSerializer(serializers.ModelSerializer):
             "featured",
             "user_featured",
             "size",
+            "ad_tag",
+            "hls_file"
         )
 
 
 class SingleMediaSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source="user.username")
     url = serializers.SerializerMethodField()
+    ads_tag = serializers.SerializerMethodField() 
+
 
     def get_url(self, obj):
         return self.context["request"].build_absolute_uri(obj.get_absolute_url())
+
+    def get_ads_tag(self, obj):
+        if obj.ad_tag:  # usa el campo real
+            return {
+                "name": obj.ad_tag.name,
+                "url": obj.ad_tag.url
+            }
+        return None
 
     class Meta:
         model = Media
@@ -146,6 +159,8 @@ class SingleMediaSerializer(serializers.ModelSerializer):
             "add_subtitle_url",
             "allow_download",
             "slideshow_items",
+            "ads_tag",
+            "hls_file"
         )
 
 
@@ -191,6 +206,7 @@ class CategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = (
+            "id",
             "title",
             "description",
             "is_global",
@@ -204,6 +220,11 @@ class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
         fields = ("title", "media_count", "thumbnail_url")
+
+class AdsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Ads
+        fields = ("name", "url", "id")
 
 
 class PlaylistSerializer(serializers.ModelSerializer):

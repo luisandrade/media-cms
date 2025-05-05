@@ -1,0 +1,15 @@
+{% extends "root.html" %}
+{% load static %}
+
+{% block beforecontent %}
+{% endblock %}
+
+{% block content %}
+<div class="page-main">
+    <div class="page-main-inner">
+    {% block innercontent %}{% endblock innercontent %}
+    </div>
+</div>
+{% endblock %}
+
+{% block bottomimports %}<script src="{% static "js/base.js" %}"></script>{% endblock bottomimports %}

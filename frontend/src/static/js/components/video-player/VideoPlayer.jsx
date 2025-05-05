@@ -139,11 +139,24 @@ export function VideoPlayer(props) {
       }
     }
 
+    let sources;
+    if(props.hls_file !== ''){
+      sources = [
+        {
+        src: props.hls_file,
+        type: 'application/x-mpegURL'
+        }
+      ]
+    }else{
+      sources = props.sources;
+      console.log("props sources",props.sources);
+    }
+
     player = new MediaPlayer(
       videoElemRef.current,
       {
         enabledTouchControls: true,
-        sources: props.sources,
+        sources: sources,
         poster: props.poster,
         autoplay: props.enableAutoplay,
         bigPlayButton: true,

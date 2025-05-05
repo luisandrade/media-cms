@@ -12,6 +12,8 @@ export function SidebarNavigationMenu() {
   const links = useContext(LinksContext);
   const sidebar = useContext(SidebarContext);
 
+  console.log("links",links);
+
   const currentUrl = urlParse(window.location.href);
   const currentHostPath = (currentUrl.host + currentUrl.pathname).replace(/\/+$/, '');
 
@@ -35,6 +37,11 @@ export function SidebarNavigationMenu() {
   }
 
   function MainMenuFirstSection() {
+
+    if (isAnonymous) {
+      return null;
+    }
+
     const items = [];
 
     if (!sidebar.hideHomeLink) {
@@ -89,6 +96,14 @@ export function SidebarNavigationMenu() {
       });
     }
 
+      items.push({
+        link: './ads.html',
+        icon: 'people',
+        text: 'Ads tag',
+        className: 'nav-item-adstag',
+      });
+    
+
     if (
       !sidebar.hideCategoriesLink &&
       PageStore.get('config-enabled').taxonomies.categories &&
@@ -110,7 +125,7 @@ export function SidebarNavigationMenu() {
         className: 'nav-item-members',
       });
     }
-
+    
     const extraItems = PageStore.get('config-contents').sidebar.mainMenuExtra.items;
 
     extraItems.forEach((navitem) => {
@@ -126,6 +141,9 @@ export function SidebarNavigationMenu() {
   }
 
   function MainMenuSecondSection() {
+    if (isAnonymous) {
+      return null;
+    }
     const items = [];
 
     if (!isAnonymous) {
@@ -161,6 +179,9 @@ export function SidebarNavigationMenu() {
   }
 
   function UserMenuSection() {
+    if (isAnonymous) {
+      return null;
+    }
     const items = [];
 
     if (PageStore.get('config-enabled').pages.history && PageStore.get('config-enabled').pages.history.enabled) {

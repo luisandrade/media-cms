@@ -23,6 +23,8 @@ function formatEndpoints(endpoints) {
 }
 
 export function init(base_url, endpoints) {
+
+  console.log("endpoints",endpoints);
   BASE_URL = urlParse(base_url);
 
   ENDPOINTS = formatEndpoints({
@@ -35,10 +37,13 @@ export function init(base_url, endpoints) {
       liked: endpoints.liked,
       history: endpoints.history,
       playlists: endpoints.playlists + '?author=',
+      live: endpoints.live + '?author=',
     },
     archive: {
       tags: endpoints.tags,
       categories: endpoints.categories,
+      ads : endpoints.ads,
+      category_ads : endpoints.category_ads
     },
     manage: {
       media: endpoints.manage_media,

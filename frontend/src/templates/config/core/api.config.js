@@ -1,9 +1,12 @@
 module.exports = {
   media: '/media',
+  live: '/live',
   playlists: '/playlists',
   comments: '/comments',
   search: '/search',
   tags: '/tags',
+  ads: '/ads',
+  category_ads: '/category-ads',
   categories: '/categories',
   members: '/users',
   liked: '/user/action/like',

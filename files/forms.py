@@ -1,7 +1,7 @@
 from django import forms
 
 from .methods import get_next_state, is_mediacms_editor
-from .models import Media, Subtitle
+from .models import Media, Subtitle, Ads
 
 
 class MultipleSelect(forms.CheckboxSelectMultiple):
@@ -27,6 +27,7 @@ class MediaForm(forms.ModelForm):
             "reported_times",
             "is_reviewed",
             "allow_download",
+            "ad_tag"
         )
         widgets = {
             "tags": MultipleSelect(),
@@ -42,6 +43,8 @@ class MediaForm(forms.ModelForm):
             self.fields.pop("reported_times")
             self.fields.pop("is_reviewed")
         self.fields["new_tags"].initial = ", ".join([tag.title for tag in self.instance.tags.all()])
+        if hasattr(self.instance, 'ads_tag'):
+            self.fields['ad_tag'].initial = self.instance.ads_tag.pk
 
     def clean_uploaded_poster(self):
         image = self.cleaned_data.get("uploaded_poster", False)
@@ -84,6 +87,14 @@ class EditSubtitleForm(forms.Form):
         super(EditSubtitleForm, self).__init__(*args, **kwargs)
         self.fields["subtitle"].initial = subtitle.subtitle_file.read().decode("utf-8")
 
+class AdsForm(forms.ModelForm):
+    class Meta:
+        model = Ads
+        fields = ['name', 'url']
+        labels = {
+            'name': 'Nombre del Tag',
+            'url': 'URL del Tag',
+        }
 
 class ContactForm(forms.Form):
     from_email = forms.EmailField(required=True)

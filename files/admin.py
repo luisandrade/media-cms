@@ -9,6 +9,7 @@ from .models import (
     Media,
     Subtitle,
     Tag,
+    Ads
 )
 
 
@@ -47,6 +48,10 @@ class MediaAdmin(admin.ModelAdmin):
 
     actions = [generate_missing_encodings]
     get_comments_count.short_description = "Comments count"
+
+class AdsAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name', 'url')
+    search_fields = ('name', 'url')
 
 
 class CategoryAdmin(admin.ModelAdmin):
@@ -102,3 +107,4 @@ admin.site.register(Category, CategoryAdmin)
 admin.site.register(Tag, TagAdmin)
 admin.site.register(Subtitle, SubtitleAdmin)
 admin.site.register(Language, LanguageAdmin)
+admin.site.register(Ads, AdsAdmin)

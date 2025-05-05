@@ -23,6 +23,7 @@ function useManageItemList(props, itemsListRef) {
   const [listHandler, setListHandler] = useState(null);
 
   function onItemsLoad(itemsArray) {
+    console.log("Items cargados desde API:", itemsArray);
     setItems([...itemsArray]);
   }
 
@@ -163,16 +164,25 @@ function pageUrl(parsedUrl, query) {
 
 function BulkActions(props) {
   const [popupContentRef, PopupContent, PopupTrigger] = usePopup();
-
   const [selectedBulkAction, setSelectedBulkAction] = useState('');
-  const [selectedItemsSize, setSelectedItemsSize] = useState(props.selectedItemsSize);
 
   function onBulkActionSelect(ev) {
     setSelectedBulkAction(ev.currentTarget.value);
   }
 
   function onClickProceed() {
-    if ('function' === typeof props.onProceedRemoval) {
+    const selectedItems = props.selectedItems || [];
+    const adId = selectedItems[0];
+    console.log("selectedItems", selectedItems);
+    console.log("✅ Ad ID seleccionado:", adId);
+
+    if (selectedBulkAction === 'assign-ad') {
+      if (adId) {
+        props.onProceedAssignAd(adId);
+      } else {
+        alert('Select an ad first.');
+      }
+    } else if (selectedBulkAction === 'delete') {
       props.onProceedRemoval();
     }
 
@@ -183,18 +193,15 @@ function BulkActions(props) {
     popupContentRef.current.tryToHide();
   }
 
-  useEffect(() => {
-    setSelectedItemsSize(props.selectedItemsSize);
-  }, [props.selectedItemsSize]);
-
   return (
     <div className="manage-items-bulk-action">
       <select value={selectedBulkAction} onChange={onBulkActionSelect}>
         <option value="">Bulk actions</option>
         <option value="delete">Delete selected</option>
+        <option value="assign-ad">Assign ad to all media</option>
       </select>
 
-      {!selectedItemsSize || !selectedBulkAction ? null : (
+      {!selectedBulkAction ? null : (
         <PopupTrigger contentRef={popupContentRef}>
           <button>Apply</button>
         </PopupTrigger>
@@ -202,10 +209,14 @@ function BulkActions(props) {
 
       <PopupContent contentRef={popupContentRef}>
         <PopupMain>
-          <div className="popup-message">
-            <span className="popup-message-title">Bulk removal</span>
-            <span className="popup-message-main">You're willing to remove selected items permanently?</span>
-          </div>
+          <span className="popup-message-title">
+            {selectedBulkAction === 'assign-ad' ? 'Assign Ad' : 'Bulk removal'}
+          </span>
+          <span className="popup-message-main">
+            {selectedBulkAction === 'assign-ad'
+              ? "You're about to assign an ad to all media. Proceed?"
+              : "You're willing to remove selected items permanently?"}
+          </span>
           <hr />
           <span className="popup-message-bottom">
             <button className="button-link cancel-profile-removal" onClick={onClickCancel}>
@@ -221,10 +232,37 @@ function BulkActions(props) {
   );
 }
 
+
+function assignAdToAllMedia(adId) {
+  fetch('/api/assign-ad-to-all-media/', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': csrfToken(),
+    },
+    body: JSON.stringify({ ad_id: adId }),
+  })
+    .then(res => {
+      if (res.ok) {
+        alert('Ad assigned successfully to all media.');
+      } else {
+        alert('Failed to assign ad.');
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+    });
+}
+
 function ManageItemsOptions(props) {
   return (
     <div className={props.className}>
-      <BulkActions selectedItemsSize={props.items.length} onProceedRemoval={props.onProceedRemoval} />
+      <BulkActions
+        onProceedRemoval={props.onProceedRemoval}
+        onProceedAssignAd={(adId) => props.onProceedAssignAd(adId)}
+        onCheckRow={props.onCheckRow}
+        selectedItems={props.items}
+      />
       {1 === props.pagesSize ? null : (
         <div className="manage-items-pagination">
           <PaginationButtons
@@ -461,6 +499,10 @@ export function ManageItemList(props) {
     deleteSelectedItems();
   }
 
+  function onAssignAd(adId) {
+    assignAdToAllMedia(adId);
+  }
+
   function onAllRowsCheck(selectedAllRows, tableType) {
     const newSelected = [];
 
@@ -480,7 +522,11 @@ export function ManageItemList(props) {
           for (entry of items) {
             newSelected.push(entry.uid);
           }
+       } else if ('ads' === tableType) {
+        for (entry of items) {
+          newSelected.push(entry.ad_id);
         }
+      }
       }
     }
 
@@ -489,27 +535,35 @@ export function ManageItemList(props) {
   }
 
   function onRowCheck(token, isSelected) {
-    if (void 0 !== token) {
-      let newSelected;
+    console.log("token", token);
+    console.log("isSelected", isSelected);
+  
+    if (void 0 === token) return;
+  
+    if (props.manageType === 'ads' || props.manageType === 'category-ads') {
 
-      if (-1 === selectedItems.indexOf(token)) {
+      console.log("token dentro de onRowCheck",token);
+      // ✅ Solo se puede seleccionar un Ad a la vez
+      if (isSelected) {
+        setSelectedItems([token]);
+        props.onSelectionChange([token]);
+      } else {
+        setSelectedItems([]);
+      }
+      setSelectedAllItems(false); // nunca es "todos"
+    } else {
+      // 👇 comportamiento original para media, users, etc.
+      let newSelected;
+  
+      if (!selectedItems.includes(token)) {
         if (isSelected) {
           newSelected = [...selectedItems, token];
-
           setSelectedItems(newSelected);
           setSelectedAllItems(newSelected.length === items.length);
         }
       } else {
         if (!isSelected) {
-          newSelected = [];
-
-          let entry;
-          for (entry of selectedItems) {
-            if (token !== entry) {
-              newSelected.push(entry);
-            }
-          }
-
+          newSelected = selectedItems.filter(entry => entry !== token);
           setSelectedItems(newSelected);
           setSelectedAllItems(newSelected.length === items.length);
         }
@@ -611,6 +665,8 @@ export function ManageItemList(props) {
         items={selectedItems}
         pagesSize={listHandler.totalPages()}
         onProceedRemoval={onBulkItemsRemoval}
+        onProceedAssignAd={onAssignAd}
+        onCheckRow={onRowCheck}
       />
 
       <div ref={itemsListWrapperRef} className="items-list-wrap">
@@ -618,10 +674,10 @@ export function ManageItemList(props) {
           {renderManageItems(items, {
             ...props,
             onAllRowsCheck: onAllRowsCheck,
-            onRowCheck: onRowCheck,
             selectedItems: selectedItems,
             selectedAllItems: selectedAllItems,
             onDelete: deleteItem,
+            onRowCheck: onRowCheck
           })}
         </div>
       </div>
@@ -635,6 +691,8 @@ export function ManageItemList(props) {
         items={selectedItems}
         pagesSize={listHandler.totalPages()}
         onProceedRemoval={onBulkItemsRemoval}
+        onProceedAssignAd={onAssignAd}
+        onRowCheck={onRowCheck}
       />
     </div>
   );

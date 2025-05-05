@@ -66,6 +66,8 @@ class MediaPageStore extends EventEmitter {
       },
     };
 
+    console.log("MediaPageStoreData[this.id",MediaPageStoreData[this.id]);
+
     this.removeMediaResponse = this.removeMediaResponse.bind(this);
     this.removeMediaFail = this.removeMediaFail.bind(this);
 
@@ -603,6 +605,7 @@ class MediaPageStore extends EventEmitter {
 
         break;
     }
+    
     return r;
   }
 

@@ -10,6 +10,10 @@ export function init(settings) {
       enabled: false,
       title: 'Categories',
     },
+    adstag: {
+      enabled: false,
+      title: 'Ads',
+    },
   };
 
   if (void 0 !== settings) {

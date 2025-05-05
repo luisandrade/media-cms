@@ -49,5 +49,8 @@ module.exports = {
     categories: {
       title: 'Categories',
     },
+    adstag: {
+      title: 'Ads Tag',
+    },
   },
 };

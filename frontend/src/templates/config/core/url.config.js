@@ -10,6 +10,7 @@ module.exports = {
   /* Archive pages */
   tags: './tags.html',
   categories: './categories.html',
+  ads : './ads.html',
   /* User pages */
   likedMedia: './liked.html',
   history: './history.html',

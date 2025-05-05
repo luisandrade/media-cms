@@ -7,7 +7,7 @@ from django.contrib.postgres.search import SearchQuery
 from django.core.mail import EmailMessage
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, render, redirect
 from drf_yasg import openapi as openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import permissions, status
@@ -32,7 +32,7 @@ from cms.permissions import (
 )
 from users.models import User
 
-from .forms import ContactForm, EditSubtitleForm, MediaForm, SubtitleForm
+from .forms import ContactForm, EditSubtitleForm, MediaForm, SubtitleForm, AdsForm
 from .frontend_translations import translate_string
 from .helpers import clean_query, get_alphanumeric_only, produce_ffmpeg_commands
 from .methods import (
@@ -56,6 +56,7 @@ from .models import (
     PlaylistMedia,
     Subtitle,
     Tag,
+    Ads
 )
 from .serializers import (
     CategorySerializer,
@@ -67,6 +68,7 @@ from .serializers import (
     PlaylistSerializer,
     SingleMediaSerializer,
     TagSerializer,
+    AdsSerializer
 )
 from .stop_words import STOP_WORDS
 from .tasks import save_user_action
@@ -169,13 +171,33 @@ def edit_subtitle(request):
         return HttpResponseRedirect(subtitle.media.get_absolute_url())
     return render(request, "cms/edit_subtitle.html", context)
 
-
+@login_required
 def categories(request):
     """List categories view"""
 
     context = {}
     return render(request, "cms/categories.html", context)
 
+@login_required
+def create_add_ads_tag(request):
+    error = None
+
+    if request.method == 'POST':
+        form = AdsForm(request.POST)
+        if form.is_valid():
+            ad = form.save()
+            return redirect('ads.html')
+        else:
+            error = "Corrige los errores del formulario."
+    else:
+        form = AdsForm()
+
+    context = {
+        'form': form,
+        'error': error,
+    }
+
+    return render(request, 'cms/ads.html', context)
 
 def contact(request):
     """Contact view"""
@@ -199,11 +221,11 @@ def contact(request):
             title = "[{}] - Contact form message received".format(settings.PORTAL_NAME)
 
             msg = """
-You have received a message through the contact form\n
-Sender name: %s
-Sender email: %s\n
-\n %s
-""" % (
+            You have received a message through the contact form\n
+            Sender name: %s
+            Sender email: %s\n
+            \n %s
+            """ % (
                 name,
                 from_email,
                 message,
@@ -221,7 +243,7 @@ Sender email: %s\n
 
     return render(request, "cms/contact.html", context)
 
-
+@login_required
 def history(request):
     """Show personal history view"""
 
@@ -287,28 +309,28 @@ def embed_media(request):
     context["media"] = friendly_token
     return render(request, "cms/embed.html", context)
 
-
+@login_required
 def featured_media(request):
     """List featured media view"""
 
     context = {}
     return render(request, "cms/featured-media.html", context)
 
-
+@login_required
 def index(request):
     """Index view"""
 
     context = {}
     return render(request, "cms/index.html", context)
 
-
+@login_required
 def latest_media(request):
     """List latest media view"""
 
     context = {}
     return render(request, "cms/latest-media.html", context)
 
-
+@login_required
 def liked_media(request):
     """List user's liked media view"""
 
@@ -339,14 +361,14 @@ def manage_comments(request):
     context = {}
     return render(request, "cms/manage_comments.html", context)
 
-
+@login_required
 def members(request):
     """List members view"""
 
     context = {}
     return render(request, "cms/members.html", context)
 
-
+@login_required
 def recommended_media(request):
     """List recommended media view"""
 
@@ -372,7 +394,7 @@ def sitemap(request):
     context["users"] = list(User.objects.filter())
     return render(request, "sitemap.xml", context, content_type="application/xml")
 
-
+@login_required
 def tags(request):
     """List tags view"""
 
@@ -386,7 +408,7 @@ def tos(request):
     context = {}
     return render(request, "cms/tos.html", context)
 
-
+@login_required
 def upload_media(request):
     """Upload media view"""
 
@@ -401,7 +423,7 @@ def upload_media(request):
 
     return render(request, "cms/add-media.html", context)
 
-
+@login_required
 def view_media(request):
     """View media view"""
 
@@ -429,7 +451,7 @@ def view_media(request):
             context["CAN_DELETE_COMMENTS"] = True
     return render(request, "cms/media.html", context)
 
-
+@login_required
 def view_playlist(request, friendly_token):
     """View playlist view"""
 
@@ -442,6 +464,65 @@ def view_playlist(request, friendly_token):
     context["playlist"] = playlist
     return render(request, "cms/playlist.html", context)
 
+
+
+class LiveList(APIView):
+    """Live listings views"""
+
+    permission_classes = (IsAuthorizedToAdd,)
+    parser_classes = (MultiPartParser, FormParser, FileUploadParser)
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(name='page', type=openapi.TYPE_INTEGER, in_=openapi.IN_QUERY, description='Page number'),
+            openapi.Parameter(name='author', type=openapi.TYPE_STRING, in_=openapi.IN_QUERY, description='username'),
+            openapi.Parameter(name='show', type=openapi.TYPE_STRING, in_=openapi.IN_QUERY, description='show', enum=['recommended', 'featured', 'latest']),
+        ],
+        tags=['Live'],
+        operation_summary='List Live',
+        operation_description='Lists all lives',
+        responses={200: MediaSerializer(many=True)},
+    )
+    def get(self, request, format=None):
+        # Show media
+        params = self.request.query_params
+        show_param = params.get("show", "")
+
+        author_param = params.get("author", "").strip()
+        if author_param:
+            user_queryset = User.objects.all()
+            user = get_object_or_404(user_queryset, username=author_param)
+        if show_param == "recommended":
+            pagination_class = FastPaginationWithoutCount
+            media = show_recommended_media(request, limit=50)
+        else:
+            pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+            if author_param:
+                # in case request.user is the user here, show
+                # all media independant of state
+                if self.request.user == user:
+                    basic_query = Q(user=user)
+                else:
+                    basic_query = Q(listable=True, user=user)
+            else:
+                # base listings should show safe content
+                basic_query = Q(listable=True)
+
+                hls_filter = ~Q(hls_file="") & ~Q(hls_file__isnull=True)
+
+                if show_param == "featured":
+                    media = Media.objects.filter(basic_query & hls_filter, featured=True)
+                else:
+                    media = Media.objects.filter(basic_query & hls_filter).order_by("-add_date")
+
+        paginator = pagination_class()
+
+        if show_param != "recommended":
+            media = media.prefetch_related("user")
+        page = paginator.paginate_queryset(media, request)
+
+        serializer = MediaSerializer(page, many=True, context={"request": request})
+        return paginator.get_paginated_response(serializer.data)
 
 class MediaList(APIView):
     """Media listings views"""
@@ -485,10 +566,12 @@ class MediaList(APIView):
                 # base listings should show safe content
                 basic_query = Q(listable=True)
 
+            hls_filter = Q(hls_file="") | Q(hls_file__isnull=True)
+
             if show_param == "featured":
-                media = Media.objects.filter(basic_query, featured=True)
+                media = Media.objects.filter(basic_query & hls_filter & Q(featured=True))
             else:
-                media = Media.objects.filter(basic_query).order_by("-add_date")
+                media = Media.objects.filter(basic_query & hls_filter).order_by("-add_date")
 
         paginator = pagination_class()
 
@@ -1420,6 +1503,121 @@ class CategoryList(APIView):
         serializer = CategorySerializer(categories, many=True, context={"request": request})
         ret = serializer.data
         return Response(ret)
+
+class AdsList(APIView):
+    """List Ads"""
+
+    @swagger_auto_schema(
+        manual_parameters=[
+            openapi.Parameter(name='page', type=openapi.TYPE_INTEGER, in_=openapi.IN_QUERY, description='Page number'),
+        ],
+        tags=['Ads'],
+        operation_summary='Lists Ads',
+        operation_description='Lists all ads',
+        responses={
+            200: openapi.Response('response description', AdsSerializer),
+        },
+    )
+    def get(self, request, format=None):
+        ads = Ads.objects.filter().order_by("name")
+        serializer = AdsSerializer(ads, many=True, context={"request": request})
+        pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+        paginator = pagination_class()
+        page = paginator.paginate_queryset(ads, request)
+        return paginator.get_paginated_response(serializer.data)
+
+class CategoryAdsList(APIView):
+    """List Category Ads"""
+
+    @swagger_auto_schema(
+        manual_parameters=[],
+        tags=['Categories'],
+        operation_summary='Lists Categories',
+        operation_description='Lists all categories',
+        responses={
+            200: openapi.Response('response description', CategorySerializer),
+        },
+    )
+
+    def get(self, request, format=None):
+        categories = Category.objects.filter().order_by("title")
+        serializer = CategorySerializer(categories, many=True, context={"request": request})
+        pagination_class = api_settings.DEFAULT_PAGINATION_CLASS
+        paginator = pagination_class()
+        page = paginator.paginate_queryset(categories, request)
+        return paginator.get_paginated_response(serializer.data)
+
+
+class AssignAdToAllMedia(APIView):
+    @swagger_auto_schema(
+        operation_summary="Assign Ad to ALL Media",
+        operation_description="Assigns the selected Ad to ALL Media in the system.",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['ad_id'],
+            properties={
+                'ad_id': openapi.Schema(
+                    type=openapi.TYPE_INTEGER,
+                    description='ID of the Ad to assign',
+                ),
+            },
+        ),
+        responses={
+            200: openapi.Response(description="Ad assigned to all media"),
+            400: openapi.Response(description="Invalid input or ad not found"),
+        }
+    )
+    def post(self, request, *args, **kwargs):
+        ad_id = request.data.get("ad_id")
+        if not ad_id:
+            return Response({"detail": "Missing ad_id"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            ad = Ads.objects.get(id=ad_id)
+        except Ads.DoesNotExist:
+            return Response({"detail": "Ad not found"}, status=status.HTTP_400_BAD_REQUEST)
+
+        updated_count = Media.objects.update(ad_tag=ad)
+        return Response({"message": f"Ad assigned to {updated_count} media items."}, status=status.HTTP_200_OK)
+
+
+class AssignAdToMediaByCategory(APIView):
+    @swagger_auto_schema(
+        operation_summary="Assign Ad to all Media in selected Categories",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            required=['category_ids', 'ad_id'],
+            properties={
+                'category_ids': openapi.Schema(
+                    type=openapi.TYPE_ARRAY,
+                    items=openapi.Items(type=openapi.TYPE_INTEGER),
+                    description='IDs of categories selected'
+                ),
+                'ad_id': openapi.Schema(
+                    type=openapi.TYPE_INTEGER,
+                    description='Ad ID to assign'
+                ),
+            }
+        ),
+        responses={
+            200: openapi.Response(description="Ad assigned successfully"),
+            400: openapi.Response(description="Invalid input"),
+        }
+    )
+    def post(self, request, *args, **kwargs):
+        category_ids = request.data.get("category_ids")
+        ad_id = request.data.get("ad_id")
+
+        if not category_ids or not ad_id:
+            return Response({"detail": "Missing category_ids or ad_id"}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            ad = Ads.objects.get(id=ad_id)
+        except Ads.DoesNotExist:
+            return Response({"detail": "Ad not found"}, status=status.HTTP_400_BAD_REQUEST)
+
+        updated_count = Media.objects.filter(category__id__in=category_ids).update(ad_tag=ad)
+        return Response({"message": f"Ad assigned to {updated_count} media items."}, status=status.HTTP_200_OK)
 
 
 class TagList(APIView):

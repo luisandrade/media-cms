@@ -240,6 +240,8 @@ class Media(models.Model):
 
     tags = models.ManyToManyField("Tag", blank=True, help_text="select one or more out of the existing tags")
 
+    ad_tag = models.ForeignKey("Ads", null=True, blank=True, on_delete=models.SET_NULL, related_name='media_items')
+
     title = models.CharField(max_length=100, help_text="media title", blank=True, db_index=True)
 
     thumbnail = ProcessedImageField(
@@ -734,6 +736,7 @@ class Media(models.Model):
         ret = []
         for cat in self.category.all():
             ret.append({"title": cat.title, "url": cat.get_absolute_url()})
+            print(ret)
         return ret
 
     @property
@@ -744,6 +747,16 @@ class Media(models.Model):
         for tag in self.tags.all():
             ret.append({"title": tag.title, "url": tag.get_absolute_url()})
         return ret
+
+    @property
+    def ads_tag_info(self):
+        """Property to get ad tag details as dict"""
+        if self.ad_tag:
+            return {
+                "name": self.ad_tag.name,
+                "url": self.ad_tag.url
+            }
+            return None
 
     @property
     def original_media_url(self):
@@ -1021,6 +1034,17 @@ class Category(models.Model):
         for item in strip_text_items:
             setattr(self, item, strip_tags(getattr(self, item, None)))
         super(Category, self).save(*args, **kwargs)
+
+class Ads(models.Model):
+    """AdsTag model"""
+    name = models.CharField(max_length=255)
+    url = models.URLField()
+
+    def __str__(self):
+        return f"{self.name} - {self.url}"
+    
+    class Meta:
+        ordering = ["name"]
 
 
 class Tag(models.Model):
@@ -1417,7 +1441,6 @@ class Comment(MPTTModel):
     @property
     def media_url(self):
         return self.get_absolute_url()
-
 
 @receiver(post_save, sender=Media)
 def media_save(sender, instance, created, **kwargs):

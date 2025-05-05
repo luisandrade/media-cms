@@ -11,6 +11,11 @@ urlpatterns = [
         name="get_user_media",
     ),
     re_path(
+        r"^user/(?P<username>[\w@.]*)/live$",
+        views.view_user_live,
+        name="get_user_live",
+    ),
+    re_path(
         r"^user/(?P<username>[\w@.]*)/playlists$",
         views.view_user_playlists,
         name="get_user_playlists",

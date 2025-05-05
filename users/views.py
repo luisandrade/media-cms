@@ -59,6 +59,18 @@ def view_user_media(request, username):
     context["SHOW_CONTACT_FORM"] = True if (user.allow_contact or is_mediacms_editor(request.user)) else False
     return render(request, "cms/user_media.html", context)
 
+def view_user_live(request, username):
+    context = {}
+    user = get_user(username=username)
+    if not user:
+        return HttpResponseRedirect("/members")
+
+    context["user"] = user
+    context["CAN_EDIT"] = True if ((user and user == request.user) or is_mediacms_manager(request.user)) else False
+    context["CAN_DELETE"] = True if is_mediacms_manager(request.user) else False
+    context["SHOW_CONTACT_FORM"] = True if (user.allow_contact or is_mediacms_editor(request.user)) else False
+    return render(request, "cms/user_live.html", context)
+
 
 def view_user_playlists(request, username):
     context = {}

@@ -85,6 +85,8 @@ const PAGES = {
   'manage-media': { id: 'manage-media', title: 'Manage media', component: 'ManageMediaPage' },
   'manage-users': { id: 'manage-users', title: 'Manage users', component: 'ManageUsersPage' },
   'manage-comments': { id: 'manage-comments', title: 'Manage comments', component: 'ManageCommentsPage' },
+  'manage-ads': { id: 'manage-ads', title: 'Manage ads', component: 'ManageAdsPage' },
+  'manage-category-ads': { id: 'manage-category-ads', title: 'Manage Category ads', component: 'ManageCategoryAdsPage' },
   'add-media': {
     id: 'add-media',
     title: 'Add media',
@@ -144,6 +146,12 @@ const PAGES = {
     id: 'profile-media',
     title: 'Profile - Media',
     component: 'ProfileMediaPage',
+    global: { profileId: DEV_SAMPLE_DATA.profileId },
+  },
+  'profile-live': {
+    id: 'profile-live',
+    title: 'Profile - Live',
+    component: 'ProfileLivePage',
     global: { profileId: DEV_SAMPLE_DATA.profileId },
   },
   'profile-about': {

@@ -64,7 +64,7 @@ services:
   db:
     image: postgres:17.2-alpine
     volumes:
-      - ../postgres_data:/var/lib/postgresql/data/
+      - ../postgres_data:/var/lib/postgresql@17/data/
     restart: always
     environment:
       POSTGRES_USER: mediacms
