@@ -542,6 +542,7 @@ export default class VideoViewer extends React.PureComponent {
                         enableAutoplay={!this.props.inEmbed}
                         hasTheaterMode={!this.props.inEmbed}
                         videoPlaybackSpeed={parseInt(this.browserCache.get('video-playback-speed'), 10)}
+                        playback_url_token={this.props.data.playback_urls}
                         inEmbed={this.props.inEmbed}
                         siteId={site.id}
                         siteUrl={site.url}

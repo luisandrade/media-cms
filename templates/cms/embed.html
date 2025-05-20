@@ -5,8 +5,8 @@
 <link href="{% static "css/embed.css" %}" rel="preload" as="style">
 <link href="{% static "css/embed.css" %}" rel="stylesheet">
 {%endblock topimports %}
-
-{% block content %}<div id="page-embed"></div>{% endblock content %}
+<pre>{{ playback_urls_json }}</pre>
+{% block content %}<div id="page-embed" data-playback-urls='{{ playback_urls }}'></div>{% endblock content %}
 
 {% block bottomimports %}
 <script src="{% static "js/embed.js" %}"></script>

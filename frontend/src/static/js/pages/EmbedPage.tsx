@@ -4,6 +4,7 @@ import { MediaPageStore } from '../utils/stores/';
 import { MediaPageActions } from '../utils/actions/';
 import VideoViewer from '../components/media-viewer/VideoViewer';
 
+
 const wrapperStyles = {
   position: 'fixed',
   top: 0,
@@ -21,6 +22,7 @@ const containerStyles = {
 export const EmbedPage: React.FC = () => {
   const [loadedVideo, setLoadedVideo] = useState(false);
   const [failedMediaLoad, setFailedMediaLoad] = useState(false);
+  const [playbackUrls, setPlaybackUrls] = useState({});
 
   const onLoadedVideoData = () => {
     setLoadedVideo(true);
@@ -34,6 +36,20 @@ export const EmbedPage: React.FC = () => {
     MediaPageStore.on('loaded_video_data', onLoadedVideoData);
     MediaPageStore.on('loaded_media_error', onMediaLoadError);
     MediaPageActions.loadMediaData();
+
+    const element = document.getElementById('page-embed');
+    const rawData = element?.getAttribute('data-playback-urls');
+    console.log("raw data",rawData);
+    if (rawData) {
+      try {
+        const parsed = JSON.parse(rawData);
+        console.log("📦 Playback URLs recibidos:", parsed);
+        setPlaybackUrls(parsed);
+      } catch (e) {
+        console.error("❌ Error al parsear playbackUrls:", e);
+      }
+    }
+
     return () => {
       MediaPageStore.removeListener('loaded_video_data', onLoadedVideoData);
       MediaPageStore.removeListener('loaded_media_error', onMediaLoadError);
@@ -59,7 +75,11 @@ export const EmbedPage: React.FC = () => {
       {loadedVideo && (
         <SiteConsumer>
           {(site) => (
-            <VideoViewer data={MediaPageStore.get('media-data')} siteUrl={site.url} containerStyles={containerStyles} />
+            <VideoViewer
+              data={{ ...MediaPageStore.get('media-data'), playback_urls: playbackUrls }}
+              siteUrl={site.url}
+              containerStyles={containerStyles}
+            />
           )}
         </SiteConsumer>
       )}

@@ -530,3 +530,11 @@ DJANGO_ADMIN_URL = "admin/"
 # SESSION_COOKIE_SECURE = True
 
 PYSUBS_COMMAND = "pysubs2"
+
+WOWZA_STREAM_NAMES = [
+    "eventoz01Roly",
+    "eventoz02",
+    "eventoz03",
+    "eventoz04",
+    "eventoz05"
+]

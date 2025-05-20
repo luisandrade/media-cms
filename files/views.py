@@ -72,6 +72,9 @@ from .serializers import (
 )
 from .stop_words import STOP_WORDS
 from .tasks import save_user_action
+import hashlib
+import base64
+import json
 
 VALID_USER_ACTIONS = [action for action, name in USER_MEDIA_ACTIONS]
 
@@ -292,22 +295,101 @@ def edit_media(request):
         {"form": form, "add_subtitle_url": media.add_subtitle_url},
     )
 
+def generate_wowza_token(stream, secret, token_name="wowzatoken", client_ip=None, start=0, end=0):
+    if client_ip:
+        to_hash = f"{stream}?{client_ip}&{secret}&{token_name}endtime={end}&{token_name}starttime={start}"
+    else:
+        to_hash = f"{stream}?{secret}&{token_name}endtime={end}&{token_name}starttime={start}"
+
+    hash_bytes = hashlib.sha384(to_hash.encode("utf-8")).digest()
+    base64_hash = base64.urlsafe_b64encode(hash_bytes).decode("utf-8").rstrip("=")
+
+    # Armado de parámetros
+    params = [
+        f"{token_name}starttime={start}",
+        f"{token_name}endtime={end}",
+        f"{token_name}hash={base64_hash}",
+    ]
+
+    if client_ip:
+        params.append(client_ip)
+
+    params.sort()
+    return "&".join(params)
+
 
 def embed_media(request):
-    """Embed media view"""
+    import hashlib, base64, json
+    from django.shortcuts import redirect, render
+    from django.conf import settings
+    from .models import Media
 
     friendly_token = request.GET.get("m", "").strip()
     if not friendly_token:
-        return HttpResponseRedirect("/")
+        return redirect("/")
 
-    media = Media.objects.values("title").filter(friendly_token=friendly_token).first()
-
+    media = Media.objects.filter(friendly_token=friendly_token).first()
     if not media:
-        return HttpResponseRedirect("/")
+        return redirect("/")
 
-    context = {}
-    context["media"] = friendly_token
-    return render(request, "cms/embed.html", context)
+    host = "scl.edge.grupoz.cl"
+    # aqui voy, hay que decirle que secret_stream se va para strewam y secret_vod para vod, ver vod en front no funciona
+    secret = "c1bcbdc0c1eac962"
+    secret_vod= "45c2a1f252003a0a"
+    token_name = "wowzatoken"
+    client_ip = None
+    start = 0
+    end = 0
+
+    def generate_wowza_token(path):
+        if client_ip:
+            to_hash = f"{path}?{client_ip}&{secret}&{token_name}endtime={end}&{token_name}starttime={start}"
+        else:
+            to_hash = f"{path}?{secret}&{token_name}endtime={end}&{token_name}starttime={start}"
+        hash_bytes = hashlib.sha384(to_hash.encode("utf-8")).digest()
+        base64_hash = base64.urlsafe_b64encode(hash_bytes).decode("utf-8").rstrip("=")
+        params = [
+            f"{token_name}starttime={start}",
+            f"{token_name}endtime={end}",
+            f"{token_name}hash={base64_hash}",
+        ]
+        if client_ip:
+            params.append(client_ip)
+        params.sort()
+        return "&".join(params)
+
+    playback_urls = {}
+
+    # ✅ ES STREAM si hls_file NO está vacío o null
+    if media.hls_file:
+        stream_names = getattr(settings, "WOWZA_STREAM_NAMES", ["default_stream"])
+        for name in stream_names:
+            stream_path = f"{name}/live"
+            token = generate_wowza_token(stream_path)
+            url = f"https://{host}/{stream_path}/playlist.m3u8?{token}"
+            playback_urls[name] = {
+                "url": url,
+                "token": token
+            }
+
+    # ❌ ES VOD si hls_file es vacío o null
+    else:
+        vod_app = "vod"
+        cache = "dc"
+        filename = "conejo.mp4"
+        stream_path = f"{vod_app}/mp4:{cache}/{filename}"
+        token = generate_wowza_token(stream_path)
+        url = f"https://{host}/{stream_path}/playlist.m3u8?{token}"
+        playback_urls["vod"] = {
+            "url": url,
+            "token": token
+        }
+
+    return render(request, "cms/embed.html", {
+        "media": friendly_token,
+        "playback_urls": json.dumps(playback_urls),
+        "is_stream": bool(media.hls_file)
+    })
 
 @login_required
 def featured_media(request):

@@ -34,6 +34,7 @@ VideoPlayerError.propTypes = {
 };
 
 export function VideoPlayerEmbed(props) {
+  console.log("props player embed", props);
   const videoElemRef = useRef(null);
   const playerRef = useRef(null);
 
@@ -84,29 +85,40 @@ export function VideoPlayerEmbed(props) {
       subtitles.on = subtitles.languages.length > 0;
     }
 
-    // sources: [
-    //   {
-    //     src: 'https://camara.03.wl.cdnz.cl/camara19/live/playlist.m3u8',
-    //     type: 'application/x-mpegURL', 
-    //   },
-    // ],
-
-    console.log("props.hls_file",props.hls_file);
+    console.log("props",props);
 
     let sources;
-    if(props.hls_file !== ''){
+
+    if (props.hls_file !== '') {
+      const extractStreamKey = (url) => {
+        try {
+          const parsed = new URL(url);
+          const pathParts = parsed.pathname.split('/').filter(Boolean);
+          return pathParts[0] || null;
+        } catch {
+          return null;
+        }
+      };
+    
+      const streamKey = extractStreamKey(props.hls_file);
+      const tokenEntry = props.playback_url_token?.[streamKey];
+      const finalUrl = tokenEntry
+        ? `${props.hls_file}?${tokenEntry.token}`
+        : props.hls_file;
+    
+      console.log("🎯 Stream key detectado:", streamKey);
+      console.log("🔐 Token aplicado:", tokenEntry?.token);
+      console.log("▶️ Final HLS URL:", finalUrl);
+    
       sources = [
         {
-        src: props.hls_file,
-        type: 'application/x-mpegURL'
+          src: finalUrl,
+          type: 'application/x-mpegURL'
         }
-      ]
-    }else{
+      ];
+    } else {
       sources = props.sources;
     }
-
-    console.log("sources",props);
-
 
     const player = videojs(videoElemRef.current, {
       enabledTouchControls: true,
@@ -127,6 +139,7 @@ export function VideoPlayerEmbed(props) {
         previous: props.hasPreviousLink,
       }
     });
+
     if(props.hls_file !== ''){
       player.volume(0);
       player.muted(true);
@@ -146,7 +159,7 @@ export function VideoPlayerEmbed(props) {
         );
       });
     }
-    console.log("props video emved",props.adsTag);
+    console.log("props video embed",props.adsTag);
 
     if(props.adsTag !== null){
       player.ima({
@@ -156,6 +169,17 @@ export function VideoPlayerEmbed(props) {
       });
 
     }
+
+    player.on('play', () => {
+      if (window._paq) {
+        window._paq.push([
+          'trackEvent',
+          'Video',
+          'Play',
+          props.info?.title || 'Video sin título',
+        ]);
+      }
+    });
 
   };
 
