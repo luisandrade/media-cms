@@ -1071,8 +1071,8 @@ class Category(models.Model):
 
 class Ads(models.Model):
     """AdsTag model"""
-    name = models.CharField(max_length=500)
-    url = models.URLField()
+    name = models.CharField(max_length=255)
+    url = models.URLField(max_length=500)
 
     def __str__(self):
         return f"{self.name} - {self.url}"

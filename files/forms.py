@@ -95,6 +95,9 @@ class AdsForm(forms.ModelForm):
             'name': 'Nombre del Tag',
             'url': 'URL del Tag',
         }
+        widgets = {
+            'url': forms.URLInput(attrs={'maxlength': 500})
+        }
 
 class ContactForm(forms.Form):
     from_email = forms.EmailField(required=True)
