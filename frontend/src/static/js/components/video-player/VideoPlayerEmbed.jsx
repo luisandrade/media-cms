@@ -181,6 +181,17 @@ export function VideoPlayerEmbed(props) {
       }
     });
 
+    player.on('ended', () => {
+      if (window._paq) {
+        window._paq.push([
+          'trackEvent',
+          'Video',
+          'Ended',
+          props.info?.title || 'Video sin título',
+        ]);
+      }
+    });
+
   };
 
   const unsetPlayer = () => {
