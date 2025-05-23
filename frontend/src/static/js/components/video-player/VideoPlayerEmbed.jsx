@@ -103,8 +103,8 @@ export function VideoPlayerEmbed(props) {
       const streamKey = extractStreamKey(props.hls_file);
       const tokenEntry = props.playback_url_token?.[streamKey];
       const finalUrl = tokenEntry
-        ? `${props.hls_file}?${tokenEntry.token}`
-        : props.hls_file;
+        ? `${props.stream}?${tokenEntry.token}`
+        : props.stream;
     
       console.log("🎯 Stream key detectado:", streamKey);
       console.log("🔐 Token aplicado:", tokenEntry?.token);
