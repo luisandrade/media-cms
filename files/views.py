@@ -361,7 +361,7 @@ def embed_media(request):
     playback_urls = {}
 
     # ES STREAM si hls_file NO está vacío o null
-    if media.hls_file:
+    if media.stream:
         stream_names = getattr(settings, "WOWZA_STREAM_NAMES", ["default_stream"])
         for name in stream_names:
             stream_path = f"{name}/live"

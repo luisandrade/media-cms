@@ -89,7 +89,7 @@ export function VideoPlayerEmbed(props) {
 
     let sources;
 
-    if (props.hls_file !== '') {
+    if (props.stream !== '') {
       const extractStreamKey = (url) => {
         try {
           const parsed = new URL(url);

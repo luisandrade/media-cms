@@ -79,6 +79,7 @@ class MediaSerializer(serializers.ModelSerializer):
             "size",
             "ad_tag",
             "hls_file"
+            "stream"
         )
 
 
