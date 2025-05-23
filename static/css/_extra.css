@@ -12,4 +12,69 @@ body {
   }
 }
 
+.flex {
+  display: flex;
+}
+
+.flex-row{
+  flex-direction: row;
+}
+
+.flex-col{
+  flex-direction: column;
+}
+
+.ads-button{
+
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 400;
+  color: #fff;
+  border: 0;
+  line-height: inherit;
+  height: 35.5px;
+
+  padding: 6px 12px;
+  border-radius: 1px;
+
+  background-color: var(--brand-color, var(--default-brand-color));
+
+  @media screen and (min-width: 710px) {
+    padding: 8px 16px;
+  }
+
+}
+
+.ads-input {
+  display: inline-block !important;
+}
+
+.tab-button.active{
+  border-color: var(--default-brand-color);
+  color : var(--default-brand-color);
+}
+
+.tabs-container {
+  margin-top: 2rem;
+}
+.tabs-header {
+  display: flex;
+  border-bottom: 2px solid #ccc;
+  margin-bottom: 1rem;
+}
+.tab-button {
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-weight: bold;
+}
+.tab-pane {
+  display: none;
+}
+.tab-pane.active {
+  display: block;
+}
+
 

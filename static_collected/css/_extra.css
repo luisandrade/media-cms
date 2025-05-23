@@ -12,4 +12,41 @@ body {
   }
 }
 
+.flex {
+  display: flex;
+}
+
+.flex-row{
+  flex-direction: row;
+}
+
+.flex-col{
+  flex-direction: column;
+}
+
+.ads-button{
+
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 400;
+  color: #fff;
+  border: 0;
+  line-height: inherit;
+  height: 35.5px;
+
+  padding: 6px 12px;
+  border-radius: 1px;
+
+  background-color: var(--brand-color, var(--default-brand-color));
+
+  @media screen and (min-width: 710px) {
+    padding: 8px 16px;
+  }
+
+}
+
+.ads-input {
+  display: inline-block !important;
+}
+
 

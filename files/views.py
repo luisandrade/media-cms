@@ -360,7 +360,7 @@ def embed_media(request):
 
     playback_urls = {}
 
-    # ✅ ES STREAM si hls_file NO está vacío o null
+    # ES STREAM si hls_file NO está vacío o null
     if media.hls_file:
         stream_names = getattr(settings, "WOWZA_STREAM_NAMES", ["default_stream"])
         for name in stream_names:
@@ -372,7 +372,7 @@ def embed_media(request):
                 "token": token
             }
 
-    # ❌ ES VOD si hls_file es vacío o null
+    # ES VOD si hls_file es vacío o null
     else:
         vod_app = "vod"
         cache = "dc"
@@ -1607,6 +1607,19 @@ class AdsList(APIView):
         paginator = pagination_class()
         page = paginator.paginate_queryset(ads, request)
         return paginator.get_paginated_response(serializer.data)
+
+    def delete(self, request, format=None):
+        tokens = request.query_params.get("tokens")
+        if not tokens:
+            return Response({"error": "No tokens provided"}, status=status.HTTP_400_BAD_REQUEST)
+
+        token_ids = [int(t.strip()) for t in tokens.split(",") if t.strip().isdigit()]
+        deleted_count, _ = Ads.objects.filter(id__in=token_ids).delete()
+
+        return Response(
+            {"message": f"{deleted_count} ad(s) deleted."},
+            status=status.HTTP_204_NO_CONTENT
+        )
 
 class CategoryAdsList(APIView):
     """List Category Ads"""

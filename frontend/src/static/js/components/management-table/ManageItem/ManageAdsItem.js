@@ -28,6 +28,11 @@ export function ManageAdsItem(props) {
       <div className="mi-link">
         <a href={props.url} target="_blank" rel="noopener noreferrer">Ver anuncio</a>
       </div>
+      <div className="mi-actions">
+        <button onClick={() => props.onProceedRemoval(props.id)} className="mi-delete-button">
+          Eliminar
+        </button>
+      </div>
     </div>
   );
 }

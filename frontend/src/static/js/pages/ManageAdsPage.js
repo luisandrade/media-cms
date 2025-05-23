@@ -85,7 +85,6 @@ export class ManageAdsPage extends Page {
   pageContent() {
     return (
       <MediaListWrapper
-        title={this.props.title + (null === this.state.resultsCount ? '' : ' (' + this.state.resultsCount + ')')}
         className="search-results-wrap items-list-hor"
       >
         <ManageItemList

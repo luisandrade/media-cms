@@ -60,6 +60,7 @@ urlpatterns = [
     re_path(r"^api/v1/categories$", views.CategoryList.as_view()),
     re_path(r"^api/v1/tags$", views.TagList.as_view()),
     re_path(r"^api/v1/ads$", views.AdsList.as_view()),
+    re_path(r"^api/v1/ads/(?P<pk>\d+)$", views.AdsList.as_view(), name="ads-detail"),
     re_path(r"^api/v1/category-ads$", views.CategoryAdsList.as_view()),
     re_path(r"^api/assign-ad-to-all-media/$", views.AssignAdToAllMedia.as_view()),
     re_path(r'^api/assign-ad-to-media-by-category/$', views.AssignAdToMediaByCategory.as_view()),

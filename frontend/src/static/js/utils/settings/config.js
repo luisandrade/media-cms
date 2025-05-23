@@ -67,7 +67,7 @@ export function config(glbl) {
     archive: {
       tags: glbl.url.tags,
       categories: glbl.url.categories,
-      ads: '/ads',
+      ads: glbl.api.ads.list,
       category_ads: '/category-ads'
     },
     manage: {

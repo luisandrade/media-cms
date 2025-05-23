@@ -118,7 +118,6 @@ export class ManageCategoryAdsPage extends Page {
   pageContent() {
     return (
       <MediaListWrapper
-        title={this.props.title + (null === this.state.resultsCount ? '' : ' (' + this.state.resultsCount + ')')}
         className="search-results-wrap items-list-hor"
       >
         <ManageItemList
@@ -137,12 +136,13 @@ export class ManageCategoryAdsPage extends Page {
         />
         <AdSelector onSelect={this.handleAdSelect} />
         <button
+          class="ads-button"
           disabled={this.state.selectedCategoryIds.length === 0 || !this.state.selectedAdId}
           onClick={() =>
             assignAdToCategories(this.state.selectedCategoryIds, this.state.selectedAdId)
           }
         >
-          Asignar Ad a categorías seleccionadas
+          Asignar
         </button>
       </MediaListWrapper>
     );
