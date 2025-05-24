@@ -161,7 +161,8 @@ class SingleMediaSerializer(serializers.ModelSerializer):
             "allow_download",
             "slideshow_items",
             "ads_tag",
-            "hls_file"
+            "hls_file",
+            "stream"
         )
 
 

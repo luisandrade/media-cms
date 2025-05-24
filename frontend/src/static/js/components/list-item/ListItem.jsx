@@ -66,7 +66,6 @@ function itemPageLink(props, item) {
 }
 
 export function listItemProps(props, item, index) {
-  console.log("listItemProps",item);
   const isArchiveItem = props.inCategoriesList || props.inTagsList;
   const isUserItem = !isArchiveItem && void 0 !== item.username;
   const isPlaylistItem =
@@ -86,12 +85,12 @@ export function listItemProps(props, item, index) {
   }
 
   const thumbnail =
-  item.hls_file && item.hls_file !== '' && item.hls_file !== null
+  item.stream && item.stream !== '' && item.stream !== null
     ? 'http://localhost/media/userlogos/live_poster.jpg'
     : item.thumbnail_url || '';
   
     const previewThumbnail =
-  item.hls_file && item.hls_file !== '' && item.hls_file !== null
+  item.stream && item.stream !== '' && item.stream !== null
     ? 'http://localhost/media/userlogos/live_poster.jpg'
     : item.preview_url || '';
 
@@ -243,7 +242,6 @@ export function listItemProps(props, item, index) {
 }
 
 export function ListItem(props) {
-  console.log("props list item",props);
   let isMediaItem = false;
 
   const args = {

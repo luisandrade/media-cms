@@ -387,8 +387,7 @@ def embed_media(request):
 
     return render(request, "cms/embed.html", {
         "media": friendly_token,
-        "playback_urls": json.dumps(playback_urls),
-        "is_stream": bool(media.hls_file)
+        "playback_urls": json.dumps(playback_urls)
     })
 
 @login_required
@@ -508,6 +507,8 @@ def upload_media(request):
 @login_required
 def view_media(request):
     """View media view"""
+    import hashlib, base64
+    from django.conf import settings
 
     friendly_token = request.GET.get("m", "").strip()
     context = {}
@@ -516,9 +517,10 @@ def view_media(request):
         context["media"] = None
         return render(request, "cms/media.html", context)
 
+    # Registro de acción de visualización
     user_or_session = get_user_or_session(request)
     save_user_action.delay(user_or_session, friendly_token=friendly_token, action="watch")
-    context = {}
+
     context["media"] = friendly_token
     context["media_object"] = media
 
@@ -531,6 +533,57 @@ def view_media(request):
             context["CAN_DELETE_MEDIA"] = True
             context["CAN_EDIT_MEDIA"] = True
             context["CAN_DELETE_COMMENTS"] = True
+
+    # 🔐 Token Wowza
+    host = "scl.edge.grupoz.cl"
+    secret = "c1bcbdc0c1eac962"
+    secret_vod = "45c2a1f252003a0a"
+    token_name = "wowzatoken"
+    client_ip = None
+    start = 0
+    end = 0
+
+    def generate_wowza_token(path, secret_key):
+        if client_ip:
+            to_hash = f"{path}?{client_ip}&{secret_key}&{token_name}endtime={end}&{token_name}starttime={start}"
+        else:
+            to_hash = f"{path}?{secret_key}&{token_name}endtime={end}&{token_name}starttime={start}"
+        hash_bytes = hashlib.sha384(to_hash.encode("utf-8")).digest()
+        base64_hash = base64.urlsafe_b64encode(hash_bytes).decode("utf-8").rstrip("=")
+        params = [
+            f"{token_name}starttime={start}",
+            f"{token_name}endtime={end}",
+            f"{token_name}hash={base64_hash}",
+        ]
+        if client_ip:
+            params.append(client_ip)
+        params.sort()
+        return "&".join(params)
+
+    playback_urls = {}
+
+    if media.stream:
+        stream_names = getattr(settings, "WOWZA_STREAM_NAMES", ["default_stream"])
+        for name in stream_names:
+            stream_path = f"{name}/live"
+            token = generate_wowza_token(stream_path, secret)
+            playback_urls[name] = {
+                "url": f"https://{host}/{stream_path}/playlist.m3u8?{token}",
+                "token": token
+            }
+    else:
+        vod_app = "vod"
+        cache = "dc"
+        filename = "conejo.mp4"  # O usa media.filename si es dinámico
+        stream_path = f"{vod_app}/mp4:{cache}/{filename}"
+        token = generate_wowza_token(stream_path, secret_vod)
+        playback_urls["vod"] = {
+            "url": f"https://{host}/{stream_path}/playlist.m3u8?{token}",
+            "token": token
+        }
+
+    context["playback_urls"] = json.dumps(playback_urls)  # ✅ Aquí se agrega al contexto
+
     return render(request, "cms/media.html", context)
 
 @login_required
@@ -590,7 +643,7 @@ class LiveList(APIView):
                 # base listings should show safe content
                 basic_query = Q(listable=True)
 
-                hls_filter = ~Q(hls_file="") & ~Q(hls_file__isnull=True)
+                hls_filter = ~Q(stream="") & ~Q(stream__isnull=True)
 
                 if show_param == "featured":
                     media = Media.objects.filter(basic_query & hls_filter, featured=True)

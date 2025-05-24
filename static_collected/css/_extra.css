@@ -49,4 +49,32 @@ body {
   display: inline-block !important;
 }
 
+.tab-button.active{
+  border-color: var(--default-brand-color);
+  color : var(--default-brand-color);
+}
+
+.tabs-container {
+  margin-top: 2rem;
+}
+.tabs-header {
+  display: flex;
+  border-bottom: 2px solid #ccc;
+  margin-bottom: 1rem;
+}
+.tab-button {
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-weight: bold;
+}
+.tab-pane {
+  display: none;
+}
+.tab-pane.active {
+  display: block;
+}
+
 

@@ -100,7 +100,7 @@ export function VideoPlayerEmbed(props) {
         }
       };
     
-      const streamKey = extractStreamKey(props.hls_file);
+      const streamKey = extractStreamKey(props.stream);
       const tokenEntry = props.playback_url_token?.[streamKey];
       const finalUrl = tokenEntry
         ? `${props.stream}?${tokenEntry.token}`

@@ -548,6 +548,7 @@ export default class VideoViewer extends React.PureComponent {
                         siteUrl={site.url}
                         adsTag={this.props.data.ads_tag}
                         hls_file={this.props.data.hls_file}
+                        stream={this.props.data.stream}
                       />
                     )}
                   </SiteConsumer>
@@ -565,6 +566,8 @@ export default class VideoViewer extends React.PureComponent {
                         siteId={site.id}
                         siteUrl={site.url}
                         hls_file={this.props.data.hls_file}
+                        playback_url_token={this.props.data.playback_urls}
+                        stream={this.props.data.stream}
                         adsTag={this.props.data.ads_tag}
                         info={this.videoInfo}
                         cornerLayers={this.cornerLayers}

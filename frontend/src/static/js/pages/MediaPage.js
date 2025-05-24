@@ -44,10 +44,38 @@ if (window.MediaCMS.site.devEnv) {
 
 export class MediaPage extends _VideoMediaPage {
   viewerContainerContent(mediaData) {
+
+    const element = document.getElementById('page-media');
+    let playbackUrls = {};
+  
+    if (element) {
+      const rawData = element.getAttribute('data-playback-urls');
+
+      console.log("raw data view normal",rawData);
+      if (rawData) {
+        try {
+          playbackUrls = JSON.parse(rawData);
+          console.log("🎥 Playback URLs (normal view):", playbackUrls);
+        } catch (e) {
+          console.error("❌ Error parsing playback_urls:", e);
+        }
+      }
+    }
+
+  
+
     switch (MediaPageStore.get('media-type')) {
       case 'video':
         return (
-          <SiteConsumer>{(site) => <VideoViewer data={mediaData} siteUrl={site.url} inEmbed={!1} />}</SiteConsumer>
+        <SiteConsumer>
+          {(site) => (
+            <VideoViewer
+              data={{ ...mediaData, playback_urls: playbackUrls }}
+              siteUrl={site.url}
+              inEmbed={false}
+            />
+          )}
+        </SiteConsumer>
         );
       case 'audio':
         return <AudioViewer />;

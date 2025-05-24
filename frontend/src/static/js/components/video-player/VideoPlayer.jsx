@@ -139,17 +139,38 @@ export function VideoPlayer(props) {
       }
     }
 
+  console.log("props video player",props);
+  
     let sources;
-    if(props.hls_file !== ''){
+    if (props.stream !== '') {
+      const extractStreamKey = (url) => {
+        try {
+          const parsed = new URL(url);
+          const pathParts = parsed.pathname.split('/').filter(Boolean);
+          return pathParts[0] || null;
+        } catch {
+          return null;
+        }
+      };
+    
+      const streamKey = extractStreamKey(props.stream);
+      const tokenEntry = props.playback_url_token?.[streamKey];
+      const finalUrl = tokenEntry
+        ? `${props.stream}?${tokenEntry.token}`
+        : props.stream;
+    
+      console.log("🎯 Stream key detectado:", streamKey);
+      console.log("🔐 Token aplicado:", tokenEntry?.token);
+      console.log("▶️ Final HLS URL:", finalUrl);
+    
       sources = [
         {
-        src: props.hls_file,
-        type: 'application/x-mpegURL'
+          src: finalUrl,
+          type: 'application/x-mpegURL'
         }
-      ]
-    }else{
+      ];
+    } else {
       sources = props.sources;
-      console.log("props sources",props.sources);
     }
 
     player = new MediaPlayer(
