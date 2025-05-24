@@ -65,17 +65,14 @@ VIDEO_PLAYER_FEATURED_VIDEO_ON_INDEX_PAGE = False
 PRE_UPLOAD_MEDIA_MESSAGE = ""
 
 # email settings
-DEFAULT_FROM_EMAIL = "info@mediacms.io"
-EMAIL_HOST_PASSWORD = "xyz"
-EMAIL_HOST_USER = "info@mediacms.io"
+DEFAULT_FROM_EMAIL = "info@vms.grupoz.cl"
+EMAIL_HOST_PASSWORD = "nZJ6HRbxcQNVDItp"
+EMAIL_HOST_USER = "zaterio@gmail.com"
 EMAIL_USE_TLS = True
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
-EMAIL_HOST = "mediacms.io"
+EMAIL_HOST = "smtp-relay.brevo.com"
 EMAIL_PORT = 587
-ADMIN_EMAIL_LIST = ["info@mediacms.io"]
-
-
-
+ADMIN_EMAIL_LIST = ["admin@vms.grupoz.cl"]
 
 
 MEDIA_IS_REVIEWED = True  # whether an admin needs to review a media file.
