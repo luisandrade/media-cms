@@ -701,7 +701,7 @@ class MediaList(APIView):
                 # base listings should show safe content
                 basic_query = Q(listable=True)
 
-            hls_filter = Q(hls_file="") | Q(hls_file__isnull=True)
+            hls_filter = Q(stream="") | Q(stream__isnull=True)
 
             if show_param == "featured":
                 media = Media.objects.filter(basic_query & hls_filter & Q(featured=True))
