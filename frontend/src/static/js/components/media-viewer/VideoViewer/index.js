@@ -549,6 +549,7 @@ export default class VideoViewer extends React.PureComponent {
                         adsTag={this.props.data.ads_tag}
                         hls_file={this.props.data.hls_file}
                         stream={this.props.data.stream}
+                        title={this.props.data.title}
                       />
                     )}
                   </SiteConsumer>

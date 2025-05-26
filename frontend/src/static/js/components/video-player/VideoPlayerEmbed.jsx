@@ -85,8 +85,6 @@ export function VideoPlayerEmbed(props) {
       subtitles.on = subtitles.languages.length > 0;
     }
 
-    console.log("props",props);
-
     let sources;
 
     if (props.stream !== '') {
@@ -159,7 +157,6 @@ export function VideoPlayerEmbed(props) {
         );
       });
     }
-    console.log("props video embed",props.adsTag);
 
     if(props.adsTag !== null){
       player.ima({
@@ -176,7 +173,7 @@ export function VideoPlayerEmbed(props) {
           'trackEvent',
           'Video',
           'Play',
-          props.info?.title || 'Video sin título',
+          props.title || 'Video sin título',
         ]);
       }
     });
@@ -187,7 +184,7 @@ export function VideoPlayerEmbed(props) {
           'trackEvent',
           'Video',
           'Ended',
-          props.info?.title || 'Video sin título',
+          props.title || 'Video sin título',
         ]);
       }
     });
