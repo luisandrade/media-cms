@@ -85,6 +85,8 @@ export function VideoPlayerEmbed(props) {
       subtitles.on = subtitles.languages.length > 0;
     }
 
+    console.log("props",props);
+
     let sources;
 
     if (props.stream !== '') {
@@ -123,6 +125,7 @@ export function VideoPlayerEmbed(props) {
       controls: true,
       autoplay: true,
       muted : false,
+      liveui: true,
       poster: props.poster,
       sources: sources,
       bigPlayButton: true,
@@ -157,6 +160,7 @@ export function VideoPlayerEmbed(props) {
         );
       });
     }
+    console.log("props video embed",props.adsTag);
 
     if(props.adsTag !== null){
       player.ima({
@@ -166,30 +170,69 @@ export function VideoPlayerEmbed(props) {
       });
 
     }
+    player.ready(function () {
 
-    player.on('play', () => {
-      if (window._paq) {
-        window._paq.push([
-          'trackEvent',
-          'Video',
-          'Play',
-          props.title || 'Video sin título',
-        ]);
+      player.on('loadedmetadata', () => {
+        videoDuration = player.duration();
+      });
+
+      let videoDuration = 0;
+      let progressTracked = {
+          25: false,
+          50: false,
+          75: false
+      };
+      videoDuration = player.duration();
+
+      player.on('play', () => {
+        if (window._paq) {
+          console.log("play");
+          window._paq.push([
+            'trackEvent',
+            'Video',
+            'Play',
+            props.title || 'Video sin título',
+          ]);
+        }
+      });
+
+      player.on('ended', () => {
+        console.log("ended");
+        if (window._paq) {
+          window._paq.push([
+            'trackEvent',
+            'Video',
+            'Ended',
+            props.title || 'Video sin título',
+          ]);
+        }
+      });
+
+    player.on('timeupdate', () => {
+      const currentTime = player.currentTime();
+      const percent = (currentTime / videoDuration) * 100;
+      const rounded = Math.floor(percent);
+
+      if (rounded >= 25 && !progressTracked[25]) {
+          window._paq.push(['trackEvent', 'Video', '25%', props.title ]);
+          progressTracked[25] = true;
+      }
+
+      if (rounded >= 50 && !progressTracked[50]) {
+          window._paq.push(['trackEvent', 'Video', '50%', props.title ]);
+          progressTracked[50] = true;
+      }
+
+      if (rounded >= 75 && !progressTracked[75]) {
+          window._paq.push(['trackEvent', 'Video', '75%', props.title ]);
+          progressTracked[75] = true;
       }
     });
 
-    player.on('ended', () => {
-      if (window._paq) {
-        window._paq.push([
-          'trackEvent',
-          'Video',
-          'Ended',
-          props.title || 'Video sin título',
-        ]);
-      }
-    });
+  });
 
   };
+  
 
   const unsetPlayer = () => {
     if (playerRef.current) {
