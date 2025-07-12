@@ -142,6 +142,8 @@ export function VideoPlayer(props) {
   console.log("props video player",props);
   
     let sources;
+    const mediaIdSource = props.url.split('m=')[1];
+
     if (props.stream !== '') {
       const extractStreamKey = (url) => {
         try {
@@ -170,7 +172,12 @@ export function VideoPlayer(props) {
         }
       ];
     } else {
-      sources = props.sources;
+      sources = [
+        {
+          src : 'https://scl.edge.grupoz.cl/mediavms-development/smil:'+mediaIdSource+'.smil/playlist.m3u8',
+          type: 'application/x-mpegURL'
+        }
+      ]
     }
 
     player = new MediaPlayer(

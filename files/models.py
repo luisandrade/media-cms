@@ -964,6 +964,48 @@ class Media(models.Model):
         if self.media_type != "video":
             return False
 
+        # 🔔 Ya no creamos la carpeta "smil", usamos directamente MEDIA_ROOT
+        output_dir = settings.MEDIA_ROOT
+
+        # 🔧 El archivo queda directo en MEDIA_ROOT (no en MEDIA_ROOT/smil)
+        smil_path = os.path.join(output_dir, f"{self.friendly_token}.smil")
+
+        encodings = self.encodings.select_related("profile").filter(
+            status="success",
+            profile__codec="h264",
+            profile__extension="mp4"
+        )
+
+        if not encodings:
+            return False
+
+        print(f"Found {encodings.count()} encodings for SMIL")
+
+        with open(smil_path, 'w') as f:
+            f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
+            f.write('<smil>\n  <body>\n    <switch>\n')
+
+            for encoding in encodings:
+                resolution = encoding.profile.resolution or 360
+                bitrate = resolution * 1000  # Estimar bitrate
+
+                src_url = encoding.media_encoding_url
+
+                # 🔧 Corrección: eliminar todo antes de "encoded"
+                if "encoded" in src_url:
+                    src_url = src_url.split("encoded", 1)[1]
+                    src_url = "encoded" + src_url
+
+                f.write(f'      <video src="{src_url}" system-bitrate="{bitrate}"/>\n')
+
+            f.write('    </switch>\n  </body>\n</smil>\n')
+
+        return True
+
+        """Generate SMIL file after encoding for adaptive streaming"""
+        if self.media_type != "video":
+            return False
+
         smil_dir = os.path.join(settings.MEDIA_ROOT, 'smil')
         os.makedirs(smil_dir, exist_ok=True)
 
@@ -983,14 +1025,24 @@ class Media(models.Model):
         with open(smil_path, 'w') as f:
             f.write('<?xml version="1.0" encoding="UTF-8"?>\n')
             f.write('<smil>\n  <body>\n    <switch>\n')
+
             for encoding in encodings:
                 resolution = encoding.profile.resolution or 360
                 bitrate = resolution * 1000  # Estimar bitrate a partir de resolución
+
                 src_url = encoding.media_encoding_url
+
+                # 🔧 Corrección: eliminar todo antes de "encoded"
+                if "encoded" in src_url:
+                    src_url = src_url.split("encoded", 1)[1]
+                    src_url = "encoded" + src_url  # agregamos "encoded" de nuevo al inicio
+
                 f.write(f'      <video src="{src_url}" system-bitrate="{bitrate}"/>\n')
+
             f.write('    </switch>\n  </body>\n</smil>\n')
 
         return True
+
 
 
 class License(models.Model):

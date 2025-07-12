@@ -88,6 +88,7 @@ export function VideoPlayerEmbed(props) {
     console.log("props",props);
 
     let sources;
+    const mediaIdSource = props.url.split('m=')[1];
 
     if (props.stream !== '') {
       const extractStreamKey = (url) => {
@@ -117,10 +118,21 @@ export function VideoPlayerEmbed(props) {
         }
       ];
     } else {
-      sources = props.sources;
+      sources = [
+        {
+          src : 'https://scl.edge.grupoz.cl/mediavms-development/smil:'+mediaIdSource+'.smil/playlist.m3u8',
+          type: 'application/x-mpegURL'
+        }
+      ]
     }
 
     const player = videojs(videoElemRef.current, {
+      html5:{
+        vhs:{
+          enableLowInitialPlaylist: false,
+          overrideNative: true
+        }
+      },
       enabledTouchControls: true,
       controls: true,
       autoplay: true,
@@ -138,8 +150,11 @@ export function VideoPlayerEmbed(props) {
         pictureInPictureToggle: false,
         next: props.hasNextLink,
         previous: props.hasPreviousLink,
+        enableLowInitialPlaylist: false
       }
     });
+
+    player.httpSourceSelector();
 
     if(props.hls_file !== ''){
       player.volume(0);

@@ -550,6 +550,7 @@ export default class VideoViewer extends React.PureComponent {
                         hls_file={this.props.data.hls_file}
                         stream={this.props.data.stream}
                         title={this.props.data.title}
+                        url={this.props.data.url}
                       />
                     )}
                   </SiteConsumer>
@@ -586,6 +587,7 @@ export default class VideoViewer extends React.PureComponent {
                         onClickPreviousCallback={this.onClickPrevious}
                         onStateUpdateCallback={this.onStateUpdate}
                         onPlayerInitCallback={this.onPlayerInit}
+                        url={this.props.data.url}
                       />
                     )}
                   </SiteConsumer>
