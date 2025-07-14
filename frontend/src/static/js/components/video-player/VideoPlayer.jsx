@@ -5,9 +5,8 @@ import urlParse from 'url-parse';
 import videojs from 'video.js';
 import 'videojs-contrib-quality-levels';
 import 'videojs-http-source-selector';
-import 'videojs-ima';
 
-import './VideoPlayerEmbed.scss';
+import './VideoPlayer.scss';
 
 export function formatInnerLink(url, baseUrl) {
   let link = urlParse(url, {});
@@ -34,7 +33,7 @@ VideoPlayerError.propTypes = {
   errorMessage: PropTypes.string.isRequired,
 };
 
-export function VideoPlayerEmbed(props) {
+export function VideoPlayer(props) {
   console.log("props player embed", props);
   const videoElemRef = useRef(null);
   const playerRef = useRef(null);
@@ -202,7 +201,7 @@ export function VideoPlayerEmbed(props) {
   );
 }
 
-VideoPlayerEmbed.propTypes = {
+VideoPlayer.propTypes = {
   playerVolume: PropTypes.string,
   playerSoundMuted: PropTypes.bool,
   videoQuality: PropTypes.string,
@@ -228,7 +227,7 @@ VideoPlayerEmbed.propTypes = {
   onUnmountCallback: PropTypes.func,
 };
 
-VideoPlayerEmbed.defaultProps = {
+VideoPlayer.defaultProps = {
   errorMessage: null,
   cornerLayers: {},
 };

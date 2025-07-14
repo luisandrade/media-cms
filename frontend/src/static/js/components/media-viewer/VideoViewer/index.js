@@ -10,7 +10,8 @@ import {
   videoAvailableCodecsAndResolutions,
   extractDefaultVideoResolution,
 } from './functions';
-import { VideoPlayer, VideoPlayerError } from '../../video-player/VideoPlayer';
+
+import { VideoPlayer } from '../../video-player/VideoPlayer';
 import { VideoPlayerEmbed } from '../../video-player/VideoPlayerEmbed';
 
 import '../VideoViewer.scss';
@@ -559,7 +560,7 @@ export default class VideoViewer extends React.PureComponent {
                 <div className="video-player" ref="videoPlayerWrapper" key="videoPlayerWrapper">
                   <SiteConsumer>
                     {(site) => (
-                      <VideoPlayerEmbed
+                      <VideoPlayer
                       info={this.videoInfo}
                       sources={this.videoSources}
                       enableAutoplay={!this.props.inEmbed}
