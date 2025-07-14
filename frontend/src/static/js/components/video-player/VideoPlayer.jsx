@@ -2,18 +2,19 @@ import React, { useRef, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import urlParse from 'url-parse';
 
-import MediaPlayer from 'mediacms-player/dist/mediacms-player.js';
-import 'mediacms-player/dist/mediacms-player.css';
+import videojs from 'video.js';
+import 'videojs-contrib-ads';
+import 'videojs-contrib-quality-levels';
+import 'videojs-http-source-selector';
+import 'videojs-ima';
 
-import './VideoPlayer.scss';
+import './VideoPlayerEmbed.scss';
 
 export function formatInnerLink(url, baseUrl) {
   let link = urlParse(url, {});
-
   if ('' === link.origin || 'null' === link.origin || !link.origin) {
     link = urlParse(baseUrl + '/' + url.replace(/^\//g, ''), {});
   }
-
   return link.toString();
 }
 
@@ -34,113 +35,60 @@ VideoPlayerError.propTypes = {
   errorMessage: PropTypes.string.isRequired,
 };
 
-export function VideoPlayer(props) {
+export function VideoPlayerEmbed(props) {
+  console.log("props player embed", props);
   const videoElemRef = useRef(null);
-
-  let player = null;
+  const playerRef = useRef(null);
 
   const playerStates = {
-    playerVolume: props.playerVolume,
-    playerSoundMuted: props.playerSoundMuted,
-    videoQuality: props.videoQuality,
-    videoPlaybackSpeed: props.videoPlaybackSpeed,
-    inTheaterMode: props.inTheaterMode,
+    playerVolume: props.playerVolume ?? 1,
+    playerSoundMuted: props.playerSoundMuted ?? false,
+    videoQuality: props.videoQuality ?? 'Auto',
+    videoPlaybackSpeed: props.videoPlaybackSpeed ?? 1,
+    inTheaterMode: props.inTheaterMode ?? false,
   };
 
-  playerStates.playerVolume =
-    null === playerStates.playerVolume ? 1 : Math.max(Math.min(Number(playerStates.playerVolume), 1), 0);
-  playerStates.playerSoundMuted = null !== playerStates.playerSoundMuted ? playerStates.playerSoundMuted : !1;
-  playerStates.videoQuality = null !== playerStates.videoQuality ? playerStates.videoQuality : 'Auto';
-  playerStates.videoPlaybackSpeed = null !== playerStates.videoPlaybackSpeed ? playerStates.videoPlaybackSpeed : !1;
-  playerStates.inTheaterMode = null !== playerStates.inTheaterMode ? playerStates.inTheaterMode : !1;
+  const onClickNext = () => {
+    props.onClickNextCallback?.();
+  };
 
-  function onClickNext() {
-    if (void 0 !== props.onClickNextCallback) {
-      props.onClickNextCallback();
-    }
-  }
+  const onClickPrevious = () => {
+    props.onClickPreviousCallback?.();
+  };
 
-  function onClickPrevious() {
-    if (void 0 !== props.onClickPreviousCallback) {
-      props.onClickPreviousCallback();
-    }
-  }
+  const onPlayerStateUpdate = (newState) => {
+    props.onStateUpdateCallback?.(newState);
+  };
 
-  function onPlayerStateUpdate(newState) {
-    if (playerStates.playerVolume !== newState.volume) {
-      playerStates.playerVolume = newState.volume;
-    }
-
-    if (playerStates.playerSoundMuted !== newState.soundMuted) {
-      playerStates.playerSoundMuted = newState.soundMuted;
-    }
-
-    if (playerStates.videoQuality !== newState.quality) {
-      playerStates.videoQuality = newState.quality;
-    }
-
-    if (playerStates.videoPlaybackSpeed !== newState.playbackSpeed) {
-      playerStates.videoPlaybackSpeed = newState.playbackSpeed;
-    }
-
-    if (playerStates.inTheaterMode !== newState.theaterMode) {
-      playerStates.inTheaterMode = newState.theaterMode;
-    }
-
-    if (void 0 !== props.onStateUpdateCallback) {
-      props.onStateUpdateCallback(newState);
-    }
-  }
-
-  function initPlayer() {
-    if (null !== player || null !== props.errorMessage) {
-      return;
-    }
+  const initPlayer = () => {
+    if (playerRef.current || props.errorMessage || !videoElemRef.current) return;
 
     if (!props.inEmbed) {
       window.removeEventListener('focus', initPlayer);
       document.removeEventListener('visibilitychange', initPlayer);
-    }
-
-    if (!videoElemRef.current) {
-      return;
-    }
-
-    if (!props.inEmbed) {
-      videoElemRef.current.focus(); // Focus on player before instance init.
+      videoElemRef.current.focus();
     }
 
     const subtitles = {
       on: false,
+      languages: [],
     };
 
-    if (void 0 !== props.subtitlesInfo && null !== props.subtitlesInfo && props.subtitlesInfo.length) {
-      subtitles.languages = [];
-
-      let i = 0;
-      while (i < props.subtitlesInfo.length) {
-        if (
-          void 0 !== props.subtitlesInfo[i].src &&
-          void 0 !== props.subtitlesInfo[i].srclang &&
-          void 0 !== props.subtitlesInfo[i].label
-        ) {
+    if (props.subtitlesInfo?.length) {
+      props.subtitlesInfo.forEach((sub) => {
+        if (sub.src && sub.srclang && sub.label) {
           subtitles.languages.push({
-            src: formatInnerLink(props.subtitlesInfo[i].src, props.siteUrl),
-            srclang: props.subtitlesInfo[i].srclang,
-            label: props.subtitlesInfo[i].label,
+            src: formatInnerLink(sub.src, props.siteUrl),
+            srclang: sub.srclang,
+            label: sub.label,
           });
         }
-
-        i += 1;
-      }
-
-      if (subtitles.languages.length) {
-        subtitles.on = true;
-      }
+      });
+      subtitles.on = subtitles.languages.length > 0;
     }
 
-  console.log("props video player",props);
-  
+    console.log("props",props);
+
     let sources;
     const mediaIdSource = props.url.split('m=')[1];
 
@@ -180,92 +128,164 @@ export function VideoPlayer(props) {
       ]
     }
 
-    player = new MediaPlayer(
-      videoElemRef.current,
-      {
-        enabledTouchControls: true,
-        sources: sources,
-        poster: props.poster,
-        autoplay: props.enableAutoplay,
-        bigPlayButton: true,
-        controlBar: {
-          theaterMode: props.hasTheaterMode,
-          pictureInPicture: false,
-          next: props.hasNextLink ? true : false,
-          previous: props.hasPreviousLink ? true : false,
-        },
-        subtitles: subtitles,
-        cornerLayers: props.cornerLayers,
-        videoPreviewThumb: props.previewSprite,
-      },
-      {
-        volume: playerStates.playerVolume,
-        soundMuted: playerStates.playerSoundMuted,
-        theaterMode: playerStates.inTheaterMode,
-        theSelectedQuality: void 0, // @note: Allow auto resolution selection by sources order.
-        theSelectedPlaybackSpeed: playerStates.videoPlaybackSpeed || 1,
-      },
-      props.info,
-      [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2],
-      onPlayerStateUpdate,
-      onClickNext,
-      onClickPrevious
-    );
+    const player = videojs(videoElemRef.current, {
+      enabledTouchControls: true,
+      controls: true,
+      autoplay: true,
+      muted : false,
+      liveui: true,
+      poster: props.poster,
+      sources: sources,
+      bigPlayButton: true,
+      volume: playerStates.playerVolume,
+      soundMuted: playerStates.playerSoundMuted,
+      theaterMode: playerStates.inTheaterMode,
+      videoPreviewThumb: props.previewSprite,
+      controlBar: {
+        theaterMode: props.hasTheaterMode,
+        pictureInPictureToggle: false,
+        next: props.hasNextLink,
+        previous: props.hasPreviousLink,
+        enableLowInitialPlaylist: false
+      }
+    });
 
-    if (void 0 !== props.onPlayerInitCallback) {
-      props.onPlayerInitCallback(player, videoElemRef.current);
-    }
-  }
+    player.qualityLevels();
+    player.httpSourceSelector({
+      default: 'auto'
+    });
 
-  function unsetPlayer() {
-    if (null === player) {
-      return;
+    if(props.hls_file !== ''){
+      player.volume(0);
+      player.muted(true);
     }
-    videojs(videoElemRef.current).dispose();
-    player = null;
-  }
+
+    if (subtitles.on) {
+      subtitles.languages.forEach((track) => {
+        player.addRemoteTextTrack(
+          {
+            kind: 'subtitles',
+            src: track.src,
+            srclang: track.srclang,
+            label: track.label,
+            default: false,
+          },
+          false
+        );
+      });
+    }
+    console.log("props video embed",props.adsTag);
+
+    if(props.adsTag !== null){
+      player.ima({
+        id: 'content_video_html5_api',
+        adTagUrl:
+        props.adsTag.url,
+      });
+
+    }
+    player.ready(function () {
+
+      player.on('loadedmetadata', () => {
+        videoDuration = player.duration();
+      });
+
+      let videoDuration = 0;
+      let progressTracked = {
+          25: false,
+          50: false,
+          75: false
+      };
+      videoDuration = player.duration();
+
+      player.on('play', () => {
+        if (window._paq) {
+          console.log("play");
+          window._paq.push([
+            'trackEvent',
+            'Video',
+            'Play',
+            props.title || 'Video sin título',
+          ]);
+        }
+      });
+
+      player.on('ended', () => {
+        console.log("ended");
+        if (window._paq) {
+          window._paq.push([
+            'trackEvent',
+            'Video',
+            'Ended',
+            props.title || 'Video sin título',
+          ]);
+        }
+      });
+
+    player.on('timeupdate', () => {
+      const currentTime = player.currentTime();
+      const percent = (currentTime / videoDuration) * 100;
+      const rounded = Math.floor(percent);
+
+      if (rounded >= 25 && !progressTracked[25]) {
+          window._paq.push(['trackEvent', 'Video', '25%', props.title ]);
+          progressTracked[25] = true;
+      }
+
+      if (rounded >= 50 && !progressTracked[50]) {
+          window._paq.push(['trackEvent', 'Video', '50%', props.title ]);
+          progressTracked[50] = true;
+      }
+
+      if (rounded >= 75 && !progressTracked[75]) {
+          window._paq.push(['trackEvent', 'Video', '75%', props.title ]);
+          progressTracked[75] = true;
+      }
+    });
+
+  });
+
+  };
+  
+
+  const unsetPlayer = () => {
+    if (playerRef.current) {
+      playerRef.current.dispose();
+      playerRef.current = null;
+    }
+  };
 
   useEffect(() => {
-    if (props.inEmbed || document.hasFocus() || 'visible' === document.visibilityState) {
-      initPlayer();
+    if (!window.google?.ima) {
+      const script = document.createElement('script');
+      script.src = 'https://imasdk.googleapis.com/js/sdkloader/ima3.js';
+      script.async = true;
+      script.onload = () => {
+        console.log('✅ Google IMA SDK cargado');
+        initPlayer(); // Inicializa después de que el SDK esté listo
+      };
+      document.body.appendChild(script);
     } else {
-      window.addEventListener('focus', initPlayer);
-      document.addEventListener('visibilitychange', initPlayer);
+      initPlayer();
     }
-
-    /*
-      // We don't need this because we have a custom function in frontend/src/static/js/components/media-viewer/VideoViewer/index.js:617
-      player && player.player.one('loadedmetadata', () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const paramT = Number(urlParams.get('t'));
-      const timestamp = !isNaN(paramT) ? paramT : 0;
-      player.player.currentTime(timestamp);
-    }); */
-
+  
     return () => {
       unsetPlayer();
-
-      if (void 0 !== props.onUnmountCallback) {
-        props.onUnmountCallback();
-      }
     };
   }, []);
 
-  return null === props.errorMessage ? (
-    <video ref={videoElemRef} className="video-js vjs-mediacms native-dimensions"></video>
+  return props.errorMessage === null ? (
+    <video
+      ref={videoElemRef}
+      id="content_video"
+      className="video-js vjs-mediacms native-dimensions"
+    ></video>
   ) : (
-    <div className="error-container">
-      <div className="error-container-inner">
-        <span className="icon-wrap">
-          <i className="material-icons">error_outline</i>
-        </span>
-        <span className="msg-wrap">{props.errorMessage}</span>
-      </div>
-    </div>
+    <VideoPlayerError errorMessage={props.errorMessage} />
   );
 }
 
-VideoPlayer.propTypes = {
+VideoPlayerEmbed.propTypes = {
   playerVolume: PropTypes.string,
   playerSoundMuted: PropTypes.bool,
   videoQuality: PropTypes.string,
@@ -275,15 +295,14 @@ VideoPlayer.propTypes = {
   siteUrl: PropTypes.string.isRequired,
   errorMessage: PropTypes.string,
   cornerLayers: PropTypes.object,
-  subtitlesInfo: PropTypes.array.isRequired,
   inEmbed: PropTypes.bool.isRequired,
   sources: PropTypes.array.isRequired,
   info: PropTypes.object.isRequired,
   enableAutoplay: PropTypes.bool.isRequired,
   hasTheaterMode: PropTypes.bool.isRequired,
-  hasNextLink: PropTypes.bool.isRequired,
-  hasPreviousLink: PropTypes.bool.isRequired,
   poster: PropTypes.string,
+  adsTag : PropTypes.object,
+  hls_file : PropTypes.string,
   previewSprite: PropTypes.object,
   onClickPreviousCallback: PropTypes.func,
   onClickNextCallback: PropTypes.func,
@@ -292,7 +311,7 @@ VideoPlayer.propTypes = {
   onUnmountCallback: PropTypes.func,
 };
 
-VideoPlayer.defaultProps = {
+VideoPlayerEmbed.defaultProps = {
   errorMessage: null,
   cornerLayers: {},
 };

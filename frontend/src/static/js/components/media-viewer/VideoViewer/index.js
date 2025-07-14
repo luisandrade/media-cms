@@ -559,36 +559,22 @@ export default class VideoViewer extends React.PureComponent {
                 <div className="video-player" ref="videoPlayerWrapper" key="videoPlayerWrapper">
                   <SiteConsumer>
                     {(site) => (
-                      <VideoPlayer
-                        playerVolume={this.browserCache.get('player-volume')}
-                        playerSoundMuted={this.browserCache.get('player-sound-muted')}
-                        videoQuality={this.browserCache.get('video-quality')}
-                        videoPlaybackSpeed={parseInt(this.browserCache.get('video-playback-speed'), 10)}
-                        inTheaterMode={this.browserCache.get('in-theater-mode')}
-                        siteId={site.id}
-                        siteUrl={site.url}
-                        hls_file={this.props.data.hls_file}
-                        playback_url_token={this.props.data.playback_urls}
-                        stream={this.props.data.stream}
-                        adsTag={this.props.data.ads_tag}
-                        info={this.videoInfo}
-                        cornerLayers={this.cornerLayers}
-                        sources={this.videoSources}
-                        poster={this.videoPoster}
-                        previewSprite={previewSprite}
-                        subtitlesInfo={this.props.data.subtitles_info}
-                        enableAutoplay={!this.props.inEmbed}
-                        inEmbed={this.props.inEmbed}
-                        hasTheaterMode={!this.props.inEmbed}
-                        hasNextLink={!!nextLink}
-                        hasPreviousLink={!!previousLink}
-                        errorMessage={MediaPageStore.get('media-load-error-message')}
-                        onClickNextCallback={this.onClickNext}
-                        onClickPreviousCallback={this.onClickPrevious}
-                        onStateUpdateCallback={this.onStateUpdate}
-                        onPlayerInitCallback={this.onPlayerInit}
-                        url={this.props.data.url}
-                      />
+                      <VideoPlayerEmbed
+                      info={this.videoInfo}
+                      sources={this.videoSources}
+                      enableAutoplay={!this.props.inEmbed}
+                      hasTheaterMode={!this.props.inEmbed}
+                      videoPlaybackSpeed={parseInt(this.browserCache.get('video-playback-speed'), 10)}
+                      playback_url_token={this.props.data.playback_urls}
+                      inEmbed={this.props.inEmbed}
+                      siteId={site.id}
+                      siteUrl={site.url}
+                      adsTag={this.props.data.ads_tag}
+                      hls_file={this.props.data.hls_file}
+                      stream={this.props.data.stream}
+                      title={this.props.data.title}
+                      url={this.props.data.url}
+                    />
                     )}
                   </SiteConsumer>
                 </div>

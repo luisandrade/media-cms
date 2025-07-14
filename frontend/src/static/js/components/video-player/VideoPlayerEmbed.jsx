@@ -4,6 +4,8 @@ import urlParse from 'url-parse';
 
 import videojs from 'video.js';
 import 'videojs-contrib-ads';
+import 'videojs-contrib-quality-levels';
+import 'videojs-http-source-selector';
 import 'videojs-ima';
 
 import './VideoPlayerEmbed.scss';
@@ -127,12 +129,6 @@ export function VideoPlayerEmbed(props) {
     }
 
     const player = videojs(videoElemRef.current, {
-      html5:{
-        vhs:{
-          enableLowInitialPlaylist: false,
-          overrideNative: true
-        }
-      },
       enabledTouchControls: true,
       controls: true,
       autoplay: true,
@@ -154,7 +150,10 @@ export function VideoPlayerEmbed(props) {
       }
     });
 
-    player.httpSourceSelector();
+    player.qualityLevels();
+    player.httpSourceSelector({
+      default: 'auto'
+    });
 
     if(props.hls_file !== ''){
       player.volume(0);

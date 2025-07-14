@@ -30,6 +30,8 @@ object-assign
 
 /*! @name pkcs7 @version 1.0.4 @license Apache-2.0 */
 
+/*! @name videojs-contrib-quality-levels @version 2.2.1 @license Apache-2.0 */
+
 /*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
 
 /**
