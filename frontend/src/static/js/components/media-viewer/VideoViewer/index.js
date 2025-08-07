@@ -11,7 +11,7 @@ import {
   extractDefaultVideoResolution,
 } from './functions';
 
-import { VideoPlayer } from '../../video-player/VideoPlayer';
+import { VideoPlaye, VideoPlayerError } from '../../video-player/VideoPlayer';
 import { VideoPlayerEmbed } from '../../video-player/VideoPlayerEmbed';
 
 import '../VideoViewer.scss';
