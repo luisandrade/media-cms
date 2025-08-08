@@ -274,15 +274,19 @@ export function VideoPlayerEmbed(props) {
     };
   }, []);
 
-  return props.errorMessage === null ? (
-    <video
-      ref={videoElemRef}
-      id="content_video"
-      className="video-js vjs-mediacms native-dimensions"
-    ></video>
-  ) : (
-    <VideoPlayerError errorMessage={props.errorMessage} />
-  );
+  if (props.errorMessage) {
+    return (
+      <div className="error-container">
+        <div className="error-container-inner">
+          <span className="icon-wrap">
+            <i className="material-icons">error_outline</i>
+          </span>
+          <span className="msg-wrap">{props.errorMessage}</span>
+        </div>
+      </div>
+    );
+  }
+  
 }
 
 VideoPlayerEmbed.propTypes = {
