@@ -528,10 +528,6 @@ export default class VideoViewer extends React.PureComponent {
           ref="playerContainer"
         >
           <div className="player-container-inner" ref="playerContainerInner" style={this.props.containerStyles}>
-            {this.state.displayPlayer && null !== MediaPageStore.get('media-load-error-type') ? (
-              <VideoPlayerError errorMessage={MediaPageStore.get('media-load-error-message')} />
-            ) : null}
-      
             {this.state.displayPlayer && MediaPageStore.get('media-load-error-type') === null ? (
               this.props.inEmbed ? (
                 <div className="video-player" ref="videoPlayerWrapper" key="videoPlayerWrapper">
