@@ -333,13 +333,19 @@ export default class VideoViewer extends React.PureComponent {
   }
 
   unsetRecommendedMedia() {
-    if (null === this.recommendedMedia) {
-      return;
+    if (!this.recommendedMedia) return;
+  
+    // quita listeners solo si la instancia existe
+    if (this.playerInstance?.player?.off) {
+      this.playerInstance.player.off('fullscreenchange', this.recommendedMedia.onResize);
     }
-    this.playerInstance.player.off('fullscreenchange', this.recommendedMedia.onResize);
-    PageStore.removeListener('window_resize', this.recommendedMedia.onResize);
-    VideoViewerStore.removeListener('changed_viewer_mode', this.recommendedMedia.onResize);
-    this.recommendedMedia.destroy();
+    PageStore?.removeListener?.('window_resize', this.recommendedMedia.onResize);
+    VideoViewerStore?.removeListener?.('changed_viewer_mode', this.recommendedMedia.onResize);
+  
+    try {
+      this.recommendedMedia.destroy?.();
+    } catch {}
+    this.recommendedMedia = null;
   }
 
   onClickNext() {
