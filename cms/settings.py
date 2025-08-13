@@ -5,6 +5,9 @@ from django.utils.translation import gettext_lazy as _
 
 DEBUG = False
 
+DATA_UPLOAD_MAX_MEMORY_SIZE = None
+FILE_UPLOAD_MAX_MEMORY_SIZE = 0
+
 # PORTAL NAME, this is the portal title and
 # is also shown on several places as emails
 PORTAL_NAME = "MediaCMS"
