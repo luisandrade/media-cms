@@ -23,7 +23,7 @@ CAN_COMMENT = "advancedUser"
 PORTAL_WORKFLOW = "public"
 
 # valid values: 'light', 'dark'.
-DEFAULT_THEME = "light"
+DEFAULT_THEME = "dark"
 
 
 # These are passed on every request
