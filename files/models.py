@@ -1465,8 +1465,7 @@ def generate_smil(media_instance):
         logger.warning(f"No se encontraron encodings válidos para {media_instance.friendly_token}")
         return None
 
-    # Crear el directorio 'smil' dentro de MEDIA_ROOT si no existe
-    smil_dir = os.path.join(settings.MEDIA_ROOT, 'smil')
+    smil_dir = settings.MEDIA_ROOT 
     os.makedirs(smil_dir, exist_ok=True)
 
     # Definir el path del archivo SMIL
@@ -1478,8 +1477,9 @@ def generate_smil(media_instance):
         try:
             path = encoding.media_file.path
             relative_path = path.split('/media_files/encoded/', 1)[-1]  # Extraer la parte después de '/media_files/encoded/'
-            smil_content += f'      <video src="/encoded/{relative_path}" system-bitrate="{encoding.profile.resolution or "unknown"}"/>\n'
-        except ValueError as e:
+            resolution = int(encoding.profile.resolution) * 1000  # Convertir resolución a formato esperado
+            smil_content += f'      <video src="/encoded/{relative_path}" system-bitrate="{resolution}"/>\n'
+        except (ValueError, AttributeError) as e:
             logger.error(f"Error al procesar encoding {encoding.id}: {e}")
             continue
     smil_content += '    </switch>\n  </body>\n</smil>\n'
