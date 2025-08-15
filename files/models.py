@@ -1444,6 +1444,42 @@ class Comment(MPTTModel):
     def media_url(self):
         return self.get_absolute_url()
 
+def generate_smil(media_instance):
+    """
+    Genera un archivo SMIL con los paths de los videos MP4 listos para el media_instance.
+    """
+    mp4_encodings = Encoding.objects.filter(
+        media=media_instance,
+        profile__extension="mp4",
+        status="success",
+        chunk=False
+    )
+    if not mp4_encodings.exists():
+        return None
+
+    # Crear el directorio 'smil' dentro de MEDIA_ROOT si no existe
+    smil_dir = os.path.join(settings.MEDIA_ROOT, 'smil')
+    os.makedirs(smil_dir, exist_ok=True)
+
+    # Definir el path del archivo SMIL
+    smil_path = os.path.join(smil_dir, f"{media_instance.friendly_token}.smil")
+
+    # Construir el contenido del archivo SMIL
+    smil_content = '<?xml version="1.0" encoding="UTF-8"?>\n<smil>\n  <body>\n    <switch>\n'
+    for encoding in mp4_encodings:
+        # Ajustar la ruta para que comience desde '/encoded'
+        path = encoding.media_file.path
+        relative_path = path.split('/media_files/encoded/', 1)[-1]  # Extraer la parte después de '/media_files/encoded/'
+        smil_content += f'      <video src="/encoded/{relative_path}" system-bitrate="{encoding.profile.resolution or "unknown"}"/>\n'
+    smil_content += '    </switch>\n  </body>\n</smil>\n'
+
+    # Guardar el archivo SMIL
+    with open(smil_path, "w") as smil_file:
+        smil_file.write(smil_content)
+
+    return smil_path
+
+
 @receiver(post_save, sender=Media)
 def media_save(sender, instance, created, **kwargs):
     # media_file path is not set correctly until mode is saved
@@ -1527,11 +1563,7 @@ def media_m2m(sender, instance, **kwargs):
 
 @receiver(post_save, sender=Encoding)
 def encoding_file_save(sender, instance, created, **kwargs):
-    """Performs actions on encoding file delete
-    For example, if encoding is a chunk file, with encoding_status success,
-    perform a check if this is the final chunk file of a media, then
-    concatenate chunks, create final encoding file and delete chunks
-    """
+    """Performs actions on encoding file save."""
 
     if instance.chunk and instance.status == "success":
         # a chunk got completed
@@ -1675,6 +1707,10 @@ def encoding_file_save(sender, instance, created, **kwargs):
         if ("running" in encodings) or ("pending" in encodings):
             return
 
+    if instance.status == "success" and not instance.chunk and instance.profile.extension == "mp4":
+        # Cuando se guarda un mp4 exitoso, intenta generar el SMIL
+        generate_smil(instance.media)
+
 
 @receiver(post_delete, sender=Encoding)
 def encoding_file_delete(sender, instance, **kwargs):
@@ -1689,3 +1725,5 @@ def encoding_file_delete(sender, instance, **kwargs):
             instance.media.post_encode_actions(encoding=instance, action="delete")
     # delete local chunks, and remote chunks + media file. Only when the
     # last encoding of a media is complete
+
+
