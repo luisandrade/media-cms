@@ -1448,13 +1448,21 @@ def generate_smil(media_instance):
     """
     Genera un archivo SMIL con los paths de los videos MP4 listos para el media_instance.
     """
+    logger = logging.getLogger(__name__)
+    logger.info(f"Generando SMIL para: {media_instance.friendly_token}")
+
+    # Filtrar encodings que tienen un archivo asociado en media_file
     mp4_encodings = Encoding.objects.filter(
         media=media_instance,
         profile__extension="mp4",
         status="success",
         chunk=False
-    )
+    ).exclude(media_file="")  # Excluir encodings sin archivo asociado
+
+    logger.info(f"Encodings encontrados para {media_instance.friendly_token}: {mp4_encodings.count()}")
+
     if not mp4_encodings.exists():
+        logger.warning(f"No se encontraron encodings válidos para {media_instance.friendly_token}")
         return None
 
     # Crear el directorio 'smil' dentro de MEDIA_ROOT si no existe
@@ -1467,16 +1475,20 @@ def generate_smil(media_instance):
     # Construir el contenido del archivo SMIL
     smil_content = '<?xml version="1.0" encoding="UTF-8"?>\n<smil>\n  <body>\n    <switch>\n'
     for encoding in mp4_encodings:
-        # Ajustar la ruta para que comience desde '/encoded'
-        path = encoding.media_file.path
-        relative_path = path.split('/media_files/encoded/', 1)[-1]  # Extraer la parte después de '/media_files/encoded/'
-        smil_content += f'      <video src="/encoded/{relative_path}" system-bitrate="{encoding.profile.resolution or "unknown"}"/>\n'
+        try:
+            path = encoding.media_file.path
+            relative_path = path.split('/media_files/encoded/', 1)[-1]  # Extraer la parte después de '/media_files/encoded/'
+            smil_content += f'      <video src="/encoded/{relative_path}" system-bitrate="{encoding.profile.resolution or "unknown"}"/>\n'
+        except ValueError as e:
+            logger.error(f"Error al procesar encoding {encoding.id}: {e}")
+            continue
     smil_content += '    </switch>\n  </body>\n</smil>\n'
 
     # Guardar el archivo SMIL
     with open(smil_path, "w") as smil_file:
         smil_file.write(smil_content)
 
+    logger.info(f"Archivo SMIL generado en: {smil_path}")
     return smil_path
 
 
