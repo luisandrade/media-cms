@@ -30,9 +30,12 @@ function filterVideoEncoding(encoding_status) {
       MediaPageStore.set('media-load-error-type', 'encodingFailed');
       MediaPageStore.set('media-load-error-message', 'Media encoding failed');
       break;
+    case 'waiting_smil':
+      MediaPageStore.set('media-load-error-type', 'encodingWaitingSMIL');
+      MediaPageStore.set('media-load-error-message', 'Media encoding is waiting for SMIL');
+      break;
   }
 }
-
 export default class VideoViewer extends React.PureComponent {
   constructor(props) {
     super(props);
@@ -131,6 +134,7 @@ export default class VideoViewer extends React.PureComponent {
         case 'encodingRunning':
         case 'encodingPending':
         case 'encodingFailed':
+        case 'encodingWaitingSMIL':
           break;
         default:
           console.warn('VIDEO DEBUG:', "Video files don't exist");
