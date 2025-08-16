@@ -34,7 +34,7 @@ translation_strings = {
     "Media was edited": "El medio fue editado",
     "Members": "Miembros",
     "My media": "Mis medios",
-    "My playlists": "Mis listas de reproducción",
+    "My playlists": "Playlists",
     "No": "No",
     "No comment yet": "Aún no hay comentarios",
     "No comments yet": "Aún no hay comentarios",

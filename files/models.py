@@ -1588,6 +1588,9 @@ def encoding_file_save(sender, instance, created, **kwargs):
         instance.media.encoding_status = "waiting_smil"
         instance.media.save(update_fields=["encoding_status"])
 
+        # Intentar generar el SMIL
+        generate_smil(instance.media)
+
         # a chunk got completed
         # check if all chunks are OK
         # then concatenate to new Encoding - and remove chunks
@@ -1727,10 +1730,6 @@ def encoding_file_save(sender, instance, created, **kwargs):
         encodings = set([encoding.status for encoding in Encoding.objects.filter(media=instance.media)])
         if ("running" in encodings) or ("pending" in encodings):
             return
-            
-    if instance.status == "success" and not instance.chunk and instance.profile.extension == "mp4":
-    # Cuando se guarda un mp4 exitoso, intenta generar el SMIL
-    generate_smil(instance.media)
 
 
 @receiver(post_delete, sender=Encoding)
