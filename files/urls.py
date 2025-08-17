@@ -10,6 +10,7 @@ urlpatterns = [
     path("i18n/", include("django.conf.urls.i18n")),
     re_path(r"^$", views.index),
     re_path(r"^about", views.about, name="about"),
+    re_path(r"^stats", views.stats, name="stats"),
     re_path(r"^setlanguage", views.setlanguage, name="setlanguage"),
     re_path(r"^add_subtitle", views.add_subtitle, name="add_subtitle"),
     re_path(r"^edit_subtitle", views.edit_subtitle, name="edit_subtitle"),

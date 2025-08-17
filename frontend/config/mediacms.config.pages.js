@@ -189,6 +189,13 @@ const STATIC_PAGES = {
     renderer: templates.renderBase(),
     snippet: templates.static.termsPage(),
   },
+  stats: {
+    buildExclude: true,
+    id: 'stats',
+    title: 'Stats',
+    renderer: templates.renderBase(),
+    snippet: templates.static.termsPage(),
+  },
 };
 
 const DEV_ONLY_STATIC_PAGES = {

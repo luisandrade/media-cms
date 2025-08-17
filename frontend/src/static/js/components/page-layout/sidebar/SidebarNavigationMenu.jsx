@@ -12,8 +12,6 @@ export function SidebarNavigationMenu() {
   const links = useContext(LinksContext);
   const sidebar = useContext(SidebarContext);
 
-  console.log("links",links);
-
   const currentUrl = urlParse(window.location.href);
   const currentHostPath = (currentUrl.host + currentUrl.pathname).replace(/\/+$/, '');
 
@@ -125,6 +123,13 @@ export function SidebarNavigationMenu() {
         className: 'nav-item-members',
       });
     }
+
+      items.push({
+        link: './stats.html',
+        icon: 'people',
+        text: 'Stats',
+        className: 'nav-item-stats',
+      });
     
     const extraItems = PageStore.get('config-contents').sidebar.mainMenuExtra.items;
 

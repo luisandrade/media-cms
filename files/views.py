@@ -85,6 +85,11 @@ def about(request):
     context = {}
     return render(request, "cms/about.html", context)
 
+def stats(request):
+    """About view"""
+
+    context = {}
+    return render(request, "cms/stats.html", context)
 
 def setlanguage(request):
     """Set Language view"""
