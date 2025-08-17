@@ -96,12 +96,11 @@ export function SidebarNavigationMenu() {
 
       items.push({
         link: './ads.html',
-        icon: 'people',
+        icon: 'tag',
         text: 'Ads tag',
         className: 'nav-item-adstag',
       });
     
-
     if (
       !sidebar.hideCategoriesLink &&
       PageStore.get('config-enabled').taxonomies.categories &&
@@ -126,7 +125,7 @@ export function SidebarNavigationMenu() {
 
       items.push({
         link: './stats.html',
-        icon: 'people',
+        icon: 'leaderboard',
         text: 'Stats',
         className: 'nav-item-stats',
       });
