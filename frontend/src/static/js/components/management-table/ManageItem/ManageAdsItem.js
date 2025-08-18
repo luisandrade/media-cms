@@ -29,7 +29,7 @@ export function ManageAdsItem(props) {
         <a href={props.url} target="_blank" rel="noopener noreferrer">Ver anuncio</a>
       </div>
       <div className="mi-actions">
-        <button onClick={() => props.onProceedRemoval(props.id)} className="mi-delete-button">
+        <button onClick={() => props.onProceedRemoval(props.id)} className="mi-delete-button border-transparent text-red-500">
           Eliminar
         </button>
       </div>

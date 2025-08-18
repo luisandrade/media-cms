@@ -21,13 +21,12 @@
             <div class="tabs-content">
                 <div id="tab-ads" class="tab-pane active">
                     <div class="items-list-hor media-list-wrapper">
-                        <form id="ads-form" class="flex flex-row column-gap-30 media-list-wrapper" method="POST">
+                        <form id="ads-form" class="flex sm:flex-row flex-col column-gap-30 media-list-wrapper" method="POST">
                             {% csrf_token %}
                             <div class="form-group">
                                 <label for="ads-name">Nombre del anuncio</label>
                                 <input type="text" name="name" id="ads-name" class="form-control ads-input" required>
                             </div>
-            
                             <div class="form-group">
                                 <label for="ads-url">URL del anuncio</label>
                                 <input type="url" name="url" id="ads-url" class="form-control ads-input" required>
