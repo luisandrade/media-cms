@@ -216,26 +216,26 @@ export function SidebarNavigationMenu() {
   function CustomMenuSection() {
     const items = [];
 
-    items.push({
-      link: '/about',
-      icon: 'contact_support',
-      text: translateString("About"),
-      className: 'nav-item-about',
-    });
+    // items.push({
+    //   link: '/about',
+    //   icon: 'contact_support',
+    //   text: translateString("About"),
+    //   className: 'nav-item-about',
+    // });
 
-      items.push({
-      link: '/tos',
-      icon: 'description',
-      text: translateString("Terms"),
-      className: 'nav-item-terms',
-    });
+    //   items.push({
+    //   link: '/tos',
+    //   icon: 'description',
+    //   text: translateString("Terms"),
+    //   className: 'nav-item-terms',
+    // });
 
-    items.push({
-      link: '/contact',
-      icon: 'alternate_email',
-      text: translateString("Contact"),
-      className: 'nav-item-contact',
-    });
+    // items.push({
+    //   link: '/contact',
+    //   icon: 'alternate_email',
+    //   text: translateString("Contact"),
+    //   className: 'nav-item-contact',
+    // });
 
     items.push({
       link: '/setlanguage',
