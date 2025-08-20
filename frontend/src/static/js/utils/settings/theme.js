@@ -43,8 +43,8 @@ export function init(theme, logo) {
         THEME.logo.lightMode.img = logo.lightMode.img.trim();
       }
 
-      if ('string' === typeof logo.lightMode.svg) {
-        THEME.logo.lightMode.svg = logo.lightMode.svg.trim();
+      if ('string' === typeof logo.lightMode.png) {
+        THEME.logo.lightMode.png = logo.lightMode.png.trim();
       }
     }
 
@@ -53,8 +53,8 @@ export function init(theme, logo) {
         THEME.logo.darkMode.img = logo.darkMode.img.trim();
       }
 
-      if ('string' === typeof logo.darkMode.svg) {
-        THEME.logo.darkMode.svg = logo.darkMode.svg.trim();
+      if ('string' === typeof logo.darkMode.png) {
+        THEME.logo.darkMode.png = logo.darkMode.png.trim();
       }
     }
   }

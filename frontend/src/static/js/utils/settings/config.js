@@ -20,8 +20,6 @@ export function config(glbl) {
     return DATA;
   }
 
-  console.log("glbl",glbl);
-
   pages.init({ ...glbl.site.pages, ...glbl.site.userPages });
   optionsPages.init(glbl.pages.home, glbl.pages.search, glbl.pages.media, glbl.pages.profile, pages.settings());
 
