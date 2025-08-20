@@ -29,7 +29,7 @@ function sidebarContents(contents) {
     },
     belowNavMenu: '',
     belowThemeSwitcher: '',
-    footer: '',
+    footer: 'Powered by MediaVMS',
   };
 
   if (undefined !== contents) {
