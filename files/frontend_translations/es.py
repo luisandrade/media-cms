@@ -40,7 +40,7 @@ translation_strings = {
     "No comments yet": "Aún no hay comentarios",
     "No results for": "No hay resultados para",
     "PLAYLISTS": "LISTAS DE REPRODUCCIÓN",
-    "Playlists": "Listas de reproducción",
+    "Playlists": "Playlists",
     "Powered by": "Desarrollado por",
     "Published on": "Publicado en",
     "Recommended": "Recomendado",
