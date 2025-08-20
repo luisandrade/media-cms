@@ -952,9 +952,9 @@
   .video-js.vjs-mediacms video[poster] {
     object-fit: fill; }
   .video-js.vjs-mediacms .vjs-progress-control .vjs-progress-holder .vjs-play-progress {
-    background-color: #009933; }
+    background-color: #ec0000; }
     .video-js.vjs-mediacms .vjs-progress-control .vjs-progress-holder .vjs-play-progress:before {
-      color: #009933; }
+      color: #ec0000; }
   .video-js.vjs-mediacms .vjs-poster {
     background-size: cover; }
   .video-js.vjs-mediacms.vjs-changing-resolution .vjs-poster {
