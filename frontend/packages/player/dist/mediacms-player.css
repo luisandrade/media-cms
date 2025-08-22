@@ -1055,7 +1055,7 @@
     opacity: 0;
     visibility: hidden; }
   .video-js.vjs-mediacms:hover .vjs-big-play-button {
-    background-color: #009933; }
+    background-color: #ec0000; }
 
 /* @-webkit-keyframes vjs-poster-reveal {
     0%{
