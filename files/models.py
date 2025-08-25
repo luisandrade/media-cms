@@ -235,15 +235,16 @@ class Media(models.Model):
 
     state = models.CharField(
         max_length=20,
+        verbose_name="Estado",
         choices=MEDIA_STATES,
         default=helpers.get_portal_workflow(),
         db_index=True,
-        help_text="state of Media",
+        help_text="Estado del medio",
     )
 
     tags = models.ManyToManyField("Tag", blank=True, verbose_name="Etiquetas", help_text="Seleccione una o más de las etiquetas existentes")
 
-    ad_tag = models.ForeignKey("Ads", null=True, blank=True, on_delete=models.SET_NULL, related_name='media_items')
+    ad_tag = models.ForeignKey("Ads", null=True, blank=True, verbose_name="Agregar Ads", on_delete=models.SET_NULL, related_name='media_items')
 
     title = models.CharField(max_length=100, help_text="Título del medio", verbose_name="Título", blank=True, db_index=True)
 
@@ -257,7 +258,7 @@ class Media(models.Model):
         help_text="media extracted small thumbnail, shown on listings",
     )
 
-    thumbnail_time = models.FloatField(blank=True, null=True, help_text="Time on video that a thumbnail will be taken")
+    thumbnail_time = models.FloatField(blank=True, null=True, verbose_name="Tiempo de la miniatura", help_text="Momento del video en el que se tomará la miniatura.")
 
     uid = models.UUIDField(unique=True, default=uuid.uuid4, help_text="A unique identifier for the Media")
 
