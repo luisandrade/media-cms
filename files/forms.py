@@ -9,7 +9,7 @@ class MultipleSelect(forms.CheckboxSelectMultiple):
 
 
 class MediaForm(forms.ModelForm):
-    new_tags = forms.CharField(label="Tags", help_text="a comma separated list of new tags.", required=False)
+    new_tags = forms.CharField(label="Tags", help_text="Una lista de nuevas etiquetas separadas por comas.", required=False)
 
     class Meta:
         model = Media

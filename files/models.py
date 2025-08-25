@@ -119,7 +119,7 @@ def category_thumb_path(instance, filename):
 class Media(models.Model):
     """The most important model for MediaCMS"""
 
-    add_date = models.DateTimeField("Date produced", blank=True, null=True, db_index=True)
+    add_date = models.DateTimeField("Fecha de producción", blank=True, null=True, db_index=True)
 
     allow_download = models.BooleanField(default=True, help_text="Si se muestra la opción para descargar el contenido.")
 
