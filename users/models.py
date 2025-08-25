@@ -26,7 +26,7 @@ class User(AbstractUser):
     description = models.TextField("Acerca de mí", blank=True)
 
     name = models.CharField("Nombre completo", max_length=250, db_index=True)
-    date_added = models.DateTimeField("Fecha de creación", vdefault=timezone.now, db_index=True)
+    date_added = models.DateTimeField("Fecha de creación", default=timezone.now, db_index=True)
     is_featured = models.BooleanField("Es Destacado", default=False, db_index=True)
 
     title = models.CharField("Título", max_length=250, blank=True)
