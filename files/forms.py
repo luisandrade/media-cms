@@ -71,8 +71,8 @@ class SubtitleForm(forms.ModelForm):
     def __init__(self, media_item, *args, **kwargs):
         super(SubtitleForm, self).__init__(*args, **kwargs)
         self.instance.media = media_item
-        self.fields["subtitle_file"].help_text = "SubRip (.srt) and WebVTT (.vtt) are supported file formats."
-        self.fields["subtitle_file"].label = "Subtitle or Closed Caption File"
+        self.fields["subtitle_file"].help_text = "SubRip (.srt) y WebVTT (.vtt) formatos de archivo compatibles."
+        self.fields["subtitle_file"].label = "Archivo de subtítulos o de texto alternativo"
 
     def save(self, *args, **kwargs):
         self.instance.user = self.instance.media.user

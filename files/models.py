@@ -1225,7 +1225,7 @@ class Language(models.Model):
 class Subtitle(models.Model):
     """Subtitles model"""
 
-    language = models.ForeignKey(Language, on_delete=models.CASCADE)
+    language = models.ForeignKey(Language, verbose_name="Idioma", on_delete=models.CASCADE)
 
     media = models.ForeignKey(Media, on_delete=models.CASCADE, related_name="subtitles")
 
