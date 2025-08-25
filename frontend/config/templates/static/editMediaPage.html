@@ -9,7 +9,7 @@
 
           <form enctype="multipart/form-data" action="" method="post" class="post-form">
             <div id="div_id_title" class="control-group">
-              <label for="id_title" class="control-label"> Title </label>
+              <label for="id_title" class="control-label"> Titulo </label>
               <div class="controls">
                 <input
                   type="text"
@@ -23,28 +23,28 @@
               </div>
             </div>
             <div id="div_id_category" class="control-group">
-              <label for="id_category" class="control-label"> Category </label>
+              <label for="id_category" class="control-label"> Categoría </label>
               <div class="controls">
                 <select name="category" class="selectmultiple" id="id_category" multiple="">
-                  <option value="1">Art</option>
-                  <option value="2">Documentary</option>
+                  <option value="1">Arte</option>
+                  <option value="2">Documental</option>
                   <option value="3">Experimental</option>
-                  <option value="4">Film</option>
-                  <option value="5">Music</option>
+                  <option value="4">Filme</option>
+                  <option value="5">Música</option>
                   <option value="6">TV</option>
                 </select>
-                <p id="hint_id_category" class="help-block">Media can be part of one or more categories</p>
+                <p id="hint_id_category" class="help-block">El contenido multimedia puede formar parte de una o más categorías</p>
               </div>
             </div>
             <div id="div_id_new_tags" class="control-group">
               <label for="id_new_tags" class="control-label"> Tags </label>
               <div class="controls">
                 <input type="text" name="new_tags" class="textinput textInput" id="id_new_tags" />
-                <p id="hint_id_new_tags" class="help-block">a comma separated list of new tags.</p>
+                <p id="hint_id_new_tags" class="help-block">Una lista de etiquetas nuevas separadas por comas.</p>
               </div>
             </div>
             <div id="div_id_add_date" class="control-group">
-              <label for="id_add_date" class="control-label"> Date produced </label>
+              <label for="id_add_date" class="control-label"> Fecha de producción </label>
               <div class="controls">
                 <input type="text" name="add_date" value="2021-01-01 00:00:01" class="datetimeinput" id="id_add_date" />
               </div>
@@ -59,11 +59,11 @@
                   class="clearablefileinput"
                   id="id_uploaded_poster"
                 />
-                <p id="hint_id_uploaded_poster" class="help-block">This image will characterize the media</p>
+                <p id="hint_id_uploaded_poster" class="help-block">Esta imagen caracterizará el contenido multimedia</p>
               </div>
             </div>
             <div id="div_id_description" class="control-group">
-              <label for="id_description" class="control-label"> Description </label>
+              <label for="id_description" class="control-label"> Descripción </label>
               <div class="controls">
                 <textarea name="description" cols="40" rows="10" class="textarea" id="id_description"></textarea>
               </div>
@@ -91,9 +91,8 @@
                     id="id_enable_comments"
                     checked=""
                   />
-                  Enable comments
                 </label>
-                <p id="hint_id_enable_comments" class="help-block">Whether comments will be allowed for this media</p>
+                <p id="hint_id_enable_comments" class="help-block">Si se permitirán comentarios para este medio</p>
               </div>
             </div>
             <div id="div_id_thumbnail_time" class="control-group">
@@ -107,7 +106,7 @@
                   class="numberinput"
                   id="id_thumbnail_time"
                 />
-                <p id="hint_id_thumbnail_time" class="help-block">Time on video that a thumbnail will be taken</p>
+                <p id="hint_id_thumbnail_time" class="help-block">Momento del video en el que se tomará la miniatura.</p>
               </div>
             </div>
             <div id="div_id_allow_download" class="control-group">
@@ -122,11 +121,11 @@
                   />
                   Allow download
                 </label>
-                <p id="hint_id_allow_download" class="help-block">Whether option to download media is shown</p>
+                <p id="hint_id_allow_download" class="help-block">Si se mostrará la opción de descargar el medio</p>
               </div>
             </div>
 
-            <button class="primaryAction" type="submit">Update Media</button>
+            <button class="primaryAction" type="submit">Actualizar medio</button>
           </form>
         </div>
       </div>
