@@ -121,16 +121,16 @@ class Media(models.Model):
 
     add_date = models.DateTimeField("Date produced", blank=True, null=True, db_index=True)
 
-    allow_download = models.BooleanField(default=True, help_text="Whether option to download media is shown")
+    allow_download = models.BooleanField(default=True, help_text="Si se muestra la opción para descargar el contenido.")
 
-    category = models.ManyToManyField("Category", blank=True, help_text="Media can be part of one or more categories")
+    category = models.ManyToManyField("Category", blank=True, help_text="El contenido puede formar parte de una o más categorías.")
 
     channel = models.ForeignKey(
         "users.Channel",
         on_delete=models.CASCADE,
         blank=True,
         null=True,
-        help_text="Media can exist in one or no Channels",
+        help_text="El contenido puede existir en uno o ningún canal",
     )
 
     description = models.TextField(blank=True)
@@ -141,35 +141,35 @@ class Media(models.Model):
 
     edit_date = models.DateTimeField(auto_now=True)
 
-    enable_comments = models.BooleanField(default=True, help_text="Whether comments will be allowed for this media")
+    enable_comments = models.BooleanField(default=True, help_text="Si se permiten comentarios para este contenido")
 
     encoding_status = models.CharField(max_length=20, choices=MEDIA_ENCODING_STATUS, default="pending", db_index=True)
 
     featured = models.BooleanField(
         default=False,
         db_index=True,
-        help_text="Whether media is globally featured by a MediaCMS editor",
+        help_text="Si el contenido está destacado globalmente por un editor de MediaCMS",
     )
 
-    friendly_token = models.CharField(blank=True, max_length=12, db_index=True, help_text="Identifier for the Media")
+    friendly_token = models.CharField(blank=True, max_length=12, db_index=True, help_text="Identificador del contenido")
 
-    hls_file = models.CharField(max_length=1000, blank=True, help_text="Path to HLS file for videos")
+    hls_file = models.CharField(max_length=1000, blank=True, help_text="Ruta al archivo HLS para videos")
 
     stream = models.CharField(max_length=255, help_text="stream path", blank=True, db_index=True)
 
     is_reviewed = models.BooleanField(
         default=settings.MEDIA_IS_REVIEWED,
         db_index=True,
-        help_text="Whether media is reviewed, so it can appear on public listings",
+        help_text="Si el contenido está revisado, puede aparecer en listados públicos",
     )
 
     license = models.ForeignKey("License", on_delete=models.CASCADE, db_index=True, blank=True, null=True)
 
     likes = models.IntegerField(db_index=True, default=1)
 
-    listable = models.BooleanField(default=False, help_text="Whether it will appear on listings")
+    listable = models.BooleanField(default=False, help_text="Si aparecerá en listados")
 
-    md5sum = models.CharField(max_length=50, blank=True, null=True, help_text="Not exposed, used internally")
+    md5sum = models.CharField(max_length=50, blank=True, null=True, help_text="No expuesto, utilizado internamente")
 
     media_file = models.FileField(
         "media file",
