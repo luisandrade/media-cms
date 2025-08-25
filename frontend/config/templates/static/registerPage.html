@@ -5,36 +5,36 @@
     <div class="page-main-inner">
       <div class="user-action-form-wrap">
         <div class="user-action-form-inner">
-          <h1>Sign Up</h1>
-          <p>Already have an account? Then please <a href="./signin.html">sign in</a>.</p>
+          <h1>Registrarse</h1>
+          <p>¿Ya tienes una cuenta? Entonces por favor <a href="./signin.html">inicia sesión</a>.</p>
           <form class="signup" id="signup_form" method="post" action="#">
             <input type="hidden" name="csrfmiddlewaretoken" value="" />
             <p>
-              <label for="id_email">E-mail:</label>
-              <input type="email" name="email" id="id_email" required="" placeholder="E-mail address" />
+              <label for="id_email">Correo electrónico:</label>
+              <input type="email" name="email" id="id_email" required="" placeholder="Dirección de correo" />
             </p>
             <p>
-              <label for="id_username">Username:</label>
+              <label for="id_username">Nombre de usuario:</label>
               <input
                 type="text"
                 name="username"
                 id="id_username"
                 autofocus="autofocus"
-                placeholder="Username"
+                placeholder="Nombre de usuario"
                 minlength="4"
                 maxlength="150"
                 required=""
               />
             </p>
             <p>
-              <label for="id_name">Name:</label>
+              <label for="id_name">Nombre completo:</label>
               <input type="text" name="name" id="id_name" maxlength="100" required="" />
             </p>
             <p>
-              <label for="id_password1">Password:</label>
-              <input type="password" name="password1" id="id_password1" required="" placeholder="Password" />
+              <label for="id_password1">Contraseña:</label>
+              <input type="password" name="password1" id="id_password1" required="" placeholder="Contraseña" />
             </p>
-            <button type="submit">Sign Up »</button>
+            <button type="submit">Registrarse »</button>
           </form>
         </div>
       </div>
