@@ -36,7 +36,7 @@ class User(AbstractUser):
         "Notificaciones por comentarios",
         default=True,
     )
-    location = models.CharField("Ubicación", verbose_name="Ubicación", max_length=250, blank=True)
+    location = models.CharField("Ubicación", max_length=250, blank=True)
     is_editor = models.BooleanField("MediaCMS Editor", default=False, db_index=True)
     is_manager = models.BooleanField("MediaCMS Manager", default=False, db_index=True)
     allow_contact = models.BooleanField("Permitir contacto", default=False)
