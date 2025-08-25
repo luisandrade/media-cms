@@ -10,17 +10,16 @@
 	{% if action == 'delete' %}
 
 	<div class="user-action-form-wrap">
-		<h1>Confirm deletion</h1>
+		<h1>Confirmar eliminación</h1>
 
 		<div class="user-action-form-inner">
-			are you sure you want to delete the subtitle?
+			¿Estás seguro de que deseas eliminar el subtítulo?
 
 			<form action="{{subtitle.url}}&action=delete&confirm=true" method="post" class="post-form">
 				{% csrf_token %}
-				<button class="secondaryAction" type="submit">DELETE SUBTITLE</button>
+				<button class="secondaryAction" type="submit">ELIMINAR SUBTÍTULO</button>
 			</form>
 		</div>
-
 	</div>
 
 
@@ -34,9 +33,9 @@
 			<form action="" method="post" class="post-form">
 				{% csrf_token %}
 				{{ form|crispy }}
-				<button class="primaryAction" style="margin-right: 10px" type="submit">SAVE</button>
-				<button class="primaryAction" style="margin-right: 10px" type="button" onclick="window.location.href='{{subtitle.url}}&action=download';">DOWNLOAD</button>
-				<button class="primaryAction" type="button" onclick="window.location.href='{{subtitle.url}}&action=delete';">DELETE</button>
+				<button class="primaryAction" style="margin-right: 10px" type="submit">GUARDAR</button>
+				<button class="primaryAction" style="margin-right: 10px" type="button" onclick="window.location.href='{{subtitle.url}}&action=download';">DESCARGAR</button>
+				<button class="primaryAction" type="button" onclick="window.location.href='{{subtitle.url}}&action=delete';">ELIMINAR</button>
 
 			</form>
 		</div>
