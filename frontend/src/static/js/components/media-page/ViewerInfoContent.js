@@ -250,16 +250,16 @@ export default function ViewerInfoContent(props) {
               <PopupContent contentRef={popupContentRef}>
                 <PopupMain>
                   <div className="popup-message">
-                    <span className="popup-message-title">Media removal</span>
-                    <span className="popup-message-main">You're willing to remove media permanently?</span>
+                    <span className="popup-message-title">Eliminar contenido</span>
+                    <span className="popup-message-main">¿Deseas eliminar este contenido de forma permanente?</span>
                   </div>
                   <hr />
                   <span className="popup-message-bottom">
                     <button className="button-link cancel-comment-removal" onClick={cancelMediaRemoval}>
-                      CANCEL
+                      CANCELAR
                     </button>
                     <button className="button-link proceed-comment-removal" onClick={proceedMediaRemoval}>
-                      PROCEED
+                      CONFIRMAR
                     </button>
                   </span>
                 </PopupMain>
