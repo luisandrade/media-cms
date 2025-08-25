@@ -123,7 +123,7 @@ class Media(models.Model):
 
     allow_download = models.BooleanField(default=True, help_text="Si se muestra la opción para descargar el contenido.")
 
-    category = models.ManyToManyField("Category", blank=True, help_text="El contenido puede formar parte de una o más categorías.")
+    category = models.ManyToManyField("Category", blank=True, verbose_name="Categoría", help_text="El contenido puede formar parte de una o más categorías.")
 
     channel = models.ForeignKey(
         "users.Channel",
@@ -133,11 +133,11 @@ class Media(models.Model):
         help_text="El contenido puede existir en uno o ningún canal",
     )
 
-    description = models.TextField(blank=True)
+    description = models.TextField(blank=True, verbose_name="Descripción")
 
-    dislikes = models.IntegerField(default=0)
+    dislikes = models.IntegerField(default=0, verbose_name="Dislikes")
 
-    duration = models.IntegerField(default=0)
+    duration = models.IntegerField(default=0, verbose_name="Duración")
 
     edit_date = models.DateTimeField(auto_now=True)
 
@@ -241,11 +241,11 @@ class Media(models.Model):
         help_text="state of Media",
     )
 
-    tags = models.ManyToManyField("Tag", blank=True, help_text="select one or more out of the existing tags")
+    tags = models.ManyToManyField("Tag", blank=True, verbose_name="Etiquetas", help_text="Seleccione una o más de las etiquetas existentes")
 
     ad_tag = models.ForeignKey("Ads", null=True, blank=True, on_delete=models.SET_NULL, related_name='media_items')
 
-    title = models.CharField(max_length=100, help_text="media title", blank=True, db_index=True)
+    title = models.CharField(max_length=100, help_text="Título del medio", verbose_name="Título", blank=True, db_index=True)
 
     thumbnail = ProcessedImageField(
         upload_to=original_thumbnail_file_path,
@@ -272,8 +272,8 @@ class Media(models.Model):
     )
 
     uploaded_poster = ProcessedImageField(
-        verbose_name="Upload image",
-        help_text="This image will characterize the media",
+        verbose_name="Subir imagen",
+        help_text="Esta imagen caracterizará el contenido multimedia",
         upload_to=original_thumbnail_file_path,
         processors=[ResizeToFit(width=720, height=None)],
         format="JPEG",
