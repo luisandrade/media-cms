@@ -23,23 +23,23 @@ class User(AbstractUser):
         options={"quality": 75},
         blank=True,
     )
-    description = models.TextField("About me", blank=True)
+    description = models.TextField("About me", verbose_name="Acerca de mí", blank=True)
 
-    name = models.CharField("full name", max_length=250, db_index=True)
-    date_added = models.DateTimeField("date added", default=timezone.now, db_index=True)
-    is_featured = models.BooleanField("Is featured", default=False, db_index=True)
+    name = models.CharField("full name", verbose_name="Nombre completo", max_length=250, db_index=True)
+    date_added = models.DateTimeField("date added", verbose_name="Fecha de creación", default=timezone.now, db_index=True)
+    is_featured = models.BooleanField("Is featured", verbose_name="Destacado", default=False, db_index=True)
 
     title = models.CharField("Title", max_length=250, blank=True)
     advancedUser = models.BooleanField("advanced user", default=False, db_index=True)
     media_count = models.IntegerField(default=0)  # save number of videos
     notification_on_comments = models.BooleanField(
         "Whether you will receive email notifications for comments added to your content",
-        default=True,
+        default=True, verbose_name="Notificaciones por comentarios",
     )
-    location = models.CharField("Location", max_length=250, blank=True)
-    is_editor = models.BooleanField("MediaCMS Editor", default=False, db_index=True)
-    is_manager = models.BooleanField("MediaCMS Manager", default=False, db_index=True)
-    allow_contact = models.BooleanField("Whether allow contact will be shown on profile page", default=False)
+    location = models.CharField("Location", verbose_name="Ubicación", max_length=250, blank=True)
+    is_editor = models.BooleanField("MediaCMS Editor", verbose_name="Editor de MediaCMS", default=False, db_index=True)
+    is_manager = models.BooleanField("MediaCMS Manager", verbose_name="Gerente de MediaCMS", default=False, db_index=True)
+    allow_contact = models.BooleanField("Whether allow contact will be shown on profile page", verbose_name="Permitir contacto", default=False)
 
     class Meta:
         ordering = ["-date_added", "name"]
