@@ -538,15 +538,15 @@ export default function ProfilePagesHeader(props) {
           <span className="delete-profile-wrap">
             <PopupTrigger contentRef={popupContentRef}>
               <button className="delete-profile" title="">
-                REMOVE PROFILE
+                ELIMINAR PERFIL
               </button>
             </PopupTrigger>
 
             <PopupContent contentRef={popupContentRef}>
               <PopupMain>
                 <div className="popup-message">
-                  <span className="popup-message-title">Profile removal</span>
-                  <span className="popup-message-main">You're willing to remove profile permanently?</span>
+                  <span className="popup-message-title">Eliminación de perfil</span>
+                  <span className="popup-message-main">¿Está seguro de que desea eliminar el perfil de forma permanente?</span>
                 </div>
                 <hr />
                 <span className="popup-message-bottom">
@@ -554,7 +554,7 @@ export default function ProfilePagesHeader(props) {
                     CANCEL
                   </button>
                   <button className="button-link proceed-profile-removal" onClick={proceedMediaRemoval}>
-                    PROCEED
+                    CONTINUAR
                   </button>
                 </span>
               </PopupMain>
