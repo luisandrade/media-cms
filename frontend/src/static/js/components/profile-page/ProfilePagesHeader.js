@@ -382,7 +382,7 @@ function AddBannerButton(props) {
   }
   return (
     <a href={link} className="edit-channel" title="Add banner">
-      ADD BANNER
+      AGREGAR BANNER
     </a>
   );
 }
@@ -395,7 +395,7 @@ function EditBannerButton(props) {
   }
   return (
     <a href={link} className="edit-channel" title="Edit banner">
-      EDIT BANNER
+      EDITAR BANNER
     </a>
   );
 }
@@ -409,7 +409,7 @@ function EditProfileButton(props) {
 
   return (
     <a href={link} className="edit-profile" title="Edit profile">
-      EDIT PROFILE
+      EDITAR PERFIL
     </a>
   );
 }
