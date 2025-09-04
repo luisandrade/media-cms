@@ -952,9 +952,9 @@
   .video-js.vjs-mediacms video[poster] {
     object-fit: fill; }
   .video-js.vjs-mediacms .vjs-progress-control .vjs-progress-holder .vjs-play-progress {
-    background-color: #ec0000; }
+    background-color: rgb(0 36 100 / 1); }
     .video-js.vjs-mediacms .vjs-progress-control .vjs-progress-holder .vjs-play-progress:before {
-      color: #ec0000; }
+      color: rgb(0 36 100 / 1); }
   .video-js.vjs-mediacms .vjs-poster {
     background-size: cover; }
   .video-js.vjs-mediacms.vjs-changing-resolution .vjs-poster {
@@ -1055,7 +1055,7 @@
     opacity: 0;
     visibility: hidden; }
   .video-js.vjs-mediacms:hover .vjs-big-play-button {
-    background-color: #ec0000; }
+    background-color: rgb(0 36 100 / 1); }
 
 /* @-webkit-keyframes vjs-poster-reveal {
     0%{
