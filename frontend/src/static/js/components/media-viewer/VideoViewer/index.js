@@ -20,19 +20,19 @@ function filterVideoEncoding(encoding_status) {
   switch (encoding_status) {
     case 'running':
       MediaPageStore.set('media-load-error-type', 'encodingRunning');
-      MediaPageStore.set('media-load-error-message', 'Media encoding is currently running. Try again in few minutes.');
+      MediaPageStore.set('media-load-error-message', 'Media encoding está actualmente en ejecución. Inténtalo de nuevo en unos minutos.');
       break;
     case 'pending':
       MediaPageStore.set('media-load-error-type', 'encodingPending');
-      MediaPageStore.set('media-load-error-message', 'Media encoding is pending');
+      MediaPageStore.set('media-load-error-message', 'Media encoding está pendiente');
       break;
     case 'fail':
       MediaPageStore.set('media-load-error-type', 'encodingFailed');
-      MediaPageStore.set('media-load-error-message', 'Media encoding failed');
+      MediaPageStore.set('media-load-error-message', 'Media encoding ha fallado');
       break;
     case 'waiting_smil':
       MediaPageStore.set('media-load-error-type', 'encodingWaitingSMIL');
-      MediaPageStore.set('media-load-error-message', 'Media encoding is waiting for SMIL');
+      MediaPageStore.set('media-load-error-message', 'Media encoding está esperando SMIL');
       break;
   }
 }
