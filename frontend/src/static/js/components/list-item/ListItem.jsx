@@ -86,12 +86,12 @@ export function listItemProps(props, item, index) {
 
   const thumbnail =
   item.stream && item.stream !== '' && item.stream !== null
-    ? 'http://localhost/media/userlogos/live_poster.jpg'
+    ? 'https://rodeovms.hnode.cl/media/images/live_poster.jpg'
     : item.thumbnail_url || '';
   
     const previewThumbnail =
   item.stream && item.stream !== '' && item.stream !== null
-    ? 'http://localhost/media/userlogos/live_poster.jpg'
+    ? 'https://rodeovms.hnode.cl/media/images/live_poster.jpg'
     : item.preview_url || '';
 
   let type, title, date, description, meta_description;
