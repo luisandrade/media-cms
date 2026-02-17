@@ -9,6 +9,35 @@ import { translateString } from '../../utils/helpers/';
 function downloadOptionsList() {
   const media_data = MediaPageStore.get('media-data');
 
+  if (media_data && true === media_data.download_requires_payment && !media_data.download_entitled) {
+    if (media_data.download_checkout_url) {
+      return [
+        {
+          itemType: 'link',
+          text:
+            null !== media_data.download_price && void 0 !== media_data.download_price
+              ? 'Comprar descarga (' + media_data.download_currency + ' ' + media_data.download_price + ')'
+              : 'Comprar descarga',
+          icon: 'shopping_cart',
+          link: formatInnerLink(media_data.download_checkout_url, SiteContext._currentValue.url),
+          linkAttr: { target: '_blank' },
+        },
+      ];
+    }
+
+    return [
+      {
+        itemType: 'div',
+        text: 'Compra requerida para descargar.',
+        icon: 'lock',
+      },
+    ];
+  }
+
+  if (media_data && Array.isArray(media_data.download_options) && media_data.download_options.length) {
+    return media_data.download_options;
+  }
+
   const title = media_data.title;
   const encodings_info = media_data.encodings_info;
 
@@ -72,7 +101,15 @@ export function VideoMediaDownloadLink(props) {
           <CircleIconButton type="span">
             <MaterialIcon type="arrow_downward" />
           </CircleIconButton>
-          <span>{translateString("DOWNLOAD")}</span>
+          <span>
+            {(() => {
+              const media_data = MediaPageStore.get('media-data');
+              if (media_data && true === media_data.download_requires_payment && !media_data.download_entitled) {
+                return 'Comprar';
+              }
+              return translateString('DOWNLOAD');
+            })()}
+          </span>
         </button>
       </PopupTrigger>
 

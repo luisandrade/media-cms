@@ -282,7 +282,28 @@ INSTALLED_APPS = [
     "uploader.apps.UploaderConfig",
     "djcelery_email",
     "drf_yasg",
+    "payments.apps.PaymentsConfig",
 ]
+
+# --- Pagos / Flow (descargas pagadas de videos) ---
+VIDEO_DOWNLOAD_REQUIRES_PAYMENT = os.getenv("VIDEO_DOWNLOAD_REQUIRES_PAYMENT", "true").lower() in ("1", "true", "yes")
+VIDEO_DOWNLOAD_PRICE_CLP = int(os.getenv("VIDEO_DOWNLOAD_PRICE_CLP", "990"))
+VIDEO_DOWNLOAD_CURRENCY = os.getenv("VIDEO_DOWNLOAD_CURRENCY", "CLP")
+
+FLOW_API_KEY = os.getenv("FLOW_API_KEY", "6D8760F5-1AF4-41D5-957F-28LABF08FF87")
+FLOW_SECRET_KEY = os.getenv("FLOW_SECRET_KEY", "f668e58e6ee5ee2a03c787d6264030d174835c29")
+FLOW_API_BASE = os.getenv("FLOW_API_BASE", "https://sandbox.flow.cl/api")
+FLOW_TIMEOUT_SECONDS = int(os.getenv("FLOW_TIMEOUT_SECONDS", "20"))
+
+# Paths relativos al FLOW_API_BASE; ajusta si tu cuenta/entorno usa otros.
+FLOW_CREATE_PATH = os.getenv("FLOW_CREATE_PATH", "/payment/create")
+FLOW_STATUS_PATH = os.getenv("FLOW_STATUS_PATH", "/payment/getStatus")
+
+# Solo para desarrollo: si Flow no está configurado, auto-aprueba y concede entitlement.
+FLOW_FAKE_SUCCESS = os.getenv("FLOW_FAKE_SUCCESS", "false").lower() in ("1", "true", "yes")
+
+# Si usas Nginx X-Accel-Redirect para servir archivos protegidos.
+PAYMENTS_X_ACCEL_REDIRECT_PREFIX = os.getenv("PAYMENTS_X_ACCEL_REDIRECT_PREFIX")
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",

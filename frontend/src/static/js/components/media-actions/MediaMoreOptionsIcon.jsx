@@ -11,6 +11,37 @@ import { ReportForm } from '../report-form/ReportForm';
 function downloadOptions(mediaData, allowDownload) {
   const site = SiteContext._currentValue;
 
+  if (mediaData && true === mediaData.download_requires_payment && !mediaData.download_entitled) {
+    if (mediaData.download_checkout_url) {
+      return [
+        {
+          itemType: 'link',
+          text:
+            null !== mediaData.download_price && void 0 !== mediaData.download_price
+              ? 'Comprar descarga (' + mediaData.download_currency + ' ' + mediaData.download_price + ')'
+              : 'Comprar descarga',
+          icon: 'shopping_cart',
+          link: formatInnerLink(mediaData.download_checkout_url, site.url),
+          linkAttr: {
+            target: '_blank',
+          },
+        },
+      ];
+    }
+
+    return [
+      {
+        itemType: 'div',
+        text: 'Compra requerida para descargar.',
+        icon: 'lock',
+      },
+    ];
+  }
+
+  if (mediaData && Array.isArray(mediaData.download_options) && mediaData.download_options.length) {
+    return mediaData.download_options;
+  }
+
   const encodingsInfo = mediaData.encodings_info;
 
   const options = {};
