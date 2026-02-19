@@ -105,7 +105,7 @@ export function VideoMediaDownloadLink(props) {
             {(() => {
               const media_data = MediaPageStore.get('media-data');
               if (media_data && true === media_data.download_requires_payment && !media_data.download_entitled) {
-                return 'Comprar';
+                return 'COMPRAR';
               }
               return translateString('DOWNLOAD');
             })()}

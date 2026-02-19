@@ -80,6 +80,7 @@ const PAGES = {
   members: { id: 'members', title: 'Members', component: 'MembersPage' },
   history: { id: 'history', title: 'History', component: 'HistoryPage' },
   liked: { id: 'liked', title: 'Liked media', component: 'LikedMediaPage' },
+  purchases: { id: 'purchases', title: 'My purchases', component: 'PurchasesPage' },
   tags: { id: 'tags', title: 'Tags', component: 'TagsPage' },
   categories: { id: 'categories', title: 'Categories', component: 'CategoriesPage' },
   'manage-media': { id: 'manage-media', title: 'Manage media', component: 'ManageMediaPage' },

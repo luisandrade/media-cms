@@ -560,6 +560,10 @@ export default class VideoViewer extends React.PureComponent {
                         adsTag={this.props.data.ads_tag}
                         hls_file={this.props.data.hls_file}
                         stream={this.props.data.stream}
+                        is_stream={this.props.data.is_stream}
+                        stream_requires_payment={this.props.data.stream_requires_payment}
+                        stream_entitled={this.props.data.stream_entitled}
+                        stream_checkout_url={this.props.data.stream_checkout_url}
                         title={this.props.data.title}
                         url={this.props.data.url}
                       />
@@ -583,6 +587,10 @@ export default class VideoViewer extends React.PureComponent {
                       adsTag={this.props.data.ads_tag}
                       hls_file={this.props.data.hls_file}
                       stream={this.props.data.stream}
+                      is_stream={this.props.data.is_stream}
+                      stream_requires_payment={this.props.data.stream_requires_payment}
+                      stream_entitled={this.props.data.stream_entitled}
+                      stream_checkout_url={this.props.data.stream_checkout_url}
                       title={this.props.data.title}
                       url={this.props.data.url}
                     />

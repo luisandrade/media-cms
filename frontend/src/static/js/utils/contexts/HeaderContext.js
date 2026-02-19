@@ -30,6 +30,12 @@ function popupTopNavItems() {
           icon: 'video_library',
           text: translateString('My media'),
         });
+
+        items.push({
+          link: links.user.purchases,
+          icon: 'shopping_bag',
+          text: translateString('My purchases'),
+        });
       }
     }
 

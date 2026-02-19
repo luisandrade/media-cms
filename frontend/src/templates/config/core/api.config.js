@@ -11,6 +11,7 @@ module.exports = {
   members: '/users',
   liked: '/user/action/like',
   history: '/user/action/watch',
+  purchases: '/purchases',
   actions: '/actions',
   manage_media: '/manage_media',
   manage_users: '/manage_users',

@@ -98,6 +98,12 @@ class SingleMediaSerializer(serializers.ModelSerializer):
     download_options = serializers.SerializerMethodField()
     original_media_url = serializers.SerializerMethodField()
 
+    is_stream = serializers.SerializerMethodField()
+    stream = serializers.SerializerMethodField()
+    stream_requires_payment = serializers.SerializerMethodField()
+    stream_entitled = serializers.SerializerMethodField()
+    stream_checkout_url = serializers.SerializerMethodField()
+
 
     def get_url(self, obj):
         return self.context["request"].build_absolute_uri(obj.get_absolute_url())
@@ -227,6 +233,43 @@ class SingleMediaSerializer(serializers.ModelSerializer):
             return None
         return obj.original_media_url
 
+    def _stream_playback_requires_payment(self, obj) -> bool:
+        request = self.context.get("request")
+        if obj.media_type != "video":
+            return False
+        if not getattr(obj, "stream", ""):
+            return False
+        if not getattr(request, "user", None) or not request.user.is_authenticated:
+            return bool(getattr(settings, "VIDEO_STREAM_REQUIRES_PAYMENT", True))
+        return bool(getattr(settings, "VIDEO_STREAM_REQUIRES_PAYMENT", True))
+
+    def get_is_stream(self, obj):
+        return bool(getattr(obj, "stream", ""))
+
+    def get_stream_requires_payment(self, obj):
+        return self._stream_playback_requires_payment(obj)
+
+    def get_stream_entitled(self, obj):
+        if not self._stream_playback_requires_payment(obj):
+            return True
+        return self._user_entitled(obj)
+
+    def get_stream_checkout_url(self, obj):
+        request = self.context.get("request")
+        if not request:
+            return None
+        if not self._stream_playback_requires_payment(obj):
+            return None
+        if self._user_entitled(obj):
+            return None
+        return request.build_absolute_uri(reverse("video_stream_checkout", args=[obj.friendly_token]))
+
+    def get_stream(self, obj):
+        # Para streams pagos, ocultar URL si no hay entitlement.
+        if self._stream_playback_requires_payment(obj) and not self._user_entitled(obj):
+            return ""
+        return getattr(obj, "stream", "")
+
     class Meta:
         model = Media
         read_only_fields = (
@@ -295,7 +338,11 @@ class SingleMediaSerializer(serializers.ModelSerializer):
             "slideshow_items",
             "ads_tag",
             "hls_file",
-            "stream"
+            "stream",
+            "is_stream",
+            "stream_requires_payment",
+            "stream_entitled",
+            "stream_checkout_url",
         )
 
 

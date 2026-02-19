@@ -38,6 +38,9 @@ export function VideoPlayer(props) {
   const videoElemRef = useRef(null);
   const playerRef = useRef(null);
 
+  const streamBlocked =
+    !!props.is_stream && !!props.stream_requires_payment && !props.stream_entitled;
+
   const playerStates = {
     playerVolume: props.playerVolume ?? 1,
     playerSoundMuted: props.playerSoundMuted ?? false,
@@ -47,6 +50,7 @@ export function VideoPlayer(props) {
   };
 
   const initPlayer = () => {
+    if (streamBlocked) return;
     if (playerRef.current || props.errorMessage || !videoElemRef.current) return;
 
     if (!props.inEmbed) {
@@ -72,8 +76,6 @@ export function VideoPlayer(props) {
       });
       subtitles.on = subtitles.languages.length > 0;
     }
-
-    console.log("props",props);
 
     let sources;
     const mediaIdSource = props.url.split('m=')[1];
@@ -136,6 +138,9 @@ export function VideoPlayer(props) {
       }
     });
 
+    playerRef.current = player;
+    props.onPlayerInitCallback?.(player);
+
     player.qualityLevels();
     player.httpSourceSelector({
       default: 'auto'
@@ -172,6 +177,10 @@ export function VideoPlayer(props) {
   };
 
   useEffect(() => {
+    if (streamBlocked) {
+      unsetPlayer();
+      return;
+    }
     if (!window.google?.ima) {
       const script = document.createElement('script');
       script.src = 'https://imasdk.googleapis.com/js/sdkloader/ima3.js';
@@ -188,14 +197,37 @@ export function VideoPlayer(props) {
     return () => {
       unsetPlayer();
     };
-  }, []);
+  }, [streamBlocked]);
+
+  if (streamBlocked) {
+    return (
+      <div className="video-player video-player-paywall">
+        <div className="video-player-paywall-inner">
+          <div className="video-player-paywall-title">Acceso restringido</div>
+          <div className="video-player-paywall-subtitle">
+            Debes comprar acceso para reproducir este stream.
+          </div>
+          {props.stream_checkout_url ? (
+            <a
+              className="video-player-paywall-button"
+              href={props.stream_checkout_url}
+            >
+              Comprar acceso
+            </a>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
 
   return props.errorMessage === null ? (
-    <video
-      ref={videoElemRef}
-      id="content_video"
-      className="video-js vjs-mediacms native-dimensions"
-    ></video>
+    <div className="video-player">
+      <video
+        ref={videoElemRef}
+        id="content_video"
+        className="video-js vjs-mediacms native-dimensions"
+      ></video>
+    </div>
   ) : (
     <VideoPlayerError errorMessage={props.errorMessage} />
   );
@@ -225,6 +257,10 @@ VideoPlayer.propTypes = {
   onPlayerInitCallback: PropTypes.func,
   onStateUpdateCallback: PropTypes.func,
   onUnmountCallback: PropTypes.func,
+  is_stream: PropTypes.bool,
+  stream_requires_payment: PropTypes.bool,
+  stream_entitled: PropTypes.bool,
+  stream_checkout_url: PropTypes.string,
 };
 
 VideoPlayer.defaultProps = {

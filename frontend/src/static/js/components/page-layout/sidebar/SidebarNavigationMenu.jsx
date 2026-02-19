@@ -166,6 +166,13 @@ export function SidebarNavigationMenu() {
             text: translateString("My media"),
             className: 'nav-item-my-media',
           });
+
+          items.push({
+            link: links.user.purchases,
+            icon: 'shopping_bag',
+            text: translateString('My purchases'),
+            className: 'nav-item-my-purchases',
+          });
         }
       }
 

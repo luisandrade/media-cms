@@ -14,6 +14,7 @@ module.exports = {
   /* User pages */
   likedMedia: './liked.html',
   history: './history.html',
+  purchases: './purchases.html',
   /* Add pages */
   addMedia: './add-media.html',
   /* Profile/account edit pages */

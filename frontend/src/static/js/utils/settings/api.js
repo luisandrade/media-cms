@@ -36,6 +36,7 @@ export function init(base_url, endpoints) {
     user: {
       liked: endpoints.liked,
       history: endpoints.history,
+      purchases: endpoints.purchases,
       playlists: endpoints.playlists + '?author=',
       live: endpoints.live + '?author=',
     },

@@ -22,9 +22,10 @@ urlpatterns = [
         "robots.txt",
         TemplateView.as_view(template_name="robots.txt", content_type="text/plain"),
     ),
+    # Payments callbacks (Flow) must resolve before any catch-all routes.
+    re_path(r"^", include("payments.urls")),
     re_path(r"^", include("files.urls")),
     re_path(r"^", include("users.urls")),
-    re_path(r"^", include("payments.urls")),
     re_path(r"^accounts/", include("allauth.urls")),
     re_path(r"^api-auth/", include("rest_framework.urls")),
     path(settings.DJANGO_ADMIN_URL, admin.site.urls),

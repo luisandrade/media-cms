@@ -5,6 +5,7 @@ export * from './HistoryPage';
 export * from './HomePage';
 export * from './LatestMediaPage';
 export * from './LikedMediaPage';
+export * from './PurchasesPage';
 export * from './ManageCommentsPage';
 export * from './ManageMediaPage';
 export * from './ManageUsersPage';

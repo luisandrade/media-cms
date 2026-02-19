@@ -260,6 +260,14 @@ def history(request):
 
 
 @login_required
+def purchases(request):
+    """Show personal purchases view"""
+
+    context = {}
+    return render(request, "cms/purchases.html", context)
+
+
+@login_required
 def edit_media(request):
     """Edit a media view"""
 
@@ -365,17 +373,41 @@ def embed_media(request):
 
     playback_urls = {}
 
-    # ES STREAM si hls_file NO está vacío o null
+    def _user_entitled_for_stream() -> bool:
+        if not getattr(media, "stream", ""):
+            return True
+        if not getattr(request, "user", None) or not request.user.is_authenticated:
+            return False
+        try:
+            from payments.models import DownloadEntitlement
+
+            ent = DownloadEntitlement.objects.filter(user=request.user, media=media).first()
+            if not ent:
+                return False
+            if ent.status != DownloadEntitlement.STATUS_ACTIVE:
+                return False
+            if ent.expires_at and ent.expires_at <= timezone.now():
+                return False
+            return True
+        except Exception:
+            return False
+
+    stream_requires_payment = bool(getattr(settings, "VIDEO_STREAM_REQUIRES_PAYMENT", True))
+
+    # ES STREAM
     if media.stream:
-        stream_names = getattr(settings, "WOWZA_STREAM_NAMES", ["default_stream"])
-        for name in stream_names:
-            stream_path = f"{name}/live"
-            token = generate_wowza_token(stream_path)
-            url = f"https://{host}/{stream_path}/playlist.m3u8?{token}"
-            playback_urls[name] = {
-                "url": url,
-                "token": token
-            }
+        if stream_requires_payment and not _user_entitled_for_stream():
+            playback_urls = {}
+        else:
+            stream_names = getattr(settings, "WOWZA_STREAM_NAMES", ["default_stream"])
+            for name in stream_names:
+                stream_path = f"{name}/live"
+                token = generate_wowza_token(stream_path)
+                url = f"https://{host}/{stream_path}/playlist.m3u8?{token}"
+                playback_urls[name] = {
+                    "url": url,
+                    "token": token,
+                }
 
     # ES VOD si hls_file es vacío o null
     else:
@@ -567,15 +599,39 @@ def view_media(request):
 
     playback_urls = {}
 
+    def _user_entitled_for_stream() -> bool:
+        if not getattr(media, "stream", ""):
+            return True
+        if not getattr(request, "user", None) or not request.user.is_authenticated:
+            return False
+        try:
+            from payments.models import DownloadEntitlement
+
+            ent = DownloadEntitlement.objects.filter(user=request.user, media=media).first()
+            if not ent:
+                return False
+            if ent.status != DownloadEntitlement.STATUS_ACTIVE:
+                return False
+            if ent.expires_at and ent.expires_at <= timezone.now():
+                return False
+            return True
+        except Exception:
+            return False
+
+    stream_requires_payment = bool(getattr(settings, "VIDEO_STREAM_REQUIRES_PAYMENT", True))
+
     if media.stream:
-        stream_names = getattr(settings, "WOWZA_STREAM_NAMES", ["default_stream"])
-        for name in stream_names:
-            stream_path = f"{name}/live"
-            token = generate_wowza_token(stream_path, secret)
-            playback_urls[name] = {
-                "url": f"https://{host}/{stream_path}/playlist.m3u8?{token}",
-                "token": token
-            }
+        if stream_requires_payment and not _user_entitled_for_stream():
+            playback_urls = {}
+        else:
+            stream_names = getattr(settings, "WOWZA_STREAM_NAMES", ["default_stream"])
+            for name in stream_names:
+                stream_path = f"{name}/live"
+                token = generate_wowza_token(stream_path, secret)
+                playback_urls[name] = {
+                    "url": f"https://{host}/{stream_path}/playlist.m3u8?{token}",
+                    "token": token,
+                }
     else:
         vod_app = "vod"
         cache = "dc"
@@ -584,7 +640,7 @@ def view_media(request):
         token = generate_wowza_token(stream_path, secret_vod)
         playback_urls["vod"] = {
             "url": f"https://{host}/{stream_path}/playlist.m3u8?{token}",
-            "token": token
+            "token": token,
         }
 
     context["playback_urls"] = json.dumps(playback_urls)  # ✅ Aquí se agrega al contexto

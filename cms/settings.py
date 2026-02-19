@@ -75,7 +75,7 @@ EMAIL_USE_TLS = True
 SERVER_EMAIL = DEFAULT_FROM_EMAIL
 EMAIL_HOST = "smtp-relay.brevo.com"
 EMAIL_PORT = 587
-ADMIN_EMAIL_LIST = ["admin@vms.grupoz.cl"]
+ADMIN_EMAIL_LIST = ["admin@vms.grupoz.cl","luis.andrade@grupoz.cl"]
 
 
 MEDIA_IS_REVIEWED = True  # whether an admin needs to review a media file.
@@ -299,6 +299,11 @@ FLOW_TIMEOUT_SECONDS = int(os.getenv("FLOW_TIMEOUT_SECONDS", "20"))
 FLOW_CREATE_PATH = os.getenv("FLOW_CREATE_PATH", "/payment/create")
 FLOW_STATUS_PATH = os.getenv("FLOW_STATUS_PATH", "/payment/getStatus")
 
+# Si estás detrás de un proxy/SSL y `request.build_absolute_uri()` no genera la URL correcta,
+# puedes fijar explícitamente estas URLs públicas.
+FLOW_URL_RETURN = os.getenv("FLOW_URL_RETURN")
+FLOW_URL_CONFIRMATION = os.getenv("FLOW_URL_CONFIRMATION")
+
 # Solo para desarrollo: si Flow no está configurado, auto-aprueba y concede entitlement.
 FLOW_FAKE_SUCCESS = os.getenv("FLOW_FAKE_SUCCESS", "false").lower() in ("1", "true", "yes")
 
@@ -493,6 +498,9 @@ if GLOBAL_LOGIN_REQUIRED:
         r'/accounts/signup/$',
         r'/accounts/password/.*/$',
         r'/accounts/confirm-email/.*/$',
+        # Flow callbacks must be publicly reachable (server-to-server + browser return)
+        r'/payments/flow/confirm/?$',
+        r'/payments/flow/return/?$',
         #        r'/api/v[0-9]+/',
     ]
 
