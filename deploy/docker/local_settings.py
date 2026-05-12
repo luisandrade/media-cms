@@ -1,6 +1,8 @@
 import os
 
-FRONTEND_HOST = os.getenv('FRONTEND_HOST', 'http://localhost')
+_frontend_host = os.getenv('FRONTEND_HOST', '')
+if _frontend_host:
+    FRONTEND_HOST = _frontend_host
 PORTAL_NAME = os.getenv('PORTAL_NAME', 'MediaCMS')
 SECRET_KEY = os.getenv('SECRET_KEY', 'ma!s3^b-cw!f#7s6s0m3*jx77a@riw(7701**(r=ww%w!2+yk2')
 REDIS_LOCATION = os.getenv('REDIS_LOCATION', 'redis://redis:6379/1')

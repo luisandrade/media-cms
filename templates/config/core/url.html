@@ -10,6 +10,7 @@ MediaCMS.url = {
     /* Archive pages */
     tags: "/tags",
     categories: "/categories",
+    {% if IS_MEDIACMS_ADMIN %}ads: "/ads",{% endif %}
     /* User pages */
     likedMedia: "/liked",
     history: "/history",

@@ -1,5 +1,6 @@
 import importlib
 import os
+import sys
 
 from django.conf import settings
 
@@ -16,6 +17,22 @@ def check_language_code(language_code):
     if language_code in ['en', 'en-us', 'en-gb']:
         return False
     return True
+
+
+def _load_language(language_code, reload_module=False):
+    language_code_file = language_code.replace('-', '_')
+    module_name = f"files.frontend_translations.{language_code_file}"
+
+    try:
+        if reload_module and module_name in sys.modules:
+            tr_module = importlib.reload(sys.modules[module_name])
+        else:
+            tr_module = importlib.import_module(module_name)
+    except Exception:
+        return
+
+    translation_strings[language_code] = getattr(tr_module, 'translation_strings', {})
+    replacement_strings[language_code] = getattr(tr_module, 'replacement_strings', {})
 
 
 for translation_file in files:
@@ -37,7 +54,14 @@ def get_translation(language_code):
     if not check_language_code(language_code):
         return {}
 
-    translation = translation_strings[language_code]
+    # In DEBUG, reload translation modules so changes are reflected without restart.
+    if getattr(settings, 'DEBUG', False):
+        _load_language(language_code, reload_module=True)
+
+    if language_code not in translation_strings:
+        _load_language(language_code, reload_module=False)
+
+    translation = translation_strings.get(language_code, {})
 
     return translation
 
@@ -47,7 +71,13 @@ def get_translation_strings(language_code):
     if not check_language_code(language_code):
         return {}
 
-    translation = replacement_strings[language_code]
+    if getattr(settings, 'DEBUG', False):
+        _load_language(language_code, reload_module=True)
+
+    if language_code not in replacement_strings:
+        _load_language(language_code, reload_module=False)
+
+    translation = replacement_strings.get(language_code, {})
 
     return translation
 
@@ -57,4 +87,10 @@ def translate_string(language_code, string):
     if not check_language_code(language_code):
         return string
 
-    return translation_strings[language_code].get(string, string)
+    if getattr(settings, 'DEBUG', False):
+        _load_language(language_code, reload_module=True)
+
+    if language_code not in translation_strings:
+        _load_language(language_code, reload_module=False)
+
+    return translation_strings.get(language_code, {}).get(string, string)

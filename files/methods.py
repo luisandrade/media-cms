@@ -151,10 +151,10 @@ def notify_users(friendly_token=None, action=None, extra=None):
 
     if action == "media_reported" and media:
         msg = """
-Media %s was reported.
-Reason: %s\n
-Total times this media has been reported: %s\n
-Media becomes private if it gets reported %s times\n
+El contenido %s fue reportado.
+Motivo: %s\n
+Total de veces que este contenido ha sido reportado: %s\n
+El contenido pasa a privado si se reporta %s veces\n
         """ % (
             media_url,
             extra,
@@ -163,14 +163,14 @@ Media becomes private if it gets reported %s times\n
         )
 
         if settings.ADMINS_NOTIFICATIONS.get("MEDIA_REPORTED", False):
-            title = "[{}] - Media was reported".format(settings.PORTAL_NAME)
+            title = "[{}] - Contenido reportado".format(settings.PORTAL_NAME)
             d = {}
             d["title"] = title
             d["msg"] = msg
             d["to"] = settings.ADMIN_EMAIL_LIST
             notify_items.append(d)
         if settings.USERS_NOTIFICATIONS.get("MEDIA_REPORTED", False):
-            title = "[{}] - Media was reported".format(settings.PORTAL_NAME)
+            title = "[{}] - Contenido reportado".format(settings.PORTAL_NAME)
             d = {}
             d["title"] = title
             d["msg"] = msg
@@ -179,9 +179,9 @@ Media becomes private if it gets reported %s times\n
 
     if action == "media_added" and media:
         if settings.ADMINS_NOTIFICATIONS.get("MEDIA_ADDED", False):
-            title = "[{}] - Media was added".format(settings.PORTAL_NAME)
+            title = "[{}] - Contenido agregado".format(settings.PORTAL_NAME)
             msg = """
-Media %s was added by user %s.
+El contenido %s fue agregado por el usuario %s.
 """ % (
                 media_url,
                 media.user,
@@ -192,9 +192,9 @@ Media %s was added by user %s.
             d["to"] = settings.ADMIN_EMAIL_LIST
             notify_items.append(d)
         if settings.USERS_NOTIFICATIONS.get("MEDIA_ADDED", False):
-            title = "[{}] - Your media was added".format(settings.PORTAL_NAME)
+            title = "[{}] - Tu contenido fue agregado".format(settings.PORTAL_NAME)
             msg = """
-Your media has been added! It will be encoded and will be available soon.
+¡Tu contenido fue agregado! Se codificará y estará disponible pronto.
 URL: %s
             """ % (
                 media_url
@@ -336,10 +336,10 @@ def notify_user_on_comment(friendly_token):
     media_url = settings.SSL_FRONTEND_HOST + media.get_absolute_url()
 
     if user.notification_on_comments:
-        title = "[{}] - A comment was added".format(settings.PORTAL_NAME)
+        title = "[{}] - Se agregó un comentario".format(settings.PORTAL_NAME)
         msg = """
-A comment has been added to your media %s .
-View it on %s
+Se agregó un comentario a tu contenido %s.
+Revísalo en %s
         """ % (
             media.title,
             media_url,
@@ -360,12 +360,12 @@ def notify_user_on_mention(friendly_token, user_mentioned, cleaned_comment):
     media_url = settings.SSL_FRONTEND_HOST + media.get_absolute_url()
 
     if user.notification_on_comments:
-        title = "[{}] - You were mentioned in a comment".format(settings.PORTAL_NAME)
+        title = "[{}] - Te mencionaron en un comentario".format(settings.PORTAL_NAME)
         msg = """
-You were mentioned in a comment on  %s .
-View it on %s
+Te mencionaron en un comentario en %s.
+Revísalo en %s
 
-Comment : %s
+Comentario: %s
         """ % (
             media.title,
             media_url,

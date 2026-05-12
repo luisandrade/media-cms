@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import logging
 
 from django.conf import settings
 from django.contrib import messages
@@ -76,6 +77,11 @@ import hashlib
 import base64
 import json
 
+from . import cdn_balancer as cdn_balancer_module
+from .cdn_balancer import get_balanced_hosts_for_request
+
+logger = logging.getLogger(__name__)
+
 VALID_USER_ACTIONS = [action for action, name in USER_MEDIA_ACTIONS]
 
 
@@ -119,11 +125,11 @@ def add_subtitle(request):
             new_subtitle = Subtitle.objects.filter(id=subtitle.id).first()
             try:
                 new_subtitle.convert_to_srt()
-                messages.add_message(request, messages.INFO, "Subtitle was added!")
+                messages.add_message(request, messages.INFO, translate_string(request.LANGUAGE_CODE, "Subtitle was added"))
                 return HttpResponseRedirect(subtitle.media.get_absolute_url())
             except:  # noqa: E722
                 new_subtitle.delete()
-                error_msg = "Invalid subtitle format. Use SubRip (.srt) or WebVTT (.vtt) files."
+                error_msg = "Formato de subtítulo inválido. Usa archivos SubRip (.srt) o WebVTT (.vtt)."
                 form.add_error("subtitle_file", error_msg)
 
     else:
@@ -166,7 +172,7 @@ def edit_subtitle(request):
     elif request.method == "POST":
         confirm = request.GET.get("confirm", "").strip()
         if confirm == "true":
-            messages.add_message(request, messages.INFO, "Subtitle was deleted")
+            messages.add_message(request, messages.INFO, translate_string(request.LANGUAGE_CODE, "Subtitle was deleted"))
             redirect_url = subtitle.media.get_absolute_url()
             subtitle.delete()
             return HttpResponseRedirect(redirect_url)
@@ -175,7 +181,7 @@ def edit_subtitle(request):
         with open(subtitle.subtitle_file.path, "w") as ff:
             ff.write(subtitle_text)
 
-        messages.add_message(request, messages.INFO, "Subtitle was edited")
+        messages.add_message(request, messages.INFO, translate_string(request.LANGUAGE_CODE, "Subtitle was edited"))
         return HttpResponseRedirect(subtitle.media.get_absolute_url())
     return render(request, "cms/edit_subtitle.html", context)
 
@@ -226,12 +232,12 @@ def contact(request):
                 name = request.POST.get("name")
             message = request.POST.get("message")
 
-            title = "[{}] - Contact form message received".format(settings.PORTAL_NAME)
+            title = "[{}] - Mensaje recibido del formulario de contacto".format(settings.PORTAL_NAME)
 
             msg = """
-            You have received a message through the contact form\n
-            Sender name: %s
-            Sender email: %s\n
+            Has recibido un mensaje a través del formulario de contacto\n
+            Nombre del remitente: %s
+            Correo del remitente: %s\n
             \n %s
             """ % (
                 name,
@@ -246,7 +252,7 @@ def contact(request):
                 reply_to=[from_email],
             )
             email.send(fail_silently=True)
-            success_msg = "Message was sent! Thanks for contacting"
+            success_msg = "¡Mensaje enviado! Gracias por contactarnos"
             context["success_msg"] = success_msg
 
     return render(request, "cms/contact.html", context)
@@ -332,9 +338,7 @@ def generate_wowza_token(stream, secret, token_name="wowzatoken", client_ip=None
 
 
 def embed_media(request):
-    import hashlib, base64, json
     from django.shortcuts import redirect, render
-    from django.conf import settings
     from .models import Media
 
     friendly_token = request.GET.get("m", "").strip()
@@ -345,33 +349,22 @@ def embed_media(request):
     if not media:
         return redirect("/")
 
-    host = "scl.edge.grupoz.cl"
-    # aqui voy, hay que decirle que secret_stream se va para strewam y secret_vod para vod, ver vod en front no funciona
-    secret = "c1bcbdc0c1eac962"
-    secret_vod= "45c2a1f252003a0a"
-    token_name = "wowzatoken"
+    balanced = get_balanced_hosts_for_request(request)
+    live_host = balanced.live_host
+    vod_host = balanced.vod_host
+
+    secret_live = getattr(settings, "WOWZA_LIVE_SECRET", "c1bcbdc0c1eac962")
+    token_name = getattr(settings, "WOWZA_TOKEN_NAME", "wowzatoken")
     client_ip = None
     start = 0
     end = 0
 
-    def generate_wowza_token(path):
-        if client_ip:
-            to_hash = f"{path}?{client_ip}&{secret}&{token_name}endtime={end}&{token_name}starttime={start}"
-        else:
-            to_hash = f"{path}?{secret}&{token_name}endtime={end}&{token_name}starttime={start}"
-        hash_bytes = hashlib.sha384(to_hash.encode("utf-8")).digest()
-        base64_hash = base64.urlsafe_b64encode(hash_bytes).decode("utf-8").rstrip("=")
-        params = [
-            f"{token_name}starttime={start}",
-            f"{token_name}endtime={end}",
-            f"{token_name}hash={base64_hash}",
-        ]
-        if client_ip:
-            params.append(client_ip)
-        params.sort()
-        return "&".join(params)
-
     playback_urls = {}
+
+    balancer_debug = (
+        str(request.GET.get("balancer_debug", "")).strip().lower() in {"1", "true", "yes", "y", "on"}
+        or bool(getattr(settings, "CDN_BALANCER_DEBUG", False))
+    )
 
     def _user_entitled_for_stream() -> bool:
         if not getattr(media, "stream", ""):
@@ -402,8 +395,15 @@ def embed_media(request):
             stream_names = getattr(settings, "WOWZA_STREAM_NAMES", ["default_stream"])
             for name in stream_names:
                 stream_path = f"{name}/live"
-                token = generate_wowza_token(stream_path)
-                url = f"https://{host}/{stream_path}/playlist.m3u8?{token}"
+                token = generate_wowza_token(
+                    stream_path,
+                    secret_live,
+                    token_name=token_name,
+                    client_ip=client_ip,
+                    start=start,
+                    end=end,
+                )
+                url = f"https://{live_host}/{stream_path}/playlist.m3u8?{token}"
                 playback_urls[name] = {
                     "url": url,
                     "token": token,
@@ -411,16 +411,49 @@ def embed_media(request):
 
     # ES VOD si hls_file es vacío o null
     else:
-        vod_app = "vod"
-        cache = "dc"
-        filename = "conejo.mp4"
-        stream_path = f"{vod_app}/mp4:{cache}/{filename}"
-        token = generate_wowza_token(stream_path)
-        url = f"https://{host}/{stream_path}/playlist.m3u8?{token}"
+        vod_template = getattr(
+            settings,
+            "WOWZA_VOD_SMIL_PATH_TEMPLATE",
+            "mediavms-development/smil:{media_id}.smil/playlist.m3u8",
+        )
+        vod_path = vod_template.format(media_id=friendly_token)
+        url = f"https://{vod_host}/{vod_path}"
         playback_urls["vod"] = {
             "url": url,
-            "token": token
+            "token": None,
         }
+
+    if balancer_debug:
+        playback_urls["_balancer"] = {
+            "client_ip": balanced.client_ip,
+            "asn": balanced.asn,
+            "city": balanced.city,
+            "vod_host": vod_host,
+            "live_host": live_host,
+            "decision": balanced.decision,
+            "meta": {
+                "remote_addr": request.META.get("REMOTE_ADDR"),
+                "x_forwarded_for": request.META.get("HTTP_X_FORWARDED_FOR"),
+                "x_real_ip": request.META.get("HTTP_X_REAL_IP"),
+                "cf_connecting_ip": request.META.get("HTTP_CF_CONNECTING_IP"),
+                "true_client_ip": request.META.get("HTTP_TRUE_CLIENT_IP"),
+            },
+            "geoip": {
+                "enabled": bool(getattr(settings, "CDN_BALANCER_ENABLED", True)),
+                "geoip2_available": cdn_balancer_module.geoip2 is not None,
+                "city_db_path": getattr(settings, "CDN_BALANCER_CITY_DB_PATH", ""),
+                "asn_db_path": getattr(settings, "CDN_BALANCER_ASN_DB_PATH", ""),
+            },
+        }
+        logger.info(
+            "cdn_balancer embed ip=%s asn=%s city=%s vod=%s live=%s decision=%s",
+            balanced.client_ip,
+            balanced.asn,
+            balanced.city,
+            vod_host,
+            live_host,
+            balanced.decision,
+        )
 
     return render(request, "cms/embed.html", {
         "media": friendly_token,
@@ -571,33 +604,23 @@ def view_media(request):
             context["CAN_EDIT_MEDIA"] = True
             context["CAN_DELETE_COMMENTS"] = True
 
-    # 🔐 Token Wowza
-    host = "scl.edge.grupoz.cl"
-    secret = "c1bcbdc0c1eac962"
-    secret_vod = "45c2a1f252003a0a"
-    token_name = "wowzatoken"
+    # 🔐 Token Wowza + CDN balancer
+    balanced = get_balanced_hosts_for_request(request)
+    live_host = balanced.live_host
+    vod_host = balanced.vod_host
+
+    secret_live = getattr(settings, "WOWZA_LIVE_SECRET", "c1bcbdc0c1eac962")
+    token_name = getattr(settings, "WOWZA_TOKEN_NAME", "wowzatoken")
     client_ip = None
     start = 0
     end = 0
 
-    def generate_wowza_token(path, secret_key):
-        if client_ip:
-            to_hash = f"{path}?{client_ip}&{secret_key}&{token_name}endtime={end}&{token_name}starttime={start}"
-        else:
-            to_hash = f"{path}?{secret_key}&{token_name}endtime={end}&{token_name}starttime={start}"
-        hash_bytes = hashlib.sha384(to_hash.encode("utf-8")).digest()
-        base64_hash = base64.urlsafe_b64encode(hash_bytes).decode("utf-8").rstrip("=")
-        params = [
-            f"{token_name}starttime={start}",
-            f"{token_name}endtime={end}",
-            f"{token_name}hash={base64_hash}",
-        ]
-        if client_ip:
-            params.append(client_ip)
-        params.sort()
-        return "&".join(params)
-
     playback_urls = {}
+
+    balancer_debug = (
+        str(request.GET.get("balancer_debug", "")).strip().lower() in {"1", "true", "yes", "y", "on"}
+        or bool(getattr(settings, "CDN_BALANCER_DEBUG", False))
+    )
 
     def _user_entitled_for_stream() -> bool:
         if not getattr(media, "stream", ""):
@@ -627,21 +650,61 @@ def view_media(request):
             stream_names = getattr(settings, "WOWZA_STREAM_NAMES", ["default_stream"])
             for name in stream_names:
                 stream_path = f"{name}/live"
-                token = generate_wowza_token(stream_path, secret)
+                token = generate_wowza_token(
+                    stream_path,
+                    secret_live,
+                    token_name=token_name,
+                    client_ip=client_ip,
+                    start=start,
+                    end=end,
+                )
                 playback_urls[name] = {
-                    "url": f"https://{host}/{stream_path}/playlist.m3u8?{token}",
+                    "url": f"https://{live_host}/{stream_path}/playlist.m3u8?{token}",
                     "token": token,
                 }
     else:
-        vod_app = "vod"
-        cache = "dc"
-        filename = "conejo.mp4"  # O usa media.filename si es dinámico
-        stream_path = f"{vod_app}/mp4:{cache}/{filename}"
-        token = generate_wowza_token(stream_path, secret_vod)
+        vod_template = getattr(
+            settings,
+            "WOWZA_VOD_SMIL_PATH_TEMPLATE",
+            "mediavms-development/smil:{media_id}.smil/playlist.m3u8",
+        )
+        vod_path = vod_template.format(media_id=friendly_token)
         playback_urls["vod"] = {
-            "url": f"https://{host}/{stream_path}/playlist.m3u8?{token}",
-            "token": token,
+            "url": f"https://{vod_host}/{vod_path}",
+            "token": None,
         }
+
+    if balancer_debug:
+        playback_urls["_balancer"] = {
+            "client_ip": balanced.client_ip,
+            "asn": balanced.asn,
+            "city": balanced.city,
+            "vod_host": vod_host,
+            "live_host": live_host,
+            "decision": balanced.decision,
+            "meta": {
+                "remote_addr": request.META.get("REMOTE_ADDR"),
+                "x_forwarded_for": request.META.get("HTTP_X_FORWARDED_FOR"),
+                "x_real_ip": request.META.get("HTTP_X_REAL_IP"),
+                "cf_connecting_ip": request.META.get("HTTP_CF_CONNECTING_IP"),
+                "true_client_ip": request.META.get("HTTP_TRUE_CLIENT_IP"),
+            },
+            "geoip": {
+                "enabled": bool(getattr(settings, "CDN_BALANCER_ENABLED", True)),
+                "geoip2_available": cdn_balancer_module.geoip2 is not None,
+                "city_db_path": getattr(settings, "CDN_BALANCER_CITY_DB_PATH", ""),
+                "asn_db_path": getattr(settings, "CDN_BALANCER_ASN_DB_PATH", ""),
+            },
+        }
+        logger.info(
+            "cdn_balancer view ip=%s asn=%s city=%s vod=%s live=%s decision=%s",
+            balanced.client_ip,
+            balanced.asn,
+            balanced.city,
+            vod_host,
+            live_host,
+            balanced.decision,
+        )
 
     context["playback_urls"] = json.dumps(playback_urls)  # ✅ Aquí se agrega al contexto
 

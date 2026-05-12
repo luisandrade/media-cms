@@ -20,3 +20,4 @@ django-debug-toolbar==5.0.1
 django-login-required-middleware==0.9.0
 pre-commit==4.1.0
 pysubs2==1.8.0
+geoip2==4.8.1

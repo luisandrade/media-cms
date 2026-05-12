@@ -1,29 +1,30 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { PageStore } from '../../utils/stores/';
+import { translateString } from '../../utils/helpers';
 import { FilterOptions } from '../_shared';
 import '../management-table/ManageItemList-filters.scss';
 
 const filters = {
   media_type: [
-    { id: 'all', title: 'All' },
-    { id: 'video', title: 'Video' },
-    { id: 'audio', title: 'Audio' },
-    { id: 'image', title: 'Image' },
-    { id: 'pdf', title: 'Pdf' },
+    { id: 'all', title: translateString('All') },
+    { id: 'video', title: translateString('Video') },
+    { id: 'audio', title: translateString('Audio') },
+    { id: 'image', title: translateString('Image') },
+    { id: 'pdf', title: translateString('Pdf') },
   ],
   upload_date: [
-    { id: 'all', title: 'All' },
-    { id: 'today', title: 'Today' },
-    { id: 'this_week', title: 'This week' },
-    { id: 'this_month', title: 'This month' },
-    { id: 'this_year', title: 'This year' },
+    { id: 'all', title: translateString('All') },
+    { id: 'today', title: translateString('Today') },
+    { id: 'this_week', title: translateString('This week') },
+    { id: 'this_month', title: translateString('This month') },
+    { id: 'this_year', title: translateString('This year') },
   ],
   sort_by: [
-    { id: 'date_added_desc', title: 'Upload date (newest)' },
-    { id: 'date_added_asc', title: 'Upload date (oldest)' },
-    { id: 'most_views', title: 'View count' },
-    { id: 'most_likes', title: 'Like count' },
+    { id: 'date_added_desc', title: translateString('Upload date (newest)') },
+    { id: 'date_added_asc', title: translateString('Upload date (oldest)') },
+    { id: 'most_views', title: translateString('View count') },
+    { id: 'most_likes', title: translateString('Like count') },
   ],
 };
 
@@ -83,7 +84,7 @@ export function SearchResultsFilters(props) {
     <div ref={containerRef} className={'mi-filters-row' + (isHidden ? ' hidden' : '')}>
       <div ref={innerContainerRef} className="mi-filters-row-inner">
         <div className="mi-filter">
-          <div className="mi-filter-title">MEDIA TYPE</div>
+          <div className="mi-filter-title">{translateString('MEDIA TYPE')}</div>
           <div className="mi-filter-options">
             <FilterOptions
               id={'media_type'}
@@ -95,7 +96,7 @@ export function SearchResultsFilters(props) {
         </div>
 
         <div className="mi-filter">
-          <div className="mi-filter-title">UPLOAD DATE</div>
+          <div className="mi-filter-title">{translateString('UPLOAD DATE')}</div>
           <div className="mi-filter-options">
             <FilterOptions
               id={'upload_date'}
@@ -107,7 +108,7 @@ export function SearchResultsFilters(props) {
         </div>
 
         <div className="mi-filter">
-          <div className="mi-filter-title">SORT BY</div>
+          <div className="mi-filter-title">{translateString('SORT BY')}</div>
           <div className="mi-filter-options">
             <FilterOptions id={'sort_by'} options={filters.sort_by} selected={sortByFilter} onSelect={onFilterSelect} />
           </div>

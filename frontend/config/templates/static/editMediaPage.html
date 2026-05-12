@@ -5,21 +5,21 @@
     <div class="page-main-inner">
       <div class="user-action-form-wrap">
         <div class="user-action-form-inner">
-          <h1>Editar Media</h1>
+          <h1>Editar medio</h1>
 
           <form enctype="multipart/form-data" action="" method="post" class="post-form">
             <div id="div_id_title" class="control-group">
-              <label for="id_title" class="control-label"> Titulo </label>
+              <label for="id_title" class="control-label"> Título </label>
               <div class="controls">
                 <input
                   type="text"
                   name="title"
-                  value="Media title..."
+                  value="Título del medio..."
                   maxlength="100"
                   class="textinput textInput"
                   id="id_title"
                 />
-                <p id="hint_id_title" class="help-block">media title</p>
+                <p id="hint_id_title" class="help-block">Título del medio</p>
               </div>
             </div>
             <div id="div_id_category" class="control-group">
@@ -37,7 +37,7 @@
               </div>
             </div>
             <div id="div_id_new_tags" class="control-group">
-              <label for="id_new_tags" class="control-label"> Tags </label>
+              <label for="id_new_tags" class="control-label"> Etiquetas </label>
               <div class="controls">
                 <input type="text" name="new_tags" class="textinput textInput" id="id_new_tags" />
                 <p id="hint_id_new_tags" class="help-block">Una lista de etiquetas nuevas separadas por comas.</p>
@@ -50,7 +50,7 @@
               </div>
             </div>
             <div id="div_id_uploaded_poster" class="control-group">
-              <label for="id_uploaded_poster" class="control-label"> Upload image </label>
+              <label for="id_uploaded_poster" class="control-label"> Subir imagen </label>
               <div class="controls">
                 <input
                   type="file"
@@ -70,15 +70,15 @@
             </div>
             <div id="div_id_state" class="control-group">
               <label for="id_state" class="control-label requiredField">
-                State<span class="asteriskField">*</span>
+                Estado<span class="asteriskField">*</span>
               </label>
               <div class="controls">
                 <select name="state" class="select" id="id_state">
-                  <option value="private">Private</option>
-                  <option value="public" selected="">Public</option>
-                  <option value="unlisted">Unlisted</option>
+                  <option value="private">Privado</option>
+                  <option value="public" selected="">Público</option>
+                  <option value="unlisted">No listado</option>
                 </select>
-                <p id="hint_id_state" class="help-block">state of Media</p>
+                <p id="hint_id_state" class="help-block">Estado del medio</p>
               </div>
             </div>
             <div id="div_id_enable_comments" class="control-group">
@@ -91,6 +91,7 @@
                     id="id_enable_comments"
                     checked=""
                   />
+                  Permitir comentarios
                 </label>
                 <p id="hint_id_enable_comments" class="help-block">Si se permitirán comentarios para este medio</p>
               </div>

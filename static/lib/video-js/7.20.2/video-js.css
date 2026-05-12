@@ -1298,7 +1298,7 @@ body.vjs-full-window {
 
 .video-js.vjs-live:not(.vjs-liveui) .vjs-seek-to-live-control,
 .video-js:not(.vjs-live) .vjs-seek-to-live-control {
-  display: none;
+  display: none !important;
 }
 
 .vjs-seek-to-live-control.vjs-control.vjs-at-live-edge {

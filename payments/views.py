@@ -401,7 +401,7 @@ class FlowReturnView(APIView):
                 messages.add_message(
                     request,
                     messages.INFO,
-                    "Compra realizada con éxito. Ya puedes descargar el video.",
+                    "Compra realizada con éxito. Ya puedes descargar el video, haz clic en el botón DESCARGAR para elegir una de las calidades disponibles.",
                 )
             elif payment.status == Payment.STATUS_FAILED:
                 messages.add_message(

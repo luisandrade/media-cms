@@ -40,6 +40,13 @@ export function VideoPlayerEmbed(props) {
   const videoElemRef = useRef(null);
   const playerRef = useRef(null);
 
+  useEffect(() => {
+    const balancerDebug = props.playback_url_token?._balancer;
+    if (balancerDebug) {
+      console.log('[CDN balancer]', balancerDebug);
+    }
+  }, [props.playback_url_token]);
+
   const streamBlocked =
     !!props.is_stream && !!props.stream_requires_payment && !props.stream_entitled;
 
@@ -109,9 +116,11 @@ export function VideoPlayerEmbed(props) {
     
       const streamKey = extractStreamKey(props.stream);
       const tokenEntry = props.playback_url_token?.[streamKey];
-      const finalUrl = tokenEntry
-        ? `${props.stream}?${tokenEntry.token}`
-        : props.stream;
+      const finalUrl = tokenEntry?.url
+        ? tokenEntry.url
+        : tokenEntry?.token
+          ? `${props.stream}?${tokenEntry.token}`
+          : props.stream;
     
       console.log("🎯 Stream key detectado:", streamKey);
       console.log("🔐 Token aplicado:", tokenEntry?.token);
@@ -124,9 +133,11 @@ export function VideoPlayerEmbed(props) {
         }
       ];
     } else {
+      const vodFromServer = props.playback_url_token?.vod?.url;
+      const vodUrl = vodFromServer || `https://scl.edge.grupoz.cl/mediavms-development/smil:${mediaIdSource}.smil/playlist.m3u8`;
       sources = [
         {
-          src : 'https://scl.edge.grupoz.cl/mediavms-development/smil:'+mediaIdSource+'.smil/playlist.m3u8',
+          src: vodUrl,
           type: 'application/x-mpegURL'
         }
       ]
@@ -137,7 +148,7 @@ export function VideoPlayerEmbed(props) {
       controls: true,
       autoplay: true,
       muted : false,
-      liveui: true,
+      liveui: false,
       poster: props.poster,
       sources: sources,
       bigPlayButton: true,

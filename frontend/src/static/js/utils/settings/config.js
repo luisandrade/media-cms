@@ -31,6 +31,7 @@ export function config(glbl) {
     latest: glbl.url.latestMedia,
     featured: glbl.url.featuredMedia,
     recommended: glbl.url.recommendedMedia,
+    ads: glbl.url.ads,
     signin: glbl.url.signin,
     signout: !glbl.user.is.anonymous ? glbl.url.signout : '',
     register: glbl.url.register,

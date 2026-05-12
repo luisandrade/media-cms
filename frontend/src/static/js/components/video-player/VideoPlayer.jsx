@@ -37,9 +37,35 @@ export function VideoPlayer(props) {
   console.log("props player embed", props);
   const videoElemRef = useRef(null);
   const playerRef = useRef(null);
+  const vodUiObserverRef = useRef(null);
+  const vodUiTimeoutsRef = useRef([]);
+
+  useEffect(() => {
+    const balancerDebug = props.playback_url_token?._balancer;
+    if (balancerDebug) {
+      console.log('[CDN balancer]', balancerDebug);
+    }
+  }, [props.playback_url_token]);
 
   const streamBlocked =
     !!props.is_stream && !!props.stream_requires_payment && !props.stream_entitled;
+
+  const playbackUrlCandidates = [
+    (props.stream ?? '').toString(),
+    (props.sources?.[0]?.src ?? '').toString(),
+  ].filter(Boolean);
+
+  const isLikelyLiveStream = (() => {
+    if (!playbackUrlCandidates.length) return false;
+    // Wowza live suele verse como: https://host/<app>/live/playlist.m3u8
+    return playbackUrlCandidates.some((url) => url.includes('/live'));
+  })();
+
+  const isLikelyVodStream = (() => {
+    if (!playbackUrlCandidates.length) return false;
+    // Wowza VOD común: /vod/mp4:dc/<file>.mp4/playlist.m3u8
+    return playbackUrlCandidates.some((url) => url.includes('/vod/') || url.includes('mp4:'));
+  })();
 
   const playerStates = {
     playerVolume: props.playerVolume ?? 1,
@@ -93,9 +119,11 @@ export function VideoPlayer(props) {
     
       const streamKey = extractStreamKey(props.stream);
       const tokenEntry = props.playback_url_token?.[streamKey];
-      const finalUrl = tokenEntry
-        ? `${props.stream}?${tokenEntry.token}`
-        : props.stream;
+      const finalUrl = tokenEntry?.url
+        ? tokenEntry.url
+        : tokenEntry?.token
+          ? `${props.stream}?${tokenEntry.token}`
+          : props.stream;
     
       console.log("🎯 Stream key detectado:", streamKey);
       console.log("🔐 Token aplicado:", tokenEntry?.token);
@@ -108,9 +136,11 @@ export function VideoPlayer(props) {
         }
       ];
     } else {
+      const vodFromServer = props.playback_url_token?.vod?.url;
+      const vodUrl = vodFromServer || `https://scl.edge.grupoz.cl/mediavms-development/smil:${mediaIdSource}.smil/playlist.m3u8`;
       sources = [
         {
-          src : 'https://scl.edge.grupoz.cl/mediavms-development/smil:'+mediaIdSource+'.smil/playlist.m3u8',
+          src: vodUrl,
           type: 'application/x-mpegURL'
         }
       ]
@@ -121,7 +151,10 @@ export function VideoPlayer(props) {
       controls: true,
       autoplay: true,
       muted : false,
-      liveui: true,
+      // Solo mostrar UI live cuando realmente parezca un stream live.
+      // En Wowza VOD (HLS de MP4) video.js puede marcarlo como live (duration=Infinity)
+      // y mostrar el botón LIVE; ahí lo neutralizamos con la limpieza defensiva.
+      liveui: isLikelyLiveStream && !isLikelyVodStream,
       poster: props.poster,
       sources: sources,
       bigPlayButton: true,
@@ -140,6 +173,109 @@ export function VideoPlayer(props) {
 
     playerRef.current = player;
     props.onPlayerInitCallback?.(player);
+
+    const isVodUrl = (url) => {
+      const safeUrl = (url ?? '').toString();
+      return safeUrl.includes('/vod/') || safeUrl.includes('mp4:');
+    };
+
+    const enforceNonLiveUi = () => {
+      try {
+        // Si explícitamente parece live, no tocar.
+        if (isLikelyLiveStream && !isLikelyVodStream) return;
+
+        const currentSrc = (player.currentSrc?.() ?? '').toString();
+        const declaredSource = (sources?.[0]?.src ?? '').toString();
+        const declaredStream = (props.stream ?? '').toString();
+        const declaredPropSource = (props.sources?.[0]?.src ?? '').toString();
+
+        const rootEl = player.el?.();
+        const hasSeekToLiveDom = !!rootEl?.querySelector?.('.vjs-seek-to-live-control');
+
+        // Tratamos como VOD si cualquiera lo indica o si video.js lo marcó como live
+        // (caso típico Wowza VOD con duration=Infinity).
+        const shouldNeutralizeLive =
+          isLikelyVodStream ||
+          isVodUrl(currentSrc) ||
+          isVodUrl(declaredSource) ||
+          isVodUrl(declaredStream) ||
+          isVodUrl(declaredPropSource) ||
+          player.hasClass?.('vjs-live') === true ||
+          hasSeekToLiveDom;
+
+        if (!shouldNeutralizeLive) return;
+
+        player.removeClass('vjs-live');
+        player.removeClass('vjs-liveui');
+
+        const controlBar = player.getChild('controlBar');
+        const liveDisplay =
+          controlBar?.getChild?.('liveDisplay') ?? controlBar?.getChild?.('LiveDisplay');
+        const seekToLive = controlBar?.getChild?.('seekToLive') ?? controlBar?.getChild?.('SeekToLive');
+
+        liveDisplay?.hide?.();
+        seekToLive?.hide?.();
+
+        if (controlBar && seekToLive) {
+          try {
+            controlBar.removeChild(seekToLive);
+            seekToLive.dispose?.();
+          } catch (e) {
+            // no-op
+          }
+        }
+
+        if (rootEl?.querySelectorAll) {
+          rootEl
+            .querySelectorAll(
+              '.vjs-seek-to-live-control, .vjs-live-control, .vjs-live-display'
+            )
+            .forEach((el) => {
+              el.style.setProperty('display', 'none', 'important');
+              el.style.setProperty('visibility', 'hidden', 'important');
+              el.style.setProperty('pointer-events', 'none', 'important');
+              el.setAttribute('aria-hidden', 'true');
+            });
+        }
+      } catch (e) {
+        // no-op
+      }
+    };
+
+    enforceNonLiveUi();
+    player.on('loadstart', enforceNonLiveUi);
+    player.on('durationchange', enforceNonLiveUi);
+    player.on('loadedmetadata', enforceNonLiveUi);
+    player.on('ready', enforceNonLiveUi);
+
+    // Reintentos cortos: a veces SeekToLive aparece después del init.
+    try {
+      vodUiTimeoutsRef.current.forEach((t) => clearTimeout(t));
+      vodUiTimeoutsRef.current = [
+        setTimeout(enforceNonLiveUi, 0),
+        setTimeout(enforceNonLiveUi, 250),
+        setTimeout(enforceNonLiveUi, 1000),
+      ];
+    } catch (e) {
+      // no-op
+    }
+
+    try {
+      vodUiObserverRef.current?.disconnect?.();
+      const rootEl = player.el?.();
+      if (rootEl && typeof MutationObserver !== 'undefined') {
+        const observer = new MutationObserver(() => enforceNonLiveUi());
+        observer.observe(rootEl, {
+          subtree: true,
+          childList: true,
+          attributes: true,
+          attributeFilter: ['class'],
+        });
+        vodUiObserverRef.current = observer;
+      }
+    } catch (e) {
+      // no-op
+    }
 
     player.qualityLevels();
     player.httpSourceSelector({
@@ -170,6 +306,14 @@ export function VideoPlayer(props) {
   
 
   const unsetPlayer = () => {
+    if (vodUiTimeoutsRef.current?.length) {
+      vodUiTimeoutsRef.current.forEach((t) => clearTimeout(t));
+      vodUiTimeoutsRef.current = [];
+    }
+    if (vodUiObserverRef.current) {
+      vodUiObserverRef.current.disconnect();
+      vodUiObserverRef.current = null;
+    }
     if (playerRef.current) {
       playerRef.current.dispose();
       playerRef.current = null;

@@ -33,19 +33,19 @@ RE_TIMECODE = re.compile(r"(\d+:\d+:\d+.\d+)")
 # this is used by Media and Encoding models
 # reflects media encoding status for objects
 MEDIA_ENCODING_STATUS = (
-    ("pending", "Pending"),
-    ("running", "Running"),
-    ("fail", "Fail"),
-    ("success", "Success"),
-    ("waiting_smil", "Waiting for SMIL"),  # Nuevo estado
+    ("pending", "Pendiente"),
+    ("running", "En proceso"),
+    ("fail", "Fallido"),
+    ("success", "Exitoso"),
+    ("waiting_smil", "Esperando SMIL"),  # Nuevo estado
 )
 
 # the media state of a Media object
 # this is set by default according to the portal workflow
 MEDIA_STATES = (
-    ("private", "Private"),
-    ("public", "Public"),
-    ("unlisted", "Unlisted"),
+    ("private", "Privado"),
+    ("public", "Público"),
+    ("unlisted", "No listado"),
 )
 
 # each uploaded Media gets a media_type hint
@@ -212,7 +212,7 @@ class Media(models.Model):
         help_text="Rating category, if media Rating is allowed",
     )
 
-    reported_times = models.IntegerField(default=0, help_text="how many time a media is reported")
+    reported_times = models.IntegerField(default=0, help_text="Cuántas veces se ha reportado este contenido")
 
     search = SearchVectorField(
         null=True,
@@ -244,7 +244,14 @@ class Media(models.Model):
 
     tags = models.ManyToManyField("Tag", blank=True, verbose_name="Etiquetas", help_text="Seleccione una o más de las etiquetas existentes")
 
-    ad_tag = models.ForeignKey("Ads", null=True, blank=True, verbose_name="Agregar Ads", on_delete=models.SET_NULL, related_name='media_items')
+    ad_tag = models.ForeignKey(
+        "Ads",
+        null=True,
+        blank=True,
+        verbose_name="Etiqueta de anuncios",
+        on_delete=models.SET_NULL,
+        related_name="media_items",
+    )
 
     title = models.CharField(max_length=100, help_text="Título del medio", verbose_name="Título", blank=True, db_index=True)
 

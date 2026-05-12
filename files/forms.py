@@ -9,7 +9,7 @@ class MultipleSelect(forms.CheckboxSelectMultiple):
 
 
 class MediaForm(forms.ModelForm):
-    new_tags = forms.CharField(label="Tags", help_text="Una lista de nuevas etiquetas separadas por comas.", required=False)
+    new_tags = forms.CharField(label="Etiquetas", help_text="Una lista de nuevas etiquetas separadas por comas.", required=False)
 
     class Meta:
         model = Media
@@ -36,6 +36,12 @@ class MediaForm(forms.ModelForm):
     def __init__(self, user, *args, **kwargs):
         self.user = user
         super(MediaForm, self).__init__(*args, **kwargs)
+
+        if "enable_comments" in self.fields:
+            self.fields["enable_comments"].label = "Permitir comentarios"
+        if "allow_download" in self.fields:
+            self.fields["allow_download"].label = "Permitir descarga"
+
         if self.instance.media_type != "video":
             self.fields.pop("thumbnail_time")
         if not is_mediacms_editor(user):
@@ -50,7 +56,7 @@ class MediaForm(forms.ModelForm):
         image = self.cleaned_data.get("uploaded_poster", False)
         if image:
             if image.size > 5 * 1024 * 1024:
-                raise forms.ValidationError("Image file too large ( > 5mb )")
+                raise forms.ValidationError("La imagen es demasiado grande (más de 5 MB)")
             return image
 
     def save(self, *args, **kwargs):
@@ -106,9 +112,9 @@ class ContactForm(forms.Form):
 
     def __init__(self, user, *args, **kwargs):
         super(ContactForm, self).__init__(*args, **kwargs)
-        self.fields["name"].label = "Your name:"
-        self.fields["from_email"].label = "Your email:"
-        self.fields["message"].label = "Please add your message here and submit:"
+        self.fields["name"].label = "Tu nombre:"
+        self.fields["from_email"].label = "Tu correo:"
+        self.fields["message"].label = "Escribe tu mensaje y envíalo:"
         self.user = user
         if user.is_authenticated:
             self.fields.pop("name")

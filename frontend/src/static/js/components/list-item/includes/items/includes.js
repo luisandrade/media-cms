@@ -1,8 +1,11 @@
 import React from 'react';
-import { format } from 'timeago.js';
+import { format, register } from 'timeago.js';
+import es from 'timeago.js/lib/lang/es';
 import { formatViewsNumber, imageExtension } from '../../../../utils/helpers/';
 import { VideoPlayerByPageLink } from '../../../video-player/VideoPlayerByPageLink';
 import { translateString } from '../../../../utils/helpers/';
+
+register('es', es);
 
 export function ItemDescription(props) {
   return '' === props.description ? null : (
@@ -45,7 +48,7 @@ export function ItemTitleLink(props) {
 }
 
 export function UserItemMemberSince(props) {
-  return <time key="member-since">Member for {format(new Date(props.date)).replace(' ago', '')}</time>;
+  return <time key="member-since">{translateString('Member for')} {format(new Date(props.date), 'es')}</time>;
 }
 
 export function TaxonomyItemMediaCount(props) {

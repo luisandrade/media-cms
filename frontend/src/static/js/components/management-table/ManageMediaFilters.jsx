@@ -1,40 +1,41 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { PageStore } from '../../utils/stores/';
+import { translateString } from '../../utils/helpers';
 import { FilterOptions } from '../_shared';
 
 import './ManageItemList-filters.scss';
 
 const filters = {
   state: [
-    { id: 'all', title: 'All' },
-    { id: 'public', title: 'Public' },
-    { id: 'private', title: 'Private' },
-    { id: 'unlisted', title: 'Unlisted' },
+    { id: 'all', title: translateString('All') },
+    { id: 'public', title: translateString('Public') },
+    { id: 'private', title: translateString('Private') },
+    { id: 'unlisted', title: translateString('Unlisted') },
   ],
   media_type: [
-    { id: 'all', title: 'All' },
-    { id: 'video', title: 'Video' },
-    { id: 'audio', title: 'Audio' },
-    { id: 'image', title: 'Image' },
-    { id: 'pdf', title: 'Pdf' },
+    { id: 'all', title: translateString('All') },
+    { id: 'video', title: translateString('Video') },
+    { id: 'audio', title: translateString('Audio') },
+    { id: 'image', title: translateString('Image') },
+    { id: 'pdf', title: translateString('Pdf') },
   ],
   encoding_status: [
-    { id: 'all', title: 'All' },
-    { id: 'success', title: 'Success' },
-    { id: 'running', title: 'Running' },
-    { id: 'pending', title: 'Pending' },
-    { id: 'fail', title: 'Fail' },
+    { id: 'all', title: translateString('All') },
+    { id: 'success', title: translateString('Success') },
+    { id: 'running', title: translateString('Running') },
+    { id: 'pending', title: translateString('Pending') },
+    { id: 'fail', title: translateString('Fail') },
   ],
   reviewed: [
-    { id: 'all', title: 'All' },
-    { id: 'true', title: 'Yes' },
-    { id: 'false', title: 'No' },
+    { id: 'all', title: translateString('All') },
+    { id: 'true', title: translateString('Yes') },
+    { id: 'false', title: translateString('No') },
   ],
   featured: [
-    { id: 'all', title: 'All' },
-    { id: 'true', title: 'Yes' },
-    { id: 'false', title: 'No' },
+    { id: 'all', title: translateString('All') },
+    { id: 'true', title: translateString('Yes') },
+    { id: 'false', title: translateString('No') },
   ],
 };
 

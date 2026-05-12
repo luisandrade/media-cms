@@ -1,6 +1,5 @@
 import React from 'react';
 import { MediaPageStore } from '../../utils/stores/';
-import { AutoPlay } from './AutoPlay';
 import { RelatedMedia } from './RelatedMedia';
 import PlaylistView from './PlaylistView';
 
@@ -45,8 +44,6 @@ export default class ViewerSidebar extends React.PureComponent {
       <div className="viewer-sidebar">
         {this.state.isPlaylistPage ? (
           <PlaylistView activeItem={this.state.activeItem} playlistData={this.props.playlistData} />
-        ) : 'video' === this.state.mediaType || 'audio' === this.state.mediaType ? (
-          <AutoPlay />
         ) : null}
         <RelatedMedia hideFirst={!this.state.isPlaylistPage} />
       </div>

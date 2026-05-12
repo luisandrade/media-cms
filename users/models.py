@@ -161,10 +161,10 @@ def post_user_create(sender, instance, created, **kwargs):
         new = Channel.objects.create(title="default", user=instance)
         new.save()
         if settings.ADMINS_NOTIFICATIONS.get("NEW_USER", False):
-            title = "[{}] - New user just registered".format(settings.PORTAL_NAME)
+            title = "[{}] - Nuevo usuario registrado".format(settings.PORTAL_NAME)
             msg = """
-User has just registered with email %s\n
-Visit user profile page at %s
+Se registró un nuevo usuario con el correo %s\n
+Visita el perfil del usuario en %s
             """ % (
                 instance.email,
                 settings.SSL_FRONTEND_HOST + instance.get_absolute_url(),

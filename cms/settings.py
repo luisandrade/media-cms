@@ -10,13 +10,13 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 0
 
 # PORTAL NAME, this is the portal title and
 # is also shown on several places as emails
-PORTAL_NAME = "MediaVMS"
+PORTAL_NAME = "RodeoVMS"
 PORTAL_DESCRIPTION = ""
 TIME_ZONE = "Europe/London"
 
 # who can add media
 # valid options include 'all', 'email_verified', 'advancedUser'
-CAN_ADD_MEDIA = "all"
+CAN_ADD_MEDIA = "advancedUser"
 
 # who can comment
 # valid options include 'all', 'email_verified', 'advancedUser'
@@ -53,7 +53,7 @@ ALLOW_RATINGS_CONFIRMED_EMAIL_ONLY = True
 # ip of the server should be part of this
 ALLOWED_HOSTS = ["*", "mediacms.io", "127.0.0.1", "localhost"]
 
-FRONTEND_HOST = "http://localhost"
+FRONTEND_HOST = "https://rodeovms.hnode.cl"
 # this variable - along with SSL_FRONTEND_HOST is used on several places
 # as email where a URL need appear etc
 
@@ -175,6 +175,43 @@ FFPROBE_COMMAND = "ffprobe"  # this is the path
 MP4HLS = "mp4hls"
 
 MASK_IPS_FOR_ACTIONS = True
+
+# --- CDN balancer (GeoLite2 ASN + City) ---
+# Habilita balanceo por IP para hosts VOD/LIVE (ver files/cdn_balancer.py)
+CDN_BALANCER_ENABLED = True
+CDN_BALANCER_CACHE_TTL_SECONDS = 60 * 60  # 1 hora
+
+# Rutas a bases MaxMind (mmdb).
+# Por defecto, se buscan en "<BASE_DIR>/geoip/" (carpeta del proyecto).
+# También puedes sobreescribirlas con env vars si lo necesitas.
+_default_city_mmdb = os.path.join(BASE_DIR, "geoip", "GeoLite2-City.mmdb")
+_default_asn_mmdb = os.path.join(BASE_DIR, "geoip", "GeoLite2-ASN.mmdb")
+
+CDN_BALANCER_CITY_DB_PATH = os.getenv("CDN_BALANCER_CITY_DB_PATH", _default_city_mmdb)
+CDN_BALANCER_ASN_DB_PATH = os.getenv("CDN_BALANCER_ASN_DB_PATH", _default_asn_mmdb)
+
+# Debug del balancer (solo para pruebas):
+# - `CDN_BALANCER_DEBUG=1` (env var) o `?balancer_debug=1` en la URL (ver files/views.py)
+_cdn_balancer_debug_env = (os.getenv("CDN_BALANCER_DEBUG", "") or "").strip().lower()
+CDN_BALANCER_DEBUG = _cdn_balancer_debug_env in {"1", "true", "yes", "y", "on"}
+
+# Si el archivo no existe, desactivamos ese lookup para evitar reintentos.
+if not os.path.exists(CDN_BALANCER_CITY_DB_PATH):
+    CDN_BALANCER_CITY_DB_PATH = ""
+if not os.path.exists(CDN_BALANCER_ASN_DB_PATH):
+    CDN_BALANCER_ASN_DB_PATH = ""
+
+# Defaults/fallbacks Wowza
+WOWZA_HOST_DEFAULT = os.getenv("WOWZA_HOST_DEFAULT", "scl.edge.grupoz.cl")
+WOWZA_TOKEN_NAME = os.getenv("WOWZA_TOKEN_NAME", "wowzatoken")
+WOWZA_LIVE_SECRET = os.getenv("WOWZA_LIVE_SECRET", "c1bcbdc0c1eac962")
+WOWZA_VOD_SECRET = os.getenv("WOWZA_VOD_SECRET", "45c2a1f252003a0a")
+
+# VOD por SMIL (si tu Wowza VOD expone playlists por SMIL)
+WOWZA_VOD_SMIL_PATH_TEMPLATE = os.getenv(
+    "WOWZA_VOD_SMIL_PATH_TEMPLATE",
+    "mediavms-development/smil:{media_id}.smil/playlist.m3u8",
+)
 # how many seconds a process in running state without reporting progress is
 # considered as stale...unfortunately v9 seems to not include time
 # some times so raising this high

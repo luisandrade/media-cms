@@ -14,7 +14,7 @@ def send_download_purchase_confirmation_email(*, payment: Payment) -> bool:
     if not to_email:
         return False
 
-    portal_name = getattr(settings, "PORTAL_NAME", "MediaVMS")
+    portal_name = getattr(settings, "PORTAL_NAME", "RodeoVMS")
 
     media_url = ""
     try:
@@ -39,9 +39,22 @@ def send_download_purchase_confirmation_email(*, payment: Payment) -> bool:
     if amount is not None:
         msg_lines.append(f"Monto: {amount} {currency}".strip())
     if media_url:
-        msg_lines.extend(["", f"Puedes volver al video aquí: {media_url}"])
+        msg_lines.extend(
+            [
+                "",
+                "Tu compra ya está confirmada y la descarga quedó habilitada. Ingresa al enlace del video y haz clic en el botón DESCARGAR para elegir una de las calidades disponibles.",
+                "",
+                f"Puedes volver al video aquí: {media_url}",
+            ]
+        )
+    else:
+        msg_lines.extend(
+            [
+                "",
+                "Tu compra ya está confirmada y la descarga quedó habilitada. Entra al video y haz clic en el botón DESCARGAR para elegir una de las calidades disponibles.",
+            ]
+        )
 
-    msg_lines.append("")
     msg_lines.append("Gracias por tu compra.")
 
     email = EmailMessage(title, "\n".join(msg_lines), settings.DEFAULT_FROM_EMAIL, [to_email])

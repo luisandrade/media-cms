@@ -157,18 +157,18 @@ def edit_channel(request, friendly_token):
 def contact_user(request, username):
     if not request.user.is_authenticated:
         return Response(
-            {"detail": "request need be authenticated"},
+            {"detail": "la solicitud debe estar autenticada"},
             status=status.HTTP_401_UNAUTHORIZED,
         )
     user = User.objects.filter(username=username).first()
     if user and (user.allow_contact or is_mediacms_editor(request.user)):
         from_email = request.user.email
-        subject = f"[{settings.PORTAL_NAME}] - Message from {from_email}"
+        subject = f"[{settings.PORTAL_NAME}] - Mensaje de {from_email}"
         body = request.data.get("body")
         body = """
-You have received a message through the contact form\n
-Sender name: %s
-Sender email: %s\n
+Has recibido un mensaje a través del formulario de contacto\n
+Nombre del remitente: %s
+Correo del remitente: %s\n
 \n %s
 """ % (
             request.user.name,

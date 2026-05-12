@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useMediaFilter } from '../../utils/hooks/';
 import { MaterialIcon, PopupMain } from '../_shared';
+import { translateString } from '../../utils/helpers';
 
 function MediaFilterOption(props) {
   function onSelectOption() {
@@ -153,42 +154,42 @@ function MediaSortingFilter(props) {
 const typeFilters = [
   {
     id: 'all',
-    label: 'All media types',
+    label: translateString('All media types'),
   },
   {
     id: 'video',
-    label: 'Video',
+    label: translateString('Video'),
   },
   {
     id: 'audio',
-    label: 'Audio',
+    label: translateString('Audio'),
   },
   {
     id: 'image',
-    label: 'Images',
+    label: translateString('Images'),
   },
   {
     id: 'pdf',
-    label: 'Pdf',
+    label: translateString('Pdf'),
   },
 ];
 
 const sortingOptions = [
   {
     id: 'date_added_desc',
-    label: 'Upload date (newest)',
+    label: translateString('Upload date (newest)'),
   },
   {
     id: 'date_added_asc',
-    label: 'Upload date (oldest)',
+    label: translateString('Upload date (oldest)'),
   },
   {
     id: 'most_views',
-    label: 'View count',
+    label: translateString('View count'),
   },
   {
     id: 'most_likes',
-    label: 'Like count',
+    label: translateString('Like count'),
   },
 ];
 
@@ -279,7 +280,7 @@ export function SearchMediaFiltersRow(props) {
         </div>
         <div className="media-filters-sort">
           <MediaSortingFilter
-            label="SORT BY"
+            label={translateString('SORT BY')}
             default={sortingOptions[0].id}
             options={sortingOptions}
             onSelect={onSelectSortOption}

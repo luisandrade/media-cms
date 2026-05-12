@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import urlParse from 'url-parse';
 import { useUser } from '../../../utils/hooks/';
 import { PageStore } from '../../../utils/stores/';
-import { LinksContext, SidebarContext } from '../../../utils/contexts/';
+import { LinksContext, MemberContext, SidebarContext } from '../../../utils/contexts/';
 import { NavigationMenuList } from '../../_shared';
 import { translateString } from '../../../utils/helpers/';
 
@@ -10,7 +10,10 @@ export function SidebarNavigationMenu() {
   const { userCan, isAnonymous, pages: userPages } = useUser();
 
   const links = useContext(LinksContext);
+  const member = useContext(MemberContext);
   const sidebar = useContext(SidebarContext);
+
+  const isSuperAdmin = !member.is.anonymous && member.is.admin;
 
   const currentUrl = urlParse(window.location.href);
   const currentHostPath = (currentUrl.host + currentUrl.pathname).replace(/\/+$/, '');
@@ -94,12 +97,14 @@ export function SidebarNavigationMenu() {
       });
     }
 
+    if (isSuperAdmin) {
       items.push({
-        link: './ads.html',
+        link: links.ads,
         icon: 'tag',
-        text: 'Ads tag',
+        text: translateString('Anuncios'),
         className: 'nav-item-adstag',
       });
+    }
     
     if (
       !sidebar.hideCategoriesLink &&
@@ -123,12 +128,12 @@ export function SidebarNavigationMenu() {
       });
     }
 
-      items.push({
-        link: './stats.html',
-        icon: 'leaderboard',
-        text: 'Stats',
-        className: 'nav-item-stats',
-      });
+      // items.push({
+      //   link: './stats.html',
+      //   icon: 'leaderboard',
+      //   text: 'Stats',
+      //   className: 'nav-item-stats',
+      // });
     
     const extraItems = PageStore.get('config-contents').sidebar.mainMenuExtra.items;
 

@@ -12,10 +12,10 @@ class MyAccountAdapter(DefaultAccountAdapter):
     def clean_email(self, email):
         if hasattr(settings, "ALLOWED_DOMAINS_FOR_USER_REGISTRATION") and settings.ALLOWED_DOMAINS_FOR_USER_REGISTRATION:
             if email.split("@")[1] not in settings.ALLOWED_DOMAINS_FOR_USER_REGISTRATION:
-                raise ValidationError("Domain is not in the permitted list")
+                raise ValidationError("El dominio no está en la lista permitida")
 
         if email.split("@")[1] in settings.RESTRICTED_DOMAINS_FOR_USER_REGISTRATION:
-            raise ValidationError("Domain is restricted from registering")
+            raise ValidationError("El dominio tiene restringido el registro")
         return email
 
     def is_open_for_signup(self, request):
