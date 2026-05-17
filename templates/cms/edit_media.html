@@ -10,12 +10,18 @@
 
         <div class="user-action-form-wrap">
 		<div class="user-action-form-inner">
-			<h1>Editar medio</h1>
-			<form enctype="multipart/form-data" action="" method="post" class="post-form">
-				{% csrf_token %}
-				{{ form|crispy }}
-				<button class="primaryAction" type="submit">Actualizar medio</button>
-			</form>
+			<div style="max-width: 900px; margin: 0 auto; padding: 20px; border-radius: 8px; box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1); background: #fff;">
+				<h1>Editar medio</h1>
+				{% if media_object %}
+					<p style="margin-bottom: 20px; color: #555;">Editando: <a href="{{ media_object.get_absolute_url }}">{{ media_object.title }}</a></p>
+					{% include "cms/media_nav.html" with active_tab="metadata" %}
+				{% endif %}
+				<form enctype="multipart/form-data" action="" method="post" class="post-form">
+					{% csrf_token %}
+					{{ form|crispy }}
+					<button class="primaryAction" type="submit">Actualizar medio</button>
+				</form>
+			</div>
 		</div>
 	</div>
 {% endblock innercontent %}

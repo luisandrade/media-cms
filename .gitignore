@@ -5,6 +5,10 @@ media_files/original/
 media_files/hls/
 media_files/chunks/
 media_files/uploads/
+media_files/**/*.mp4
+media_files/**/*.smil
+media_files/*.mp4
+media_files/*.smil
 postgres_data/
 celerybeat-schedule
 logs/
@@ -18,6 +22,8 @@ static/drf-yasg
 cms/local_settings.py
 deploy/docker/local_settings.py
 yt.readme.md
+mediacms-original/
+static_collected/
 
 # GeoLite2 / MaxMind DBs (no commitear)
 geoip/

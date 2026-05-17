@@ -6,6 +6,10 @@ import { FilterOptions } from '../_shared';
 
 import './ManageItemList-filters.scss';
 
+const categories = window.CATEGORIES
+  ? [{ id: 'all', title: translateString('All') }].concat(window.CATEGORIES.map((category) => ({ id: category, title: category })))
+  : [{ id: 'all', title: translateString('All') }];
+
 const filters = {
   state: [
     { id: 'all', title: translateString('All') },
@@ -47,6 +51,7 @@ export function ManageMediaFilters(props) {
   const [encodingStatus, setEncodingStatus] = useState('all');
   const [isFeatured, setIsFeatured] = useState('all');
   const [isReviewed, setIsReviewed] = useState('all');
+  const [category, setCategory] = useState('all');
 
   const containerRef = useRef(null);
   const innerContainerRef = useRef(null);
@@ -64,6 +69,7 @@ export function ManageMediaFilters(props) {
       encoding_status: encodingStatus,
       featured: isFeatured,
       is_reviewed: isReviewed,
+      category: category,
     };
 
     switch (ev.currentTarget.getAttribute('filter')) {
@@ -91,6 +97,11 @@ export function ManageMediaFilters(props) {
         args.is_reviewed = ev.currentTarget.getAttribute('value');
         props.onFiltersUpdate(args);
         setIsReviewed(args.is_reviewed);
+        break;
+      case 'category':
+        args.category = ev.currentTarget.getAttribute('value');
+        props.onFiltersUpdate(args);
+        setCategory(args.category);
         break;
     }
   }
@@ -150,6 +161,13 @@ export function ManageMediaFilters(props) {
           <div className="mi-filter-title">FEATURED</div>
           <div className="mi-filter-options">
             <FilterOptions id={'featured'} options={filters.featured} selected={isFeatured} onSelect={onFilterSelect} />
+          </div>
+        </div>
+
+        <div className="mi-filter">
+          <div className="mi-filter-title">CATEGORY</div>
+          <div className="mi-filter-options">
+            <FilterOptions id={'category'} options={categories} selected={category} onSelect={onFilterSelect} />
           </div>
         </div>
       </div>

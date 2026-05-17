@@ -16,12 +16,12 @@ RUN wget -q https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-stati
 
 # Install Bento4 in the specified location
 RUN mkdir -p /home/mediacms.io/bento4 && \
-    wget -q http://zebulon.bok.net/Bento4/binaries/Bento4-SDK-1-6-0-637.x86_64-unknown-linux.zip && \
-    unzip Bento4-SDK-1-6-0-637.x86_64-unknown-linux.zip -d /home/mediacms.io/bento4 && \
-    mv /home/mediacms.io/bento4/Bento4-SDK-1-6-0-637.x86_64-unknown-linux/* /home/mediacms.io/bento4/ && \
-    rm -rf /home/mediacms.io/bento4/Bento4-SDK-1-6-0-637.x86_64-unknown-linux && \
+    wget -q https://www.bok.net/Bento4/binaries/Bento4-SDK-1-6-0-641.x86_64-unknown-linux.zip && \
+    unzip Bento4-SDK-1-6-0-641.x86_64-unknown-linux.zip -d /home/mediacms.io/bento4 && \
+    mv /home/mediacms.io/bento4/Bento4-SDK-1-6-0-641.x86_64-unknown-linux/* /home/mediacms.io/bento4/ && \
+    rm -rf /home/mediacms.io/bento4/Bento4-SDK-1-6-0-641.x86_64-unknown-linux && \
     rm -rf /home/mediacms.io/bento4/docs && \
-    rm Bento4-SDK-1-6-0-637.x86_64-unknown-linux.zip
+    rm Bento4-SDK-1-6-0-641.x86_64-unknown-linux.zip
 
 ############ RUNTIME IMAGE ############
 FROM python:3.13-bookworm AS runtime_image

@@ -8,9 +8,11 @@ import re
 from datetime import datetime
 
 from django.conf import settings
+from django.core.files import File
 from django.core.cache import cache
 from django.core.mail import EmailMessage
 from django.db.models import Q
+from django.utils import timezone
 
 from cms import celery_app
 
@@ -209,6 +211,82 @@ URL: %s
         email = EmailMessage(item["title"], item["msg"], settings.DEFAULT_FROM_EMAIL, item["to"])
         email.send(fail_silently=True)
     return True
+
+
+def copy_video(original_media, copy_encodings=True, title_suffix="(Trimmed)"):
+    """Create a copy of a video media item and optionally its successful encodings."""
+
+    with open(original_media.media_file.path, "rb") as file_handle:
+        media_file = File(file_handle)
+        new_media = models.Media(
+            media_file=media_file,
+            title=f"{original_media.title} {title_suffix}",
+            description=original_media.description,
+            user=original_media.user,
+            media_type="video",
+            enable_comments=original_media.enable_comments,
+            allow_download=original_media.allow_download,
+            state=original_media.state,
+            is_reviewed=original_media.is_reviewed,
+            encoding_status=original_media.encoding_status,
+            listable=original_media.listable,
+            add_date=timezone.now(),
+            video_height=original_media.video_height,
+            media_info=original_media.media_info,
+        )
+        models.Media.objects.bulk_create([new_media])
+
+    if copy_encodings:
+        for encoding in original_media.encodings.filter(chunk=False, status="success"):
+            if encoding.media_file:
+                with open(encoding.media_file.path, "rb") as file_handle:
+                    media_file = File(file_handle)
+                    new_encoding = models.Encoding(
+                        media_file=media_file,
+                        media=new_media,
+                        profile=encoding.profile,
+                        status="success",
+                        progress=100,
+                        chunk=False,
+                        logs=f"Copied from encoding {encoding.id}",
+                    )
+                    models.Encoding.objects.bulk_create([new_encoding])
+
+    for category in original_media.category.all():
+        new_media.category.add(category)
+
+    for tag in original_media.tags.all():
+        new_media.tags.add(tag)
+
+    if original_media.thumbnail:
+        with open(original_media.thumbnail.path, "rb") as file_handle:
+            thumbnail_name = original_media.thumbnail.name.split("/")[-1]
+            new_media.thumbnail.save(thumbnail_name, File(file_handle))
+
+    if original_media.poster:
+        with open(original_media.poster.path, "rb") as file_handle:
+            poster_name = original_media.poster.name.split("/")[-1]
+            new_media.poster.save(poster_name, File(file_handle))
+
+    return new_media
+
+
+def create_video_trim_request(media, data):
+    """Create a trim request from the editor payload."""
+
+    video_action = "replace"
+    if data.get("saveIndividualSegments"):
+        video_action = "create_segments"
+    elif data.get("saveAsCopy"):
+        video_action = "save_new"
+
+    return models.VideoTrimRequest.objects.create(
+        media=media,
+        status="initial",
+        video_action=video_action,
+        media_trim_style="no_encoding",
+        timestamps=data.get("segments", {}),
+    )
 
 
 def show_recommended_media(request, limit=100):

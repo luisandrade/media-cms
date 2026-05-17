@@ -7,8 +7,9 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.postgres.search import SearchQuery
 from django.core.mail import EmailMessage
 from django.db.models import Q
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render, redirect
+from django.views.decorators.csrf import csrf_exempt
 from drf_yasg import openapi as openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import permissions, status
@@ -38,6 +39,7 @@ from .frontend_translations import translate_string
 from .helpers import clean_query, get_alphanumeric_only, produce_ffmpeg_commands
 from .methods import (
     check_comment_for_mention,
+    create_video_trim_request,
     get_user_or_session,
     is_mediacms_editor,
     is_mediacms_manager,
@@ -57,6 +59,7 @@ from .models import (
     PlaylistMedia,
     Subtitle,
     Tag,
+    VideoTrimRequest,
     Ads
 )
 from .serializers import (
@@ -72,7 +75,7 @@ from .serializers import (
     AdsSerializer
 )
 from .stop_words import STOP_WORDS
-from .tasks import save_user_action
+from .tasks import save_user_action, video_trim_task
 import hashlib
 import base64
 import json
@@ -311,7 +314,87 @@ def edit_media(request):
     return render(
         request,
         "cms/edit_media.html",
-        {"form": form, "add_subtitle_url": media.add_subtitle_url},
+        {
+            "form": form,
+            "media_object": media,
+            "add_subtitle_url": media.add_subtitle_url,
+            "allow_video_trimmer": settings.ALLOW_VIDEO_TRIMMER,
+        },
+    )
+
+
+@csrf_exempt
+@login_required
+def trim_video(request, friendly_token):
+    if not settings.ALLOW_VIDEO_TRIMMER:
+        return JsonResponse({"success": False, "error": "Video trimming is not allowed"}, status=400)
+
+    if request.method != "POST":
+        return HttpResponseRedirect("/")
+
+    media = Media.objects.filter(friendly_token=friendly_token).first()
+    if not media:
+        return HttpResponseRedirect("/")
+
+    if not (request.user == media.user or is_mediacms_editor(request.user) or is_mediacms_manager(request.user)):
+        return HttpResponseRedirect("/")
+
+    existing_requests = VideoTrimRequest.objects.filter(media=media, status__in=["initial", "running"]).exists()
+    if existing_requests:
+        return JsonResponse({"success": False, "error": "A trim request is already in progress for this video"}, status=400)
+
+    try:
+        data = json.loads(request.body)
+        video_trim_request = create_video_trim_request(media, data)
+        video_trim_task.delay(video_trim_request.id)
+        return JsonResponse({"success": True, "request_id": video_trim_request.id}, status=200)
+    except Exception:
+        return JsonResponse({"success": False, "error": "Incorrect request data"}, status=400)
+
+
+@login_required
+def edit_video(request):
+    friendly_token = request.GET.get("m", "").strip()
+    if not friendly_token:
+        return HttpResponseRedirect("/")
+
+    media = Media.objects.filter(friendly_token=friendly_token).first()
+    if not media:
+        return HttpResponseRedirect("/")
+
+    if not (request.user == media.user or is_mediacms_editor(request.user) or is_mediacms_manager(request.user)):
+        return HttpResponseRedirect("/")
+
+    if media.media_type != "video":
+        messages.add_message(request, messages.INFO, "Media is not video")
+        return HttpResponseRedirect(media.get_absolute_url())
+
+    if not settings.ALLOW_VIDEO_TRIMMER:
+        messages.add_message(request, messages.INFO, "Video Trimmer is not enabled")
+        return HttpResponseRedirect(media.get_absolute_url())
+
+    running_trim_request = VideoTrimRequest.objects.filter(media=media, status__in=["initial", "running"]).exists()
+    if running_trim_request:
+        messages.add_message(request, messages.INFO, "Video trim request is already running")
+        return HttpResponseRedirect(media.get_absolute_url())
+
+    media_file_path = media.trim_video_url
+    if not media_file_path:
+        messages.add_message(request, messages.INFO, "No MP4 source is available for the video trimmer yet")
+        return HttpResponseRedirect(media.get_absolute_url())
+
+    if media.encoding_status in ["pending", "running"]:
+        messages.add_message(request, messages.INFO, "Media encoding has not finished yet. Showing the best available source")
+
+    return render(
+        request,
+        "cms/edit_video.html",
+        {
+            "media_object": media,
+            "add_subtitle_url": media.add_subtitle_url,
+            "media_file_path": media_file_path,
+            "allow_video_trimmer": settings.ALLOW_VIDEO_TRIMMER,
+        },
     )
 
 def generate_wowza_token(stream, secret, token_name="wowzatoken", client_ip=None, start=0, end=0):
@@ -335,6 +418,23 @@ def generate_wowza_token(stream, secret, token_name="wowzatoken", client_ip=None
 
     params.sort()
     return "&".join(params)
+
+
+def _build_local_vod_playback_urls(media):
+    hls_master_file = ""
+    try:
+        hls_master_file = ((getattr(media, "hls_info", {}) or {}).get("master_file") or "").strip()
+    except Exception:
+        hls_master_file = ""
+
+    if hls_master_file:
+        return {"vod": {"url": hls_master_file, "token": None}}
+
+    original_media_url = (getattr(media, "original_media_url", None) or "").strip()
+    if original_media_url:
+        return {"vod": {"url": original_media_url, "token": None}}
+
+    return {}
 
 
 def embed_media(request):
@@ -411,17 +511,20 @@ def embed_media(request):
 
     # ES VOD si hls_file es vacío o null
     else:
-        vod_template = getattr(
-            settings,
-            "WOWZA_VOD_SMIL_PATH_TEMPLATE",
-            "mediavms-development/smil:{media_id}.smil/playlist.m3u8",
-        )
-        vod_path = vod_template.format(media_id=friendly_token)
-        url = f"https://{vod_host}/{vod_path}"
-        playback_urls["vod"] = {
-            "url": url,
-            "token": None,
-        }
+        if bool(getattr(settings, "VIDEO_PLAYBACK_USE_LOCAL_URLS", False)):
+            playback_urls = _build_local_vod_playback_urls(media)
+        else:
+            vod_template = getattr(
+                settings,
+                "WOWZA_VOD_SMIL_PATH_TEMPLATE",
+                "mediavms-development/smil:{media_id}.smil/playlist.m3u8",
+            )
+            vod_path = vod_template.format(media_id=friendly_token)
+            url = f"https://{vod_host}/{vod_path}"
+            playback_urls["vod"] = {
+                "url": url,
+                "token": None,
+            }
 
     if balancer_debug:
         playback_urls["_balancer"] = {
@@ -501,7 +604,8 @@ def manage_users(request):
 def manage_media(request):
     """List media management view"""
 
-    context = {}
+    categories = Category.objects.all().order_by("title").values_list("title", flat=True)
+    context = {"categories": list(categories)}
     return render(request, "cms/manage_media.html", context)
 
 
@@ -663,16 +767,19 @@ def view_media(request):
                     "token": token,
                 }
     else:
-        vod_template = getattr(
-            settings,
-            "WOWZA_VOD_SMIL_PATH_TEMPLATE",
-            "mediavms-development/smil:{media_id}.smil/playlist.m3u8",
-        )
-        vod_path = vod_template.format(media_id=friendly_token)
-        playback_urls["vod"] = {
-            "url": f"https://{vod_host}/{vod_path}",
-            "token": None,
-        }
+        if bool(getattr(settings, "VIDEO_PLAYBACK_USE_LOCAL_URLS", False)):
+            playback_urls = _build_local_vod_playback_urls(media)
+        else:
+            vod_template = getattr(
+                settings,
+                "WOWZA_VOD_SMIL_PATH_TEMPLATE",
+                "mediavms-development/smil:{media_id}.smil/playlist.m3u8",
+            )
+            vod_path = vod_template.format(media_id=friendly_token)
+            playback_urls["vod"] = {
+                "url": f"https://{vod_host}/{vod_path}",
+                "token": None,
+            }
 
     if balancer_debug:
         playback_urls["_balancer"] = {

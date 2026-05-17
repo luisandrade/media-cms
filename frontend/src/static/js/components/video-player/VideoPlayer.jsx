@@ -33,6 +33,24 @@ VideoPlayerError.propTypes = {
   errorMessage: PropTypes.string.isRequired,
 };
 
+function inferVideoSourceType(url) {
+  const normalizedUrl = (url ?? '').toString().split('?')[0].toLowerCase();
+
+  if (normalizedUrl.endsWith('.m3u8')) {
+    return 'application/x-mpegURL';
+  }
+
+  if (normalizedUrl.endsWith('.mp4')) {
+    return 'video/mp4';
+  }
+
+  if (normalizedUrl.endsWith('.webm')) {
+    return 'video/webm';
+  }
+
+  return 'application/x-mpegURL';
+}
+
 export function VideoPlayer(props) {
   console.log("props player embed", props);
   const videoElemRef = useRef(null);
@@ -132,18 +150,19 @@ export function VideoPlayer(props) {
       sources = [
         {
           src: finalUrl,
-          type: 'application/x-mpegURL'
+          type: inferVideoSourceType(finalUrl)
         }
       ];
     } else {
       const vodFromServer = props.playback_url_token?.vod?.url;
-      const vodUrl = vodFromServer || `https://scl.edge.grupoz.cl/mediavms-development/smil:${mediaIdSource}.smil/playlist.m3u8`;
-      sources = [
-        {
-          src: vodUrl,
-          type: 'application/x-mpegURL'
-        }
-      ]
+      sources = vodFromServer
+        ? [
+            {
+              src: vodFromServer,
+              type: inferVideoSourceType(vodFromServer)
+            }
+          ]
+        : []
     }
 
     const player = videojs(videoElemRef.current, {

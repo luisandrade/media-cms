@@ -28,6 +28,7 @@ class DownloadEntitlement(models.Model):
         indexes = [
             models.Index(fields=["user", "media", "status"]),
         ]
+        app_label = "payments"
 
 
 class Payment(models.Model):
@@ -72,3 +73,4 @@ class Payment(models.Model):
             models.Index(fields=["status", "created_at"]),
             models.Index(fields=["user", "media", "status"]),
         ]
+        app_label = "payments"

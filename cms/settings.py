@@ -16,7 +16,7 @@ TIME_ZONE = "Europe/London"
 
 # who can add media
 # valid options include 'all', 'email_verified', 'advancedUser'
-CAN_ADD_MEDIA = "advancedUser"
+CAN_ADD_MEDIA = "all"
 
 # who can comment
 # valid options include 'all', 'email_verified', 'advancedUser'
@@ -161,6 +161,14 @@ STATIC_ROOT = BASE_DIR + "/static/"
 # where uploaded + encoded media are stored
 MEDIA_ROOT = BASE_DIR + "/media_files/"
 
+_test_mode_env = (os.getenv("TEST_MODE", "") or "").strip().lower()
+TEST_MODE = _test_mode_env in {"1", "true", "yes", "y", "on"}
+
+# En modo test mantenemos uploads de video en el filesystem local y evitamos
+# entregar URLs VOD externas al frontend.
+VIDEO_UPLOADS_USE_LOCAL_STORAGE = TEST_MODE
+VIDEO_PLAYBACK_USE_LOCAL_URLS = TEST_MODE
+
 # these used to be os.path.join(MEDIA_ROOT, "folder/") but update to
 # Django 3.1.9 requires not absolute paths to be utilized...
 
@@ -253,7 +261,11 @@ CHUNKS_DIR = "chunks/"
 UPLOAD_MAX_FILES_NUMBER = 100
 CONCURRENT_UPLOADS = True
 CHUNKS_DONE_PARAM_NAME = "done"
-FILE_STORAGE = "django.core.files.storage.DefaultStorage"
+FILE_STORAGE = (
+    "django.core.files.storage.FileSystemStorage"
+    if VIDEO_UPLOADS_USE_LOCAL_STORAGE
+    else "django.core.files.storage.DefaultStorage"
+)
 
 X_FRAME_OPTIONS = "ALLOWALL"
 EMAIL_BACKEND = "djcelery_email.backends.CeleryEmailBackend"
@@ -269,7 +281,7 @@ POST_UPLOAD_AUTHOR_MESSAGE_UNLISTED_NO_COMMENTARY = ""
 CANNOT_ADD_MEDIA_MESSAGE = ""
 
 # mp4hls command, part of Bento4
-MP4HLS_COMMAND = "/home/mediacms.io/mediacms/Bento4-SDK-1-6-0-637.x86_64-unknown-linux/bin/mp4hls"
+MP4HLS_COMMAND = "/home/mediacms.io/mediacms/Bento4-SDK-1-6-0-641.x86_64-unknown-linux/bin/mp4hls"
 
 # highly experimental, related with remote workers
 ADMIN_TOKEN = ""
@@ -543,6 +555,7 @@ if GLOBAL_LOGIN_REQUIRED:
 
 # if True, only show original, don't perform any action on videos
 DO_NOT_TRANSCODE_VIDEO = False
+ALLOW_VIDEO_TRIMMER = True
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 

@@ -8,5 +8,5 @@
 {% block content %}<div id="page-embed" data-playback-urls='{{ playback_urls }}'></div>{% endblock content %}
 
 {% block bottomimports %}
-<script src="{% static "js/embed.js" %}"></script>
+<script src="{% static "js/embed.js" %}?v={{ VERSION }}"></script>
 {% endblock bottomimports %}

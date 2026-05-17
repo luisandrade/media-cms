@@ -1,4 +1,5 @@
 from django.conf import settings
+from version import VERSION
 
 from .frontend_translations import get_translation, get_translation_strings
 from .methods import is_mediacms_editor, is_mediacms_manager
@@ -34,6 +35,7 @@ def stuff(request):
     ret["RSS_URL"] = "/rss"
     ret["TRANSLATION"] = get_translation(request.LANGUAGE_CODE)
     ret["REPLACEMENTS"] = get_translation_strings(request.LANGUAGE_CODE)
+    ret["VERSION"] = VERSION
     if request.user.is_superuser:
         ret["DJANGO_ADMIN_URL"] = settings.DJANGO_ADMIN_URL
 

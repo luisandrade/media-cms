@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block headtitle %}{% blocktranslate trimmed %}Editar video{% endblocktranslate %} - {{ PORTAL_NAME }}{% endblock headtitle %}
+
+{% block topimports %}
+<link href="{% static 'video_editor/video-editor.css' %}" rel="preload" as="style">
+<link href="{% static 'video_editor/video-editor.css' %}" rel="stylesheet">
+{% blocktranslate trimmed asvar ve_play_preview %}Reproducir vista previa{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_stop_preview %}Detener vista previa{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_play %}Reproducir{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_pause %}Pausar{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_undo %}Deshacer{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_redo %}Rehacer{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_reset %}Restablecer{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_stop_segments %}Detener reproduccion de segmentos{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_play_segments %}Reproducir segmentos de forma continua{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_pause_video %}Pausar video{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_play_full_video %}Reproducir video completo{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_disabled_preview %}Deshabilitado durante la vista previa{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_undo_last %}Deshacer la ultima accion{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_redo_last %}Rehacer la ultima accion deshecha{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_reset_full_video %}Restablecer al video completo{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_clip_segments %}Segmentos del clip{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_segment_label %}Segmento{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_duration_label %}Duracion{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_delete_segment %}Eliminar segmento{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_delete_segment_tooltip %}Eliminar este segmento{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_no_segments %}Todavia no se han creado segmentos. Usa el boton de dividir para crear segmentos.{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_click_start %}Haz clic para empezar a editar...{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_tap_play %}Toca Reproducir para inicializar los controles de video{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_mute %}Silenciar{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_unmute %}Activar sonido{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_fullscreen %}Pantalla completa{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_toggle_fullscreen %}Alternar pantalla completa{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_close_modal %}Cerrar modal{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_save %}Guardar{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_save_changes %}Guardar cambios{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_save_changes_tooltip %}Guardar cambios{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_save_copy %}Guardar como copia{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_save_copy_tooltip %}Guardar como una copia nueva{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_save_segments %}Guardar segmentos{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_save_segments_tooltip %}Guardar segmentos como archivos separados{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_cancel %}Cancelar{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_confirm_save %}Confirmar guardado{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_confirm_save_copy %}Confirmar guardado como copia{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_save_as_new_copy %}Guardar como nueva copia{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_processing_video %}Procesando video{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_processing_wait %}Espera mientras se procesa tu video...{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_save_replace_warning %}Estas a punto de reemplazar el video original por esta version recortada. Esta accion no se puede deshacer.{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_save_copy_warning %}Estas a punto de guardar una copia nueva con tus ediciones. El video original permanecera igual. Encontraras el nuevo archivo en tu carpeta Mi contenido, con un nombre basado en el archivo original.{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_save_segments_warning %}Estas a punto de guardar cada segmento como un video independiente. Encontraras los archivos nuevos en tu carpeta Mi contenido, con un nombre basado en el archivo original.{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_success_title %}Video editado correctamente{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_success_default %}Procesamiento completado correctamente{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_redirect_prefix %}Seras redirigido a tu{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_media_page %}pagina del contenido{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_in %}en{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_seconds_suffix %}segundos.{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_segments_redirect_note %}Los nuevos videos apareceran en breve alli.{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_changes_redirect_note %}Los cambios del video pueden tardar unos minutos en aplicarse.{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_processing_error %}Error al procesar el video{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_processing_generic_error %}Ocurrio un error durante el procesamiento{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_processing_unexpected_error %}Ocurrio un error inesperado{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_saved_successfully %}Video guardado correctamente{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_saved_copy_successfully %}Video guardado como una copia nueva{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_segments_saved_successfully %}Se guardaron correctamente {count} segmentos{% endblocktranslate %}
+{% blocktranslate trimmed asvar ve_html5_video_fallback %}Tu navegador no admite video HTML5.{% endblocktranslate %}
+<script>
+window.VIDEO_EDITOR_BOOTSTRAP_DATA = {
+    videoUrl: "{{ media_file_path|escapejs }}",
+    mediaId: "{{ media_object.friendly_token|escapejs }}",
+    redirectURL: "{{ media_object.get_absolute_url|escapejs }}",
+    redirectUserMediaURL: "{{ media_object.user.get_absolute_url|escapejs }}"
+};
+
+window.MEDIA_DATA = window.VIDEO_EDITOR_BOOTSTRAP_DATA;
+
+window.VIDEO_EDITOR_I18N = {
+    exact: {
+        "Play Preview": "{{ ve_play_preview|escapejs }}",
+        "Stop Preview": "{{ ve_stop_preview|escapejs }}",
+        "Play": "{{ ve_play|escapejs }}",
+        "Pause": "{{ ve_pause|escapejs }}",
+        "Undo": "{{ ve_undo|escapejs }}",
+        "Redo": "{{ ve_redo|escapejs }}",
+        "Reset": "{{ ve_reset|escapejs }}",
+        "Stop segments playback": "{{ ve_stop_segments|escapejs }}",
+        "Play segments in one continuous flow": "{{ ve_play_segments|escapejs }}",
+        "Pause video": "{{ ve_pause_video|escapejs }}",
+        "Play full video": "{{ ve_play_full_video|escapejs }}",
+        "Disabled during preview": "{{ ve_disabled_preview|escapejs }}",
+        "Undo last action": "{{ ve_undo_last|escapejs }}",
+        "Redo last undone action": "{{ ve_redo_last|escapejs }}",
+        "Reset to full video": "{{ ve_reset_full_video|escapejs }}",
+        "Clip Segments": "{{ ve_clip_segments|escapejs }}",
+        "Delete Segment": "{{ ve_delete_segment|escapejs }}",
+        "Delete this segment": "{{ ve_delete_segment_tooltip|escapejs }}",
+        "No segments created yet. Use the split button to create segments.": "{{ ve_no_segments|escapejs }}",
+        "Click to start editing...": "{{ ve_click_start|escapejs }}",
+        "Tap Play to initialize video controls": "{{ ve_tap_play|escapejs }}",
+        "Mute": "{{ ve_mute|escapejs }}",
+        "Unmute": "{{ ve_unmute|escapejs }}",
+        "Fullscreen": "{{ ve_fullscreen|escapejs }}",
+        "Toggle fullscreen": "{{ ve_toggle_fullscreen|escapejs }}",
+        "Close modal": "{{ ve_close_modal|escapejs }}",
+        "Save": "{{ ve_save|escapejs }}",
+        "Save changes": "{{ ve_save_changes_tooltip|escapejs }}",
+        "Save Changes": "{{ ve_save_changes|escapejs }}",
+        "Save as Copy": "{{ ve_save_copy|escapejs }}",
+        "Save as a new copy": "{{ ve_save_copy_tooltip|escapejs }}",
+        "Save Segments": "{{ ve_save_segments|escapejs }}",
+        "Save segments as separate files": "{{ ve_save_segments_tooltip|escapejs }}",
+        "Cancel": "{{ ve_cancel|escapejs }}",
+        "Confirm Save": "{{ ve_confirm_save|escapejs }}",
+        "Confirm Save As Copy": "{{ ve_confirm_save_copy|escapejs }}",
+        "Save As New Copy": "{{ ve_save_as_new_copy|escapejs }}",
+        "Processing Video": "{{ ve_processing_video|escapejs }}",
+        "Please wait while your video is being processed...": "{{ ve_processing_wait|escapejs }}",
+        "You're about to replace the original video with this trimmed version. This can't be undone.": "{{ ve_save_replace_warning|escapejs }}",
+        "You're about to save a new copy with your edits. The original video will stay the same. Find the new file in your My Media folder - named after the original file.": "{{ ve_save_copy_warning|escapejs }}",
+        "You're about to save each segment as a separate video. Find the new files in your My Media folder - named after the original file.": "{{ ve_save_segments_warning|escapejs }}",
+        "Video Edited Successfully": "{{ ve_success_title|escapejs }}",
+        "Processing completed successfully!": "{{ ve_success_default|escapejs }}",
+        "You will be redirected to your": "{{ ve_redirect_prefix|escapejs }}",
+        "media page": "{{ ve_media_page|escapejs }}",
+        "in": "{{ ve_in|escapejs }}",
+        "The new video(s) will soon be there.": "{{ ve_segments_redirect_note|escapejs }}",
+        "Changes to the video might take a few minutes to be applied.": "{{ ve_changes_redirect_note|escapejs }}",
+        "Video Processing Error": "{{ ve_processing_error|escapejs }}",
+        "An error occurred during processing": "{{ ve_processing_generic_error|escapejs }}",
+        "An unexpected error occurred": "{{ ve_processing_unexpected_error|escapejs }}",
+        "Video saved successfully!": "{{ ve_saved_successfully|escapejs }}",
+        "Video saved as a new copy!": "{{ ve_saved_copy_successfully|escapejs }}",
+        "Your browser doesn't support HTML5 video.": "{{ ve_html5_video_fallback|escapejs }}"
+    },
+    segmentLabel: "{{ ve_segment_label|escapejs }}",
+    durationLabel: "{{ ve_duration_label|escapejs }}",
+    zoomLabel: "Zoom",
+    secondsSuffix: "{{ ve_seconds_suffix|escapejs }}",
+    segmentsSavedTemplate: "{{ ve_segments_saved_successfully|escapejs }}"
+};
+
+(function () {
+    function preserveSpacing(original, translated) {
+        var match = original.match(/^(\s*)([\s\S]*?)(\s*)$/);
+        if (!match) {
+            return translated;
+        }
+
+        return match[1] + translated + match[3];
+    }
+
+    function translateValue(value) {
+        var i18n = window.VIDEO_EDITOR_I18N;
+        if (!i18n || !value) {
+            return value;
+        }
+
+        var normalized = value.replace(/\s+/g, " ").trim();
+        if (!normalized) {
+            return value;
+        }
+
+        if (Object.prototype.hasOwnProperty.call(i18n.exact, normalized)) {
+            return preserveSpacing(value, i18n.exact[normalized]);
+        }
+
+        var match = normalized.match(/^Segment\s+(\d+)$/);
+        if (match) {
+            return preserveSpacing(value, i18n.segmentLabel + " " + match[1]);
+        }
+
+        match = normalized.match(/^Duration:\s*(.+)$/);
+        if (match) {
+            return preserveSpacing(value, i18n.durationLabel + ": " + match[1]);
+        }
+
+        match = normalized.match(/^(\d+)\s+segments saved successfully!?$/);
+        if (match) {
+            return preserveSpacing(
+                value,
+                i18n.segmentsSavedTemplate.replace("{count}", match[1])
+            );
+        }
+
+        match = normalized.match(/^Zoom\s+(\d+)x$/);
+        if (match) {
+            return preserveSpacing(value, i18n.zoomLabel + " " + match[1] + "x");
+        }
+
+        match = normalized.match(/^(\d+)\s+seconds\.$/);
+        if (match) {
+            return preserveSpacing(value, match[1] + " " + i18n.secondsSuffix);
+        }
+
+        return value;
+    }
+
+    function translateNodeText(root) {
+        if (!root) {
+            return;
+        }
+
+        var walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+        var textNode;
+        while ((textNode = walker.nextNode())) {
+            if (!textNode.nodeValue || !textNode.parentElement) {
+                continue;
+            }
+
+            var translated = translateValue(textNode.nodeValue);
+            if (translated !== textNode.nodeValue) {
+                textNode.nodeValue = translated;
+            }
+        }
+    }
+
+    function translateAttributes(root) {
+        if (!root || !root.querySelectorAll) {
+            return;
+        }
+
+        var elements = root.querySelectorAll("*");
+        var attributes = ["aria-label", "data-tooltip", "title", "placeholder"];
+
+        elements.forEach(function (element) {
+            attributes.forEach(function (attribute) {
+                var currentValue = element.getAttribute(attribute);
+                if (!currentValue) {
+                    return;
+                }
+
+                var translatedValue = translateValue(currentValue);
+                if (translatedValue !== currentValue) {
+                    element.setAttribute(attribute, translatedValue);
+                }
+            });
+        });
+    }
+
+    function localizeEditor(root) {
+        translateNodeText(root);
+        translateAttributes(root);
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        var root = document.getElementById("video-editor-trim-root");
+        if (!root) {
+            return;
+        }
+
+        localizeEditor(root);
+
+        var observer = new MutationObserver(function (mutations) {
+            mutations.forEach(function (mutation) {
+                if (mutation.type === "characterData" && mutation.target.parentElement) {
+                    var translatedText = translateValue(mutation.target.nodeValue || "");
+                    if (translatedText !== mutation.target.nodeValue) {
+                        mutation.target.nodeValue = translatedText;
+                    }
+                    return;
+                }
+
+                mutation.addedNodes.forEach(function (node) {
+                    if (node.nodeType === Node.TEXT_NODE) {
+                        var translatedNodeText = translateValue(node.nodeValue || "");
+                        if (translatedNodeText !== node.nodeValue) {
+                            node.nodeValue = translatedNodeText;
+                        }
+                        return;
+                    }
+
+                    if (node.nodeType === Node.ELEMENT_NODE) {
+                        localizeEditor(node);
+                    }
+                });
+            });
+        });
+
+        observer.observe(root, {
+            childList: true,
+            subtree: true,
+            characterData: true
+        });
+    });
+}());
+</script>
+<script src="{% static 'video_editor/video-editor.js' %}"></script>
+<script>
+window.MEDIA_DATA = window.VIDEO_EDITOR_BOOTSTRAP_DATA;
+</script>
+{% endblock topimports %}
+
+{% block innercontent %}
+<div class="user-action-form-wrap">
+    <div class="user-action-form-inner" style="max-width: 1280px; margin: 0 auto; padding: 20px; border-radius: 8px; box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1); background: #fff;">
+        {% include "cms/media_nav.html" with active_tab="trim" %}
+        <div id="video-editor-trim-root"></div>
+    </div>
+</div>
+{% endblock innercontent %}

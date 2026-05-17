@@ -3,7 +3,10 @@ from __future__ import annotations
 from django.conf import settings
 from django.core.mail import EmailMessage
 
-from .models import Payment
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .models import Payment
 
 
 def send_download_purchase_confirmation_email(*, payment: Payment) -> bool:

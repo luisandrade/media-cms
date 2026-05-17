@@ -787,6 +787,170 @@ def clean_query(query):
     return query.lower()
 
 
+def timestamp_to_seconds(timestamp):
+    """Convert a HH:MM:SS.mmm timestamp to seconds."""
+
+    try:
+        parts = timestamp.split(":")
+        if len(parts) != 3:
+            return 0
+        hours = int(parts[0])
+        minutes = int(parts[1])
+        seconds = float(parts[2])
+        return hours * 3600 + minutes * 60 + seconds
+    except (TypeError, ValueError):
+        return 0
+
+
+def seconds_to_timestamp(seconds):
+    """Convert seconds to HH:MM:SS.mmm."""
+
+    hours = int(seconds // 3600)
+    minutes = int((seconds % 3600) // 60)
+    seconds_remainder = seconds % 60
+    seconds_int = int(seconds_remainder)
+    milliseconds = int((seconds_remainder - seconds_int) * 1000)
+    return f"{hours:02d}:{minutes:02d}:{seconds_int:02d}.{milliseconds:03d}"
+
+
+def get_trim_timestamps(media_file_path, timestamps_list, run_ffprobe=False):
+    """Prepare trim ranges, optionally aligning starts to I-frames."""
+
+    if not isinstance(timestamps_list, list):
+        return []
+
+    timestamps_results = []
+    timestamps_to_process = []
+
+    for item in timestamps_list:
+        if isinstance(item, dict) and "startTime" in item and "endTime" in item:
+            timestamps_to_process.append(item)
+
+    if not timestamps_to_process:
+        return []
+
+    if len(timestamps_to_process) == 1 and timestamps_to_process[0]["startTime"] == "00:00:00.000":
+        return timestamps_list
+
+    for item in timestamps_to_process:
+        start_time = item["startTime"]
+        end_time = item["endTime"]
+        adjusted_start_time = start_time
+        i_frames = []
+
+        if run_ffprobe:
+            seconds_to_subtract = 10
+            start_seconds = timestamp_to_seconds(start_time)
+            search_start = max(0, start_seconds - seconds_to_subtract)
+
+            cmd = [
+                settings.FFPROBE_COMMAND,
+                "-v",
+                "error",
+                "-select_streams",
+                "v:0",
+                "-show_entries",
+                "frame=pts_time,pict_type",
+                "-of",
+                "csv=p=0",
+                "-read_intervals",
+                f"{search_start}%{start_time}",
+                media_file_path,
+            ]
+            stdout = run_command(cmd).get("out")
+
+            if stdout:
+                for line in stdout.strip().split("\n"):
+                    if line and line.endswith(",I"):
+                        i_frames.append(line.replace(",I", ""))
+
+            if i_frames:
+                adjusted_start_time = seconds_to_timestamp(float(i_frames[-1]))
+
+        timestamps_results.append({"startTime": adjusted_start_time, "endTime": end_time})
+
+    return timestamps_results
+
+
+def trim_video_method(media_file_path, timestamps_list):
+    """Trim a video file in place using ffmpeg copy."""
+
+    if not isinstance(timestamps_list, list) or not timestamps_list:
+        return False
+
+    if not os.path.exists(media_file_path):
+        return False
+
+    with tempfile.TemporaryDirectory(dir=settings.TEMP_DIRECTORY) as temp_dir:
+        output_file = os.path.join(temp_dir, "output.mp4")
+        segment_files = []
+
+        for index, item in enumerate(timestamps_list):
+            start_time = timestamp_to_seconds(item["startTime"])
+            end_time = timestamp_to_seconds(item["endTime"])
+            duration = end_time - start_time
+            if duration <= 0:
+                return False
+
+            segment_file = output_file if len(timestamps_list) == 1 else os.path.join(temp_dir, f"segment_{index}.mp4")
+            cmd = [
+                settings.FFMPEG_COMMAND,
+                "-y",
+                "-ss",
+                str(item["startTime"]),
+                "-i",
+                media_file_path,
+                "-t",
+                str(duration),
+                "-c",
+                "copy",
+                "-avoid_negative_ts",
+                "1",
+                segment_file,
+            ]
+            run_command(cmd)
+
+            if not os.path.exists(segment_file) or os.path.getsize(segment_file) == 0:
+                return False
+
+            if len(timestamps_list) > 1:
+                segment_files.append(segment_file)
+
+        if len(timestamps_list) > 1:
+            if not segment_files:
+                return False
+
+            concat_list_path = os.path.join(temp_dir, "concat_list.txt")
+            with open(concat_list_path, "w") as file_handle:
+                for segment in segment_files:
+                    file_handle.write(f"file '{segment}'\n")
+
+            concat_cmd = [
+                settings.FFMPEG_COMMAND,
+                "-y",
+                "-f",
+                "concat",
+                "-safe",
+                "0",
+                "-i",
+                concat_list_path,
+                "-c",
+                "copy",
+                output_file,
+            ]
+            run_command(concat_cmd)
+
+            if not os.path.exists(output_file) or os.path.getsize(output_file) == 0:
+                return False
+
+        try:
+            rm_file(media_file_path)
+            shutil.copy2(output_file, media_file_path)
+            return True
+        except Exception:
+            return False
+
+
 def get_alphanumeric_only(string):
     """Returns a query that contains only alphanumeric characters
     This include characters other than the English alphabet too

@@ -651,7 +651,15 @@ class Media(models.Model):
 
         if encoding and encoding.status == "success" and encoding.profile.codec == "h264" and action == "add":
             from . import tasks
+
             tasks.create_hls(self.friendly_token)
+
+            if not encoding.chunk:
+                trim_request = VideoTrimRequest.objects.filter(media=self, status="running").first()
+                if trim_request:
+                    tasks.post_trim_action(self.friendly_token)
+                    trim_request.status = "success"
+                    trim_request.save(update_fields=["status"])
 
 
         return True
@@ -674,6 +682,34 @@ class Media(models.Model):
         self.encoding_status = encoding_status
 
         return True
+
+    @property
+    def trim_video_url(self):
+        if self.media_type != "video":
+            return None
+
+        encoding = self.encodings.filter(status="success", profile__extension="mp4", chunk=False).order_by("-profile__resolution").first()
+        if encoding:
+            return helpers.url_from_path(encoding.media_file.path)
+
+        if os.path.splitext(self.media_file.name)[1].lower() == ".mp4":
+            return helpers.url_from_path(self.media_file.path)
+
+        return None
+
+    @property
+    def trim_video_path(self):
+        if self.media_type != "video":
+            return None
+
+        encoding = self.encodings.filter(status="success", profile__extension="mp4", chunk=False).order_by("-profile__resolution").first()
+        if encoding:
+            return encoding.media_file.path
+
+        if os.path.splitext(self.media_file.name)[1].lower() == ".mp4":
+            return self.media_file.path
+
+        return None
 
     @property
     def encodings_info(self, full=False):
@@ -966,6 +1002,38 @@ class Media(models.Model):
                 }
             )
         return ret
+
+
+class VideoTrimRequest(models.Model):
+    """Track asynchronous trim operations for a media item."""
+
+    VIDEO_TRIM_STATUS = (
+        ("initial", "Initial"),
+        ("running", "Running"),
+        ("success", "Success"),
+        ("fail", "Fail"),
+    )
+
+    VIDEO_ACTION_CHOICES = (
+        ("replace", "Replace Original"),
+        ("save_new", "Save as New"),
+        ("create_segments", "Create Segments"),
+    )
+
+    TRIM_STYLE_CHOICES = (
+        ("no_encoding", "No Encoding"),
+        ("precise", "Precise"),
+    )
+
+    media = models.ForeignKey("Media", on_delete=models.CASCADE, related_name="trim_requests")
+    status = models.CharField(max_length=20, choices=VIDEO_TRIM_STATUS, default="initial")
+    add_date = models.DateTimeField(auto_now_add=True)
+    video_action = models.CharField(max_length=20, choices=VIDEO_ACTION_CHOICES)
+    media_trim_style = models.CharField(max_length=20, choices=TRIM_STYLE_CHOICES, default="no_encoding")
+    timestamps = models.JSONField(null=False, blank=False, help_text="Timestamps for trimming")
+
+    def __str__(self):
+        return f"Trim request for {self.media.title} ({self.status})"
 
 
 class License(models.Model):

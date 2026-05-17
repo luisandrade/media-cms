@@ -29,7 +29,7 @@ done
 
 # update configuration files
 
-sed -i 's/\/home\/mediacms\.io\/mediacms\/Bento4-SDK-1-6-0-637\.x86_64-unknown-linux\/bin\/mp4hls/\/srv\/mediacms\/bento4\/bin\/mp4hls/g' cms/settings.py
+sed -i 's/\/home\/mediacms\.io\/mediacms\/Bento4-SDK-1-6-0-641\.x86_64-unknown-linux\/bin\/mp4hls/\/srv\/mediacms\/bento4\/bin\/mp4hls/g' cms/settings.py
 sed -i 's/www-data/nginx/g;s/\/home\/mediacms\.io\/mediacms\/logs/\/var\/log\/mediacms/g;s/\/home\/mediacms\.io\/mediacms/\/srv\/mediacms/g;s/\/home\/mediacms\.io\/bin/\/srv\/mediacms\/virtualenv\/bin/g' deploy/local_install/celery_*.service
 sed -i 's/\/home\/mediacms\.io\/mediacms/\/srv\/mediacms/g' deploy/local_install/mediacms.io
 sed -i 's/\/home\/mediacms\.io\/bin/\/srv\/mediacms\/virtualenv\/bin/g;s/\/home\/mediacms\.io\/mediacms/\/srv\/mediacms/g' deploy/local_install/mediacms.service
@@ -202,8 +202,8 @@ while true ; do
 		;;
 	[dD*] )
 		cd /srv/mediacms/
-		wget http://zebulon.bok.net/Bento4/binaries/Bento4-SDK-1-6-0-637.x86_64-unknown-linux.zip
-		bsdtar -xf Bento4-SDK-1-6-0-637.x86_64-unknown-linux.zip -s '/Bento4-SDK-1-6-0-637.x86_64-unknown-linux/bento4/'
+		wget https://www.bok.net/Bento4/binaries/Bento4-SDK-1-6-0-641.x86_64-unknown-linux.zip
+		bsdtar -xf Bento4-SDK-1-6-0-641.x86_64-unknown-linux.zip -s '/Bento4-SDK-1-6-0-641.x86_64-unknown-linux/bento4/'
 
 		break
 		;;
