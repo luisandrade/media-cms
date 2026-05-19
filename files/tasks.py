@@ -50,6 +50,40 @@ ERRORS_LIST = [
 ]
 
 
+@task(name="sync_live_record_media_task", queue="short_tasks")
+def sync_live_record_media_task():
+    if not getattr(settings, "LIVE_RECORD_SYNC_ENABLED", False):
+        return {"created": 0, "updated": 0, "skipped": 0, "reason": "disabled"}
+
+    username = (getattr(settings, "LIVE_RECORD_SYNC_USERNAME", "") or "").strip()
+    if not username:
+        logger.warning("LIVE_RECORD_SYNC_USERNAME is not configured")
+        return {"created": 0, "updated": 0, "skipped": 0, "reason": "missing_username"}
+
+    try:
+        user = User.objects.get(username=username)
+    except User.DoesNotExist:
+        logger.warning("LIVE_RECORD_SYNC_USERNAME '%s' does not exist", username)
+        return {"created": 0, "updated": 0, "skipped": 0, "reason": "missing_user"}
+
+    from .methods import sync_live_record_media
+
+    result = sync_live_record_media(
+        user=user,
+        folder=getattr(settings, "LIVE_RECORD_SYNC_FOLDER", None),
+        publish=getattr(settings, "LIVE_RECORD_SYNC_PUBLISH", True),
+        reviewed=getattr(settings, "LIVE_RECORD_SYNC_REVIEWED", True),
+    )
+
+    summary = {
+        "created": len(result["created"]),
+        "updated": len(result["updated"]),
+        "skipped": len(result["skipped"]),
+    }
+    logger.info("live_record sync summary: %s", summary)
+    return summary
+
+
 def handle_pending_running_encodings(media):
     """Drop unfinished encodings before trimming files in place."""
 

@@ -124,6 +124,15 @@ export function VideoPlayer(props) {
     let sources;
     const mediaIdSource = props.url.split('m=')[1];
 
+    const normalizedPropSources = Array.isArray(props.sources)
+      ? props.sources
+          .filter((source) => !!source?.src)
+          .map((source) => ({
+            ...source,
+            type: source.type || inferVideoSourceType(source.src),
+          }))
+      : [];
+
     if (props.stream !== '') {
       const extractStreamKey = (url) => {
         try {
@@ -155,14 +164,24 @@ export function VideoPlayer(props) {
       ];
     } else {
       const vodFromServer = props.playback_url_token?.vod?.url;
-      sources = vodFromServer
-        ? [
-            {
+          sources = [...normalizedPropSources];
+
+          if (vodFromServer) {
+            const hlsSourceIndex = sources.findIndex((source) => inferVideoSourceType(source.src) === 'application/x-mpegURL');
+            const tokenizedVodSource = {
               src: vodFromServer,
               type: inferVideoSourceType(vodFromServer)
+            };
+
+            if (hlsSourceIndex >= 0) {
+              sources[hlsSourceIndex] = {
+                ...sources[hlsSourceIndex],
+                ...tokenizedVodSource,
+              };
+            } else {
+              sources.unshift(tokenizedVodSource);
             }
-          ]
-        : []
+          }
     }
 
     const player = videojs(videoElemRef.current, {

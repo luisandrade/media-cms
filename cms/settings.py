@@ -177,6 +177,11 @@ MEDIA_ENCODING_DIR = "encoded/"
 THUMBNAIL_UPLOAD_DIR = f"{MEDIA_UPLOAD_DIR}/thumbnails/"
 SUBTITLES_UPLOAD_DIR = f"{MEDIA_UPLOAD_DIR}/subtitles/"
 HLS_DIR = os.path.join(MEDIA_ROOT, "hls/")
+LIVE_RECORD_SYNC_ENABLED = (os.getenv("LIVE_RECORD_SYNC_ENABLED", "true") or "").strip().lower() in {"1", "true", "yes", "y", "on"}
+LIVE_RECORD_SYNC_USERNAME = os.getenv("LIVE_RECORD_SYNC_USERNAME", os.getenv("ADMIN_USER", "admin"))
+LIVE_RECORD_SYNC_FOLDER = os.getenv("LIVE_RECORD_SYNC_FOLDER", os.path.join(MEDIA_ROOT, "live_record"))
+LIVE_RECORD_SYNC_PUBLISH = (os.getenv("LIVE_RECORD_SYNC_PUBLISH", "true") or "").strip().lower() in {"1", "true", "yes", "y", "on"}
+LIVE_RECORD_SYNC_REVIEWED = (os.getenv("LIVE_RECORD_SYNC_REVIEWED", "true") or "").strip().lower() in {"1", "true", "yes", "y", "on"}
 
 FFMPEG_COMMAND = "ffmpeg"  # this is the path
 FFPROBE_COMMAND = "ffprobe"  # this is the path
@@ -501,6 +506,12 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": crontab(minute=2, hour="*/30"),
     },
 }
+
+if LIVE_RECORD_SYNC_ENABLED:
+    CELERY_BEAT_SCHEDULE["sync_live_record_media_task"] = {
+        "task": "sync_live_record_media_task",
+        "schedule": crontab(minute="*"),
+    }
 # TODO: beat, delete chunks from media root
 # chunks_dir after xx days...(also uploads_dir)
 

@@ -316,6 +316,7 @@ def edit_media(request):
         "cms/edit_media.html",
         {
             "form": form,
+            "media_object": media,
             "add_subtitle_url": media.add_subtitle_url,
             "allow_video_trimmer": settings.ALLOW_VIDEO_TRIMMER,
         },
@@ -864,7 +865,7 @@ class LiveList(APIView):
             if folder_param == "live_record":
                 media = Media.objects.filter(
                     basic_query,
-                    media_file__contains="/live_record/",
+                    media_file__contains="live_record/",
                 ).order_by("-add_date")
             else:
                 hls_filter = ~Q(stream="") & ~Q(stream__isnull=True)

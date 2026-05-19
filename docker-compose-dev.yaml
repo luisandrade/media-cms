@@ -90,6 +90,20 @@ services:
       TEST_MODE: ${TEST_MODE:-True}
     depends_on:
       - web
+  celery_beat:
+    image: mediacms/mediacms-dev:latest
+    volumes:
+      - ./:/home/mediacms.io/mediacms/
+    environment:
+      ENABLE_UWSGI: 'no'
+      ENABLE_NGINX: 'no'
+      ENABLE_CELERY_SHORT: 'no'
+      ENABLE_CELERY_LONG: 'no'
+      ENABLE_MIGRATIONS: 'no'
+      DEVELOPMENT_MODE: True
+      TEST_MODE: ${TEST_MODE:-True}
+    depends_on:
+      - web
   pgadmin:
     image: dpage/pgadmin4
     restart: always

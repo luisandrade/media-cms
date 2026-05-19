@@ -6,50 +6,6 @@
 {% block topimports %}
 <link href="{% static 'video_editor/video-editor.css' %}" rel="preload" as="style">
 <link href="{% static 'video_editor/video-editor.css' %}" rel="stylesheet">
-<style>
-    #video-editor-trim-root {
-        --video-editor-theme-color: rgb(0 36 100 / 1);
-        --video-editor-theme-color-hover: rgb(0 25 70 / 1);
-    }
-
-    #video-editor-trim-root .video-progress-fill,
-    #video-editor-trim-root .video-scrubber {
-        background-color: var(--video-editor-theme-color);
-    }
-
-    #video-editor-trim-root .video-progress.dragging .video-scrubber {
-        box-shadow: 0 0 8px rgb(0 36 100 / 0.6);
-    }
-
-    #video-editor-trim-root .save-button,
-    #video-editor-trim-root .save-copy-button,
-    #video-editor-trim-root .save-segments-button,
-    #video-editor-trim-root .modal-button-primary,
-    #video-editor-trim-root .modal-choice-button,
-    #video-editor-trim-root .centered-choice {
-        background-color: var(--video-editor-theme-color);
-    }
-
-    #video-editor-trim-root .save-button:hover,
-    #video-editor-trim-root .save-copy-button:hover,
-    #video-editor-trim-root .save-segments-button:hover,
-    #video-editor-trim-root .modal-button-primary:hover,
-    #video-editor-trim-root .modal-choice-button:hover,
-    #video-editor-trim-root .centered-choice:hover {
-        background-color: var(--video-editor-theme-color-hover);
-    }
-
-    #video-editor-trim-root .spinner {
-        border-top-color: var(--video-editor-theme-color);
-    }
-
-    #video-editor-trim-root .countdown,
-    #video-editor-trim-root .play-button,
-    #video-editor-trim-root .preview-button,
-    #video-editor-trim-root .button-group button:hover:not(:disabled) {
-        color: var(--video-editor-theme-color);
-    }
-</style>
 {% blocktranslate trimmed asvar ve_play_preview %}Reproducir vista previa{% endblocktranslate %}
 {% blocktranslate trimmed asvar ve_stop_preview %}Detener vista previa{% endblocktranslate %}
 {% blocktranslate trimmed asvar ve_play %}Reproducir{% endblocktranslate %}
@@ -337,8 +293,8 @@ window.MEDIA_DATA = window.VIDEO_EDITOR_BOOTSTRAP_DATA;
 
 {% block innercontent %}
 <div class="user-action-form-wrap">
-    <div class="user-action-form-inner" style="max-width: 1280px; margin: 0 auto; padding: 20px; border-radius: 8px; box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1); background: #fff;">
-        {% include "cms/media_nav.html" with active_tab="trim" %}
+    {% include "cms/media_nav.html" with active_tab="trim" %}
+    <div class="user-action-form-inner" style="max-width: 1280px; margin: 0 auto; padding: 20px; border-radius: 8px; box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);">
         <div id="video-editor-trim-root"></div>
     </div>
 </div>

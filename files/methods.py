@@ -3,6 +3,7 @@
 
 import itertools
 import logging
+import os
 import random
 import re
 from datetime import datetime
@@ -17,9 +18,133 @@ from django.utils import timezone
 from cms import celery_app
 
 from . import models
-from .helpers import mask_ip
+from .helpers import get_file_type, mask_ip
 
 logger = logging.getLogger(__name__)
+
+
+def _requeue_live_record_media(media):
+    if media.media_type != "video":
+        return False
+
+    has_real_encodings = media.encodings.exclude(profile__extension="gif").filter(chunk=False).exists()
+    if has_real_encodings:
+        return False
+
+    media.set_media_type(save=False)
+    if settings.DO_NOT_TRANSCODE_VIDEO:
+        media.encoding_status = "success"
+    else:
+        media.encoding_status = "pending"
+
+    media.listable = False
+    media.save(
+        update_fields=[
+            "listable",
+            "media_type",
+            "duration",
+            "media_info",
+            "video_height",
+            "size",
+            "md5sum",
+            "encoding_status",
+        ]
+    )
+
+    if settings.DO_NOT_TRANSCODE_VIDEO:
+        media.produce_sprite_from_video()
+    else:
+        media.produce_sprite_from_video()
+        media.encode(force=False)
+
+    return True
+
+
+def _update_live_record_media(media, publish=False, reviewed=True):
+    media.is_reviewed = reviewed
+    if publish:
+        media.state = "public"
+
+    media.listable = media.state == "public" and media.encoding_status == "success" and media.is_reviewed is True
+    media.save(update_fields=["state", "is_reviewed", "listable"])
+
+    _requeue_live_record_media(media)
+
+
+def sync_live_record_media(user, folder=None, publish=False, reviewed=True):
+    """Create Media rows for files already present inside live_record.
+
+    Files are registered in-place, keeping their path relative to MEDIA_ROOT,
+    so the recorded section can target that folder directly.
+    """
+
+    folder = folder or os.path.join(settings.MEDIA_ROOT, "live_record")
+    folder = os.path.realpath(folder)
+    media_root = os.path.realpath(settings.MEDIA_ROOT)
+
+    if not folder.startswith(media_root):
+        raise ValueError("Folder must be inside MEDIA_ROOT")
+
+    result = {
+        "created": [],
+        "updated": [],
+        "skipped": [],
+    }
+
+    if not os.path.isdir(folder):
+        return result
+
+    channel = user.channels.order_by("add_date").first()
+
+    for dirpath, _, filenames in os.walk(folder):
+        for filename in sorted(filenames):
+            absolute_path = os.path.join(dirpath, filename)
+
+            if not os.path.isfile(absolute_path):
+                continue
+
+            media_kind = get_file_type(absolute_path)
+            if media_kind not in {"video", "audio", "image", "pdf"}:
+                result["skipped"].append({
+                    "path": absolute_path,
+                    "reason": "unsupported",
+                })
+                continue
+
+            relative_path = os.path.relpath(absolute_path, settings.MEDIA_ROOT).replace(os.sep, "/")
+
+            existing_media = models.Media.objects.filter(media_file=relative_path).first()
+            if existing_media:
+                _update_live_record_media(existing_media, publish=publish, reviewed=reviewed)
+                result["updated"].append(existing_media)
+                result["skipped"].append({
+                    "path": relative_path,
+                    "reason": "already_registered",
+                })
+                continue
+
+            modified_at = datetime.fromtimestamp(
+                os.path.getmtime(absolute_path),
+                tz=timezone.get_current_timezone(),
+            )
+
+            media = models.Media(
+                user=user,
+                channel=channel,
+                media_file=relative_path,
+                title=os.path.splitext(filename)[0][:99],
+                add_date=modified_at,
+                is_reviewed=reviewed,
+            )
+
+            if publish:
+                media.state = "public"
+
+            media.save()
+            _update_live_record_media(media, publish=publish, reviewed=reviewed)
+            result["created"].append(media)
+
+    return result
 
 
 def get_user_or_session(request):
