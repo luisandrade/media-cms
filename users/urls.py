@@ -16,6 +16,11 @@ urlpatterns = [
         name="get_user_live",
     ),
     re_path(
+        r"^user/(?P<username>[\w@.]*)/recorded$",
+        views.view_user_recorded,
+        name="get_user_recorded",
+    ),
+    re_path(
         r"^user/(?P<username>[\w@.]*)/playlists$",
         views.view_user_playlists,
         name="get_user_playlists",

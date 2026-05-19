@@ -1,4 +1,6 @@
 from django.conf import settings
+from urllib.parse import urlencode
+
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import serializers
@@ -165,6 +167,13 @@ class SingleMediaSerializer(serializers.ModelSerializer):
             return None
         return getattr(settings, "VIDEO_DOWNLOAD_CURRENCY", "CLP")
 
+    def _auth_redirect_url(self, target_url):
+        request = self.context.get("request")
+        if not request:
+            return target_url
+        login_url = request.build_absolute_uri(reverse("account_login"))
+        return f"{login_url}?{urlencode({'next': target_url})}"
+
     def get_download_checkout_url(self, obj):
         request = self.context.get("request")
         if not request:
@@ -173,7 +182,10 @@ class SingleMediaSerializer(serializers.ModelSerializer):
             return None
         if self._user_entitled(obj):
             return None
-        return request.build_absolute_uri(reverse("video_download_checkout", args=[obj.friendly_token]))
+        checkout_url = request.build_absolute_uri(reverse("video_download_checkout", args=[obj.friendly_token]))
+        if not getattr(request, "user", None) or not request.user.is_authenticated:
+            return self._auth_redirect_url(checkout_url)
+        return checkout_url
 
     def get_download_options(self, obj):
         request = self.context.get("request")
@@ -262,7 +274,10 @@ class SingleMediaSerializer(serializers.ModelSerializer):
             return None
         if self._user_entitled(obj):
             return None
-        return request.build_absolute_uri(reverse("video_stream_checkout", args=[obj.friendly_token]))
+        checkout_url = request.build_absolute_uri(reverse("video_stream_checkout", args=[obj.friendly_token]))
+        if not getattr(request, "user", None) or not request.user.is_authenticated:
+            return self._auth_redirect_url(checkout_url)
+        return checkout_url
 
     def get_stream(self, obj):
         # Para streams pagos, ocultar URL si no hay entitlement.

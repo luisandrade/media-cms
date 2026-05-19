@@ -49,10 +49,12 @@ export function config(glbl) {
           about: glbl.user.pages.about,
           playlists: glbl.user.pages.playlists,
           live: glbl.user.pages.live,
+          recorded: glbl.user.pages.recorded,
         }
       : {
           media: glbl.site.url.replace(/\/$/, '') + '/user/' + glbl.profileId,
           live: glbl.site.url.replace(/\/$/, '') + '/user/' + glbl.profileId + '/live',
+          recorded: glbl.site.url.replace(/\/$/, '') + '/user/' + glbl.profileId + '/recorded',
           about: glbl.site.url.replace(/\/$/, '') + '/user/' + glbl.profileId + '/about',
           playlists: glbl.site.url.replace(/\/$/, '') + '/user/' + glbl.profileId + '/playlists',
         },

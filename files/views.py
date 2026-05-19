@@ -87,6 +87,11 @@ logger = logging.getLogger(__name__)
 
 VALID_USER_ACTIONS = [action for action, name in USER_MEDIA_ACTIONS]
 
+def portal_login_required(view_func):
+    if getattr(settings, "GLOBAL_LOGIN_REQUIRED", False):
+        return login_required(view_func)
+    return view_func
+
 
 def about(request):
     """About view"""
@@ -107,7 +112,7 @@ def setlanguage(request):
     return render(request, "cms/set_language.html", context)
 
 
-@login_required
+@portal_login_required
 def add_subtitle(request):
     """Add subtitle view"""
 
@@ -142,7 +147,7 @@ def add_subtitle(request):
     return render(request, "cms/add_subtitle.html", context)
 
 
-@login_required
+@portal_login_required
 def edit_subtitle(request):
     subtitle_id = request.GET.get("id", "").strip()
     action = request.GET.get("action", "").strip()
@@ -188,14 +193,14 @@ def edit_subtitle(request):
         return HttpResponseRedirect(subtitle.media.get_absolute_url())
     return render(request, "cms/edit_subtitle.html", context)
 
-@login_required
+@portal_login_required
 def categories(request):
     """List categories view"""
 
     context = {}
     return render(request, "cms/categories.html", context)
 
-@login_required
+@portal_login_required
 def create_add_ads_tag(request):
     error = None
 
@@ -213,9 +218,6 @@ def create_add_ads_tag(request):
         'form': form,
         'error': error,
     }
-
-    return render(request, 'cms/ads.html', context)
-
 def contact(request):
     """Contact view"""
 
@@ -248,19 +250,17 @@ def contact(request):
                 message,
             )
             email = EmailMessage(
-                title,
                 msg,
                 settings.DEFAULT_FROM_EMAIL,
                 settings.ADMIN_EMAIL_LIST,
                 reply_to=[from_email],
             )
             email.send(fail_silently=True)
-            success_msg = "¡Mensaje enviado! Gracias por contactarnos"
             context["success_msg"] = success_msg
 
     return render(request, "cms/contact.html", context)
 
-@login_required
+@portal_login_required
 def history(request):
     """Show personal history view"""
 
@@ -268,7 +268,7 @@ def history(request):
     return render(request, "cms/history.html", context)
 
 
-@login_required
+@portal_login_required
 def purchases(request):
     """Show personal purchases view"""
 
@@ -276,7 +276,7 @@ def purchases(request):
     return render(request, "cms/purchases.html", context)
 
 
-@login_required
+@portal_login_required
 def edit_media(request):
     """Edit a media view"""
 
@@ -316,15 +316,13 @@ def edit_media(request):
         "cms/edit_media.html",
         {
             "form": form,
-            "media_object": media,
             "add_subtitle_url": media.add_subtitle_url,
             "allow_video_trimmer": settings.ALLOW_VIDEO_TRIMMER,
         },
     )
 
-
 @csrf_exempt
-@login_required
+@portal_login_required
 def trim_video(request, friendly_token):
     if not settings.ALLOW_VIDEO_TRIMMER:
         return JsonResponse({"success": False, "error": "Video trimming is not allowed"}, status=400)
@@ -352,7 +350,7 @@ def trim_video(request, friendly_token):
         return JsonResponse({"success": False, "error": "Incorrect request data"}, status=400)
 
 
-@login_required
+@portal_login_required
 def edit_video(request):
     friendly_token = request.GET.get("m", "").strip()
     if not friendly_token:
@@ -391,13 +389,11 @@ def edit_video(request):
         "cms/edit_video.html",
         {
             "media_object": media,
-            "add_subtitle_url": media.add_subtitle_url,
             "media_file_path": media_file_path,
             "allow_video_trimmer": settings.ALLOW_VIDEO_TRIMMER,
         },
     )
 
-def generate_wowza_token(stream, secret, token_name="wowzatoken", client_ip=None, start=0, end=0):
     if client_ip:
         to_hash = f"{stream}?{client_ip}&{secret}&{token_name}endtime={end}&{token_name}starttime={start}"
     else:
@@ -508,8 +504,6 @@ def embed_media(request):
                     "url": url,
                     "token": token,
                 }
-
-    # ES VOD si hls_file es vacío o null
     else:
         if bool(getattr(settings, "VIDEO_PLAYBACK_USE_LOCAL_URLS", False)):
             playback_urls = _build_local_vod_playback_urls(media)
@@ -520,9 +514,8 @@ def embed_media(request):
                 "mediavms-development/smil:{media_id}.smil/playlist.m3u8",
             )
             vod_path = vod_template.format(media_id=friendly_token)
-            url = f"https://{vod_host}/{vod_path}"
             playback_urls["vod"] = {
-                "url": url,
+                "url": f"https://{vod_host}/{vod_path}",
                 "token": None,
             }
 
@@ -563,28 +556,25 @@ def embed_media(request):
         "playback_urls": json.dumps(playback_urls)
     })
 
-@login_required
 def featured_media(request):
     """List featured media view"""
 
     context = {}
     return render(request, "cms/featured-media.html", context)
 
-@login_required
 def index(request):
     """Index view"""
 
     context = {}
     return render(request, "cms/index.html", context)
 
-@login_required
 def latest_media(request):
     """List latest media view"""
 
     context = {}
     return render(request, "cms/latest-media.html", context)
 
-@login_required
+@portal_login_required
 def liked_media(request):
     """List user's liked media view"""
 
@@ -592,7 +582,7 @@ def liked_media(request):
     return render(request, "cms/liked_media.html", context)
 
 
-@login_required
+@portal_login_required
 def manage_users(request):
     """List users management view"""
 
@@ -600,7 +590,7 @@ def manage_users(request):
     return render(request, "cms/manage_users.html", context)
 
 
-@login_required
+@portal_login_required
 def manage_media(request):
     """List media management view"""
 
@@ -609,21 +599,19 @@ def manage_media(request):
     return render(request, "cms/manage_media.html", context)
 
 
-@login_required
+@portal_login_required
 def manage_comments(request):
     """List comments management view"""
 
     context = {}
     return render(request, "cms/manage_comments.html", context)
 
-@login_required
 def members(request):
     """List members view"""
 
     context = {}
     return render(request, "cms/members.html", context)
 
-@login_required
 def recommended_media(request):
     """List recommended media view"""
 
@@ -649,7 +637,6 @@ def sitemap(request):
     context["users"] = list(User.objects.filter())
     return render(request, "sitemap.xml", context, content_type="application/xml")
 
-@login_required
 def tags(request):
     """List tags view"""
 
@@ -663,7 +650,7 @@ def tos(request):
     context = {}
     return render(request, "cms/tos.html", context)
 
-@login_required
+@portal_login_required
 def upload_media(request):
     """Upload media view"""
 
@@ -678,7 +665,6 @@ def upload_media(request):
 
     return render(request, "cms/add-media.html", context)
 
-@login_required
 def view_media(request):
     """View media view"""
     import hashlib, base64
@@ -817,7 +803,7 @@ def view_media(request):
 
     return render(request, "cms/media.html", context)
 
-@login_required
+@portal_login_required
 def view_playlist(request, friendly_token):
     """View playlist view"""
 
@@ -853,6 +839,7 @@ class LiveList(APIView):
         # Show media
         params = self.request.query_params
         show_param = params.get("show", "")
+        folder_param = params.get("folder", "").strip()
 
         author_param = params.get("author", "").strip()
         if author_param:
@@ -874,6 +861,12 @@ class LiveList(APIView):
                 # base listings should show safe content
                 basic_query = Q(listable=True)
 
+            if folder_param == "live_record":
+                media = Media.objects.filter(
+                    basic_query,
+                    media_file__contains="/live_record/",
+                ).order_by("-add_date")
+            else:
                 hls_filter = ~Q(stream="") & ~Q(stream__isnull=True)
 
                 if show_param == "featured":

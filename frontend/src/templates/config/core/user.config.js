@@ -32,5 +32,6 @@ module.exports = {
     media: './profile-media.html',
     playlists: './profile-playlists.html',
     live: './profile-live.html',
+    recorded: './profile-recorded.html',
   },
 };

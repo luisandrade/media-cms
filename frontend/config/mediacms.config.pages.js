@@ -155,6 +155,12 @@ const PAGES = {
     component: 'ProfileLivePage',
     global: { profileId: DEV_SAMPLE_DATA.profileId },
   },
+  'profile-recorded': {
+    id: 'profile-recorded',
+    title: 'Profile - Recorded',
+    component: 'ProfileRecordedPage',
+    global: { profileId: DEV_SAMPLE_DATA.profileId },
+  },
   'profile-about': {
     id: 'profile-about',
     title: 'Profile - About',

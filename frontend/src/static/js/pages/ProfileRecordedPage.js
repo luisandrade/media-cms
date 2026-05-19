@@ -8,9 +8,9 @@ import ProfilePagesContent from '../components/profile-page/ProfilePagesContent'
 import { LazyLoadItemListAsync } from '../components/item-list/LazyLoadItemListAsync.jsx';
 import { ProfileMediaPage } from './ProfileMediaPage';
 
-export class ProfileLivePage extends ProfileMediaPage {
+export class ProfileRecordedPage extends ProfileMediaPage {
   constructor(props) {
-    super(props, 'author-history');
+    super(props, 'author-recorded');
 
     this.state = {
       resultsCount: null,
@@ -28,7 +28,7 @@ export class ProfileLivePage extends ProfileMediaPage {
   pageContent() {
     return [
       this.state.author ? (
-        <ProfilePagesHeader key="ProfilePagesHeader" author={this.state.author} type="live" />
+        <ProfilePagesHeader key="ProfilePagesHeader" author={this.state.author} type="recorded" />
       ) : null,
       this.state.author ? (
         <ProfilePagesContent key="ProfilePagesContent">
@@ -42,7 +42,7 @@ export class ProfileLivePage extends ProfileMediaPage {
               >
                 <LazyLoadItemListAsync
                   itemsCountCallback={this.getCountFunc}
-                  requestUrl={apiUrl.user.live + this.state.author.username}
+                  requestUrl={apiUrl.user.live + this.state.author.username + '&folder=live_record'}
                   hideAuthor={!PageStore.get('config-media-item').displayAuthor}
                   hideViews={!PageStore.get('config-media-item').displayViews}
                   hideDate={!PageStore.get('config-media-item').displayPublishDate}
@@ -57,10 +57,10 @@ export class ProfileLivePage extends ProfileMediaPage {
   }
 }
 
-ProfileLivePage.propTypes = {
+ProfileRecordedPage.propTypes = {
   title: PropTypes.string.isRequired,
 };
 
-ProfileLivePage.defaultProps = {
-  title: 'live',
+ProfileRecordedPage.defaultProps = {
+  title: 'Grabaciones',
 };
