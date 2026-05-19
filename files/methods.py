@@ -22,6 +22,58 @@ from .helpers import get_file_type, mask_ip
 
 logger = logging.getLogger(__name__)
 
+LIVE_RECORD_TEMP_SUFFIXES = (".temp", ".tmp", ".part", ".partial")
+
+
+def _get_live_record_sync_min_age_seconds():
+    value = getattr(settings, "LIVE_RECORD_SYNC_MIN_AGE_SECONDS", 30)
+    try:
+        return max(int(value), 0)
+    except (TypeError, ValueError):
+        return 30
+
+
+def _get_live_record_cache_key(absolute_path):
+    return f"live_record_sync_state:{absolute_path}"
+
+
+def _is_live_record_file_ready(absolute_path):
+    filename = os.path.basename(absolute_path).lower()
+    if filename.endswith(LIVE_RECORD_TEMP_SUFFIXES):
+        return False, "temporary"
+
+    try:
+        stats = os.stat(absolute_path)
+    except OSError:
+        return False, "missing"
+
+    if stats.st_size <= 0:
+        return False, "empty"
+
+    modified_at = datetime.fromtimestamp(
+        stats.st_mtime,
+        tz=timezone.get_current_timezone(),
+    )
+    age_seconds = max((timezone.now() - modified_at).total_seconds(), 0)
+    min_age_seconds = _get_live_record_sync_min_age_seconds()
+
+    current_state = {
+        "size": stats.st_size,
+        "mtime_ns": getattr(stats, "st_mtime_ns", int(stats.st_mtime * 1000000000)),
+    }
+    cache_key = _get_live_record_cache_key(absolute_path)
+    previous_state = cache.get(cache_key)
+    cache_timeout = max(min_age_seconds * 4, 3600)
+    cache.set(cache_key, current_state, cache_timeout)
+
+    if previous_state != current_state:
+        return False, "changing"
+
+    if age_seconds < min_age_seconds:
+        return False, "too_recent"
+
+    return True, None
+
 
 def _requeue_live_record_media(media):
     if media.media_type != "video":
@@ -101,6 +153,14 @@ def sync_live_record_media(user, folder=None, publish=False, reviewed=True):
             absolute_path = os.path.join(dirpath, filename)
 
             if not os.path.isfile(absolute_path):
+                continue
+
+            is_ready, skip_reason = _is_live_record_file_ready(absolute_path)
+            if not is_ready:
+                result["skipped"].append({
+                    "path": absolute_path,
+                    "reason": skip_reason,
+                })
                 continue
 
             media_kind = get_file_type(absolute_path)

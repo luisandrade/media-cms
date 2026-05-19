@@ -180,6 +180,7 @@ HLS_DIR = os.path.join(MEDIA_ROOT, "hls/")
 LIVE_RECORD_SYNC_ENABLED = (os.getenv("LIVE_RECORD_SYNC_ENABLED", "true") or "").strip().lower() in {"1", "true", "yes", "y", "on"}
 LIVE_RECORD_SYNC_USERNAME = os.getenv("LIVE_RECORD_SYNC_USERNAME", os.getenv("ADMIN_USER", "admin"))
 LIVE_RECORD_SYNC_FOLDER = os.getenv("LIVE_RECORD_SYNC_FOLDER", os.path.join(MEDIA_ROOT, "live_record"))
+LIVE_RECORD_SYNC_MIN_AGE_SECONDS = int((os.getenv("LIVE_RECORD_SYNC_MIN_AGE_SECONDS", "30") or "30").strip())
 LIVE_RECORD_SYNC_PUBLISH = (os.getenv("LIVE_RECORD_SYNC_PUBLISH", "true") or "").strip().lower() in {"1", "true", "yes", "y", "on"}
 LIVE_RECORD_SYNC_REVIEWED = (os.getenv("LIVE_RECORD_SYNC_REVIEWED", "true") or "").strip().lower() in {"1", "true", "yes", "y", "on"}
 
