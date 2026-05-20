@@ -79,8 +79,13 @@ def _requeue_live_record_media(media):
     if media.media_type != "video":
         return False
 
-    has_real_encodings = media.encodings.exclude(profile__extension="gif").filter(chunk=False).exists()
+    encodings = media.encodings.exclude(profile__extension="gif")
+    has_real_encodings = encodings.filter(chunk=False).exists()
     if has_real_encodings:
+        return False
+
+    has_encoding_work_in_progress = encodings.filter(Q(status="pending") | Q(status="running")).exists()
+    if has_encoding_work_in_progress:
         return False
 
     media.set_media_type(save=False)

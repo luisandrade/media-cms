@@ -63,7 +63,7 @@ services:
       POSTGRES_DB: mediacms
       TZ: Europe/London
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}", "--host=db", "--dbname=$POSTGRES_DB", "--username=$POSTGRES_USER"]
+      test: ["CMD-SHELL", "pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}", "--host=db", "--dbname=$${POSTGRES_DB}", "--username=$${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -104,6 +104,18 @@ services:
       TEST_MODE: ${TEST_MODE:-True}
     depends_on:
       - web
+  flower:
+    image: mher/flower:2.0
+    restart: always
+    command: >-
+      celery --broker=${FLOWER_BROKER_URL:-redis://redis:6379/1}
+      flower --port=5555
+      --basic-auth=${FLOWER_BASIC_AUTH:-admin:admin}
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+      - celery_worker
   pgadmin:
     image: dpage/pgadmin4
     restart: always

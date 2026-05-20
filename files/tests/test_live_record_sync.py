@@ -5,7 +5,7 @@ from unittest.mock import Mock, patch
 from django.core.cache import cache
 from django.test import SimpleTestCase, override_settings
 
-from files.methods import sync_live_record_media
+from files.methods import _requeue_live_record_media, sync_live_record_media
 
 
 class LiveRecordSyncTests(SimpleTestCase):
@@ -58,3 +58,21 @@ class LiveRecordSyncTests(SimpleTestCase):
         self.assertEqual(first_result["skipped"][0]["reason"], "changing")
         self.assertEqual(len(second_result["created"]), 1)
         media_instance.save.assert_called_once()
+
+    def test_requeue_live_record_media_skips_when_encoding_is_in_progress(self):
+        media = Mock()
+        media.media_type = "video"
+
+        encodings = Mock()
+        media.encodings.exclude.return_value = encodings
+
+        final_encodings = Mock()
+        encodings.filter.return_value = final_encodings
+        final_encodings.exists.side_effect = [False, True]
+
+        result = _requeue_live_record_media(media)
+
+        self.assertFalse(result)
+        media.set_media_type.assert_not_called()
+        media.save.assert_not_called()
+        media.encode.assert_not_called()
