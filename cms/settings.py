@@ -1,4 +1,5 @@
 import os
+from datetime import timedelta
 
 from celery.schedules import crontab
 from django.utils.translation import gettext_lazy as _
@@ -181,6 +182,7 @@ LIVE_RECORD_SYNC_ENABLED = (os.getenv("LIVE_RECORD_SYNC_ENABLED", "true") or "")
 LIVE_RECORD_SYNC_USERNAME = os.getenv("LIVE_RECORD_SYNC_USERNAME", os.getenv("ADMIN_USER", "admin"))
 LIVE_RECORD_SYNC_FOLDER = os.getenv("LIVE_RECORD_SYNC_FOLDER", os.path.join(MEDIA_ROOT, "live_record"))
 LIVE_RECORD_SYNC_MIN_AGE_SECONDS = int((os.getenv("LIVE_RECORD_SYNC_MIN_AGE_SECONDS", "30") or "30").strip())
+LIVE_RECORD_SYNC_SCHEDULE_SECONDS = int((os.getenv("LIVE_RECORD_SYNC_SCHEDULE_SECONDS", "60") or "60").strip())
 LIVE_RECORD_SYNC_PUBLISH = (os.getenv("LIVE_RECORD_SYNC_PUBLISH", "true") or "").strip().lower() in {"1", "true", "yes", "y", "on"}
 LIVE_RECORD_SYNC_REVIEWED = (os.getenv("LIVE_RECORD_SYNC_REVIEWED", "true") or "").strip().lower() in {"1", "true", "yes", "y", "on"}
 
@@ -511,7 +513,7 @@ CELERY_BEAT_SCHEDULE = {
 if LIVE_RECORD_SYNC_ENABLED:
     CELERY_BEAT_SCHEDULE["sync_live_record_media_task"] = {
         "task": "sync_live_record_media_task",
-        "schedule": crontab(minute="*"),
+        "schedule": timedelta(seconds=max(LIVE_RECORD_SYNC_SCHEDULE_SECONDS, 1)),
     }
 # TODO: beat, delete chunks from media root
 # chunks_dir after xx days...(also uploads_dir)
