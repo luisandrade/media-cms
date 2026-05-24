@@ -199,6 +199,44 @@ $__button-link-horizontal-padding: 16;
   text-transform: uppercase;
 }
 
+/* Styles from mediacms_eflix_skin for header right upload button */
+.header-right {
+  display: inline-block;
+
+  .header-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border: 1px solid rgba(0,0,0,0.08);
+    background: var(--primary-color);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    line-height: 1;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+
+    svg {
+      display: block;
+      width: 16px;
+      height: 16px;
+      flex: 0 0 auto;
+    }
+  }
+
+  .header-btn-primary {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+  }
+
+  .header-btn-primary:hover {
+    background: var(--primary-hover);
+    border-color: var(--primary-hover);
+  }
+}
+
 .signin-icon-link {
   color: var(--brand-color, var(--default-brand-color));
 }

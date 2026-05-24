@@ -69,43 +69,12 @@
     }
   }
 
-  input[type='text'],
-  button[type='submit'] {
-    border-style: solid;
-  }
-
   input[type='text'] {
     width: 100%;
     padding: 0 10px;
     font-size: 16.52px;
     border-width: 1px;
     border-radius: 2px 0 0 2px;
-  }
-
-  button[type='submit'] {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    right: 0;
-    width: 64px;
-    padding: 0;
-    border-width: 1px 1px 1px 0;
-    border-radius: 0 2px 2px 0;
-
-    .material-icons {
-      opacity: 0.6;
-      margin-bottom: 1px;
-      overflow: hidden;
-    }
-
-    &:hover,
-    &:focus {
-      outline: 0;
-
-      .material-icons {
-        opacity: 1;
-      }
-    }
   }
 
   @media screen and (max-width: 1023px) {
@@ -151,9 +120,6 @@
 
 .search-field-wrap {
   input[type='text'],
-  button[type='submit'] {
-    line-height: 1.875;
-  }
 
   button[type='submit'] {
     .material-icons {
@@ -184,4 +150,69 @@
     outline: 0;
     background-color: #eee;
   }
+}
+
+/* Styles to match mediacms_netflix_skin header-search */
+.header-search {
+  position: relative;
+  max-width: 480px;
+  width: 100%;
+  display: block;
+}
+
+.header-search .text-field-wrap {
+  position: relative;
+  padding-right: 96px; /* room for button */
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  background: var(--bg-input);
+}
+
+.header-search .header-search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+
+.header-search input[type='text'] {
+  width: 100%;
+  padding: 10px 16px 10px 40px;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.header-search input[type='text']::placeholder {
+  color: var(--text-muted);
+}
+
+.header-search .header-search-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary-color) !important;
+  color: #fff !important;
+  padding: 8px 16px !important;
+  border: none !important;
+  cursor: pointer;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  width: auto !important;
+  height: auto !important;
+  min-height: 30px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+}
+
+.header-search .header-search-btn:hover {
+  background: var(--primary-hover);
 }

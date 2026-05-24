@@ -208,7 +208,7 @@ def create_add_ads_tag(request):
         form = AdsForm(request.POST)
         if form.is_valid():
             ad = form.save()
-            return redirect('ads.html')
+            return redirect('ads')
         else:
             error = "Corrige los errores del formulario."
     else:
@@ -218,6 +218,7 @@ def create_add_ads_tag(request):
         'form': form,
         'error': error,
     }
+    return render(request, "cms/ads.html", context)
 def contact(request):
     """Contact view"""
 

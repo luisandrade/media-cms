@@ -79,10 +79,24 @@ function headerPopupPages(user, popupNavItems, hasHeaderThemeSwitcher) {
 function UploadMediaButton({ user, links }) {
   return !user.is.anonymous && user.can.addMedia ? (
     <div className={'hidden-only-in-small'}>
-      <CircleIconButton type="link" href={links.user.addMedia} title="Upload media">
-        <MaterialIcon type="video_call" />
-        <span className="hidden-txt">Upload media</span>
-      </CircleIconButton>
+      <div className="header-right">
+        <button
+          type="button"
+          className="header-btn header-btn-primary"
+          onClick={() => {
+            if (links && links.user && links.user.addMedia) {
+              window.location.href = links.user.addMedia;
+            }
+          }}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="17 8 12 3 7 8" />
+            <line x1="12" y1="3" x2="12" y2="15" />
+          </svg>
+          Subir Video
+        </button>
+      </div>
     </div>
   ) : null;
 }

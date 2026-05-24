@@ -284,6 +284,7 @@ export function SearchField(props) {
 
   return (
     <div className="search-field-wrap">
+      <div className="header-search">
       <div>
         <form
           ref={formRef}
@@ -294,11 +295,18 @@ export function SearchField(props) {
         >
           <div>
             <div className="text-field-wrap">
+              <span className="header-search-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+              </span>
+
               <input
                 ref={searchInputRef}
                 type="text"
-                placeholder={translateString("Search")}
-                aria-label="Search"
+                placeholder="Buscar videos, canales..."
+                aria-label="Buscar"
                 name="q"
                 value={queryVal}
                 onChange={onQueryChange}
@@ -312,11 +320,10 @@ export function SearchField(props) {
                 </PopupMain>
               </PopupContent>
             </div>
-            <button type="submit" aria-label="Search">
-              <MaterialIcon type="search" />
-            </button>
+            <button type="submit" className="header-search-btn" aria-label="Buscar">Buscar</button>
           </div>
         </form>
+      </div>
       </div>
     </div>
   );

@@ -5,8 +5,14 @@ body {
   --default-logo-height: 32px;
   --logo-height:45px;
 
-  --default-theme-color: rgb(0 36 100 / 1);
-  --default-brand-color: rgb(0 36 100 / 1);
+  --default-theme-color: #e50914;
+  --default-brand-color: #e50914;
+
+  /* Fallback variables used by global styles (scrollbar, etc.) */
+  --primary-color: var(--default-theme-color);
+  --primary-hover: #b20710;
+  --border-color: #2a2a2a;
+  --transition-fast: 0.2s cubic-bezier(0.4,0,0.2,1);
 
   --success-color: #00a28b;
   --warning-color: #e09f1f;
@@ -18,7 +24,7 @@ body {
 
   --header-height: 56px;
 
-  --sidebar-width: 240px;
+  --sidebar-width: 250px;
 
   --item-title-font-size: 14px;
   --item-title-max-lines: 2;
@@ -33,6 +39,22 @@ body {
 
   --links-color: var(--default-theme-color);
 }
+
+/* Global scrollbar styles (use CSS variables so themes control colors) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track { background: transparent; }
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+  transition: background var(--transition-fast);
+}
+
+::-webkit-scrollbar-thumb:hover { background: var(--primary-color); }
 
 body {
   --default-item-width: 218px;

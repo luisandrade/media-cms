@@ -2,6 +2,9 @@ body.dark_theme {
   --body-text-color: rgba(255, 255, 255, 0.88);
   --body-bg-color: #121212;
 
+  /* Active theme switcher icon color (sun/moon) */
+  --theme-switcher-icon-active-color: #fffa00;
+
   --hr-color: #2a2a2a;
 
   --dotted-outline-color: rgba(255, 255, 255, 0.4);
@@ -14,7 +17,7 @@ body.dark_theme {
 
   /* ################################################## */
 
-  --header-bg-color: rgb(255, 255, 255);
+  --header-bg-color: #1c1c1c;
 
   --header-circle-button-color: #fff;
 
@@ -38,11 +41,11 @@ body.dark_theme {
 
   /* ################################################## */
 
-  --nav-menu-active-item-bg-color: rgba(255, 255, 255, 0.1);
+  --nav-menu-active-item-bg-color: rgba(229, 9, 20, 0.15);
 
-  --nav-menu-item-hover-bg-color: rgba(255, 255, 255, 0.1);
+  --nav-menu-item-hover-bg-color: rgba(229, 9, 20, 0.15);
 
-  --in-popup-nav-menu-item-hover-bg-color: rgba(255, 255, 255, 0.1);
+  --in-popup-nav-menu-item-hover-bg-color: rgba(229, 9, 20, 0.15);
 
   /* ################################################## */
 
@@ -73,7 +76,7 @@ body.dark_theme {
   --popup-hr-bg-color: rgba(255, 255, 255, 0.08);
 
   --popup-top-text-color: #fff;
-  --popup-top-bg-color: rgba(136, 136, 136, 0.4);
+  --popup-top-bg-color: rgba(229, 9, 20, 0.15);
 
   --popup-msg-title-text-color: rgba(255, 255, 255, 0.88);
   --popup-msg-main-text-color: rgba(255, 255, 255, 0.5);
@@ -342,3 +345,19 @@ body.dark_theme {
   --user-action-form-inner-input-text-color: rgba(255, 255, 255, 0.88);
   --user-action-form-inner-input-bg-color: #121212;
 }
+
+/* Scrollbar styles for dark theme */
+body.dark_theme::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+body.dark_theme::-webkit-scrollbar-track { background: transparent; }
+
+body.dark_theme::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+  transition: background var(--transition-fast);
+}
+
+body.dark_theme::-webkit-scrollbar-thumb:hover { background: var(--primary-color); }

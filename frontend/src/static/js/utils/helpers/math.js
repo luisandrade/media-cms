@@ -8,3 +8,16 @@ export const isPositiveInteger = (x) => isInteger(x) && isPositive(x);
 export const isPositiveIntegerOrZero = (x) => isInteger(x) && (isPositive(x) || isZero(x));
 
 export const greaterCommonDivision = (a, b) => (!b ? a : greaterCommonDivision(b, a % b));
+
+// Default export to help bundlers assign a module id
+export default {
+	isGt,
+	isZero,
+	isNumber,
+	isInteger,
+	isPositive,
+	isPositiveNumber,
+	isPositiveInteger,
+	isPositiveIntegerOrZero,
+	greaterCommonDivision,
+};

@@ -145,3 +145,16 @@
     }
   }
 }
+
+/* Sidebar-specific active link left border (ensure applies correctly) */
+.nav-menu {
+  li {
+    &.link-item {
+      &.active {
+        > * {
+          border-left: 4px solid #e50914;
+        }
+      }
+    }
+  }
+}

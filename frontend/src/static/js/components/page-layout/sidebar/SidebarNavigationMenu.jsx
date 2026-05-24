@@ -191,7 +191,12 @@ export function SidebarNavigationMenu() {
       }
     }
 
-    return items.length ? <NavigationMenuList key="main-second" items={formatItems(items)} /> : null;
+    return items.length ? (
+      <div className="sidebar-section">
+        <div className="sidebar-section-title">{translateString('Contenido')}</div>
+        <NavigationMenuList key="main-second" items={formatItems(items)} />
+      </div>
+    ) : null;
   }
 
   function UserMenuSection() {
@@ -289,8 +294,14 @@ export function SidebarNavigationMenu() {
       });
     }
 
-    return items.length ? <NavigationMenuList key="admin" items={formatItems(items)} /> : null;
+    return items.length ? (
+      <div className="sidebar-section">
+        <div className="sidebar-section-title">{translateString('Administración')}</div>
+        <NavigationMenuList key="admin" items={formatItems(items)} />
+      </div>
+    ) : null;
   }
+
 
   return [MainMenuFirstSection(), MainMenuSecondSection(), UserMenuSection(), CustomMenuSection(), AdminMenuSection()];
 }

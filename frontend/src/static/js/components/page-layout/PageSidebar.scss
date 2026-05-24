@@ -138,10 +138,21 @@
 
     &.active {
       i {
-        color: var(--theme-color, var(--default-theme-color));
+        color: var(--theme-switcher-icon-active-color, var(--theme-color, var(--default-theme-color)));
       }
     }
   }
+}
+
+/* Sidebar section title style */
+.sidebar-section-title {
+  padding: 16px 20px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  text-align: left;
 }
 
 .checkbox-switcher-wrap {
