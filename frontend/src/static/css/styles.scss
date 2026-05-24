@@ -36,6 +36,9 @@ body {
 @import './includes/typography/_typography.scss';
 @import './includes/form_controls/_form_controls.scss';
 
+// SCSS helper variable that references the CSS theme variable for video editor cards
+$video-editor-card-bg: var(--video-editor-card-bg-color, var(--user-action-form-inner-bg-color));
+
 a {
   color: var(--theme-color, var(--default-theme-color));
 
@@ -392,6 +395,42 @@ button {
       margin: 0 0 0.75rem 0;
     }
   }
+}
+
+/* Override video-editor timeline card background to follow theme variable */
+#video-editor-trim-root .timeline-container-card {
+  background-color: $video-editor-card-bg !important;
+}
+
+/* Apply same variable to clip segments panel */
+#video-editor-trim-root .clip-segments-container {
+  background-color: $video-editor-card-bg !important;
+}
+
+/* Ensure segment title/time use theme text color */
+#video-editor-trim-root .segment-title,
+#video-editor-trim-root .segment-time {
+  color: var(--video-editor-card-text-color) !important;
+}
+
+/* Force save segments button to brand red in all themes */
+#video-editor-trim-root .save-segments-button,
+#video-editor-trim-root button.save-segments-button {
+  background-color: #e50914 !important;
+  border-color: #e50914 !important;
+  color: #ffffff !important;
+  border-radius: 0 !important;
+}
+
+/* Also apply same branding to save and save-copy buttons */
+#video-editor-trim-root .save-button,
+#video-editor-trim-root button.save-button,
+#video-editor-trim-root .save-copy-button,
+#video-editor-trim-root button.save-copy-button {
+  background-color: #e50914 !important;
+  border-color: #e50914 !important;
+  color: #ffffff !important;
+  border-radius: 0 !important;
 }
 
 .player-container.player-container-error {
