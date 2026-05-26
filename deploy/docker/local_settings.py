@@ -1,6 +1,6 @@
 import os
 
-_frontend_host = os.getenv('FRONTEND_HOST', '')
+_frontend_host = os.getenv('FRONTEND_HOST', 'https://demovms.grupoz.cl')
 if _frontend_host:
     FRONTEND_HOST = _frontend_host
 PORTAL_NAME = os.getenv('PORTAL_NAME', 'MediaVMS')
