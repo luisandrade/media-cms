@@ -11,7 +11,7 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 0
 
 # PORTAL NAME, this is the portal title and
 # is also shown on several places as emails
-PORTAL_NAME = "RodeoVMS"
+PORTAL_NAME = "MediaVMS"
 PORTAL_DESCRIPTION = ""
 TIME_ZONE = "Europe/London"
 
@@ -54,7 +54,7 @@ ALLOW_RATINGS_CONFIRMED_EMAIL_ONLY = True
 # ip of the server should be part of this
 ALLOWED_HOSTS = ["*", "mediacms.io", "127.0.0.1", "localhost"]
 
-FRONTEND_HOST = "https://rodeovms.hnode.cl"
+FRONTEND_HOST = "https://demovsm.grupoz.cl"
 # this variable - along with SSL_FRONTEND_HOST is used on several places
 # as email where a URL need appear etc
 
