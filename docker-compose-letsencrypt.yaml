@@ -59,8 +59,8 @@ services:
       ENABLE_CELERY_SHORT: 'no'
       ENABLE_CELERY_LONG: 'no'
       ENABLE_MIGRATIONS: 'no'
-      VIRTUAL_HOST: 'rodeovms.hnode.cl'
-      LETSENCRYPT_HOST: 'rodeovms.hnode.cl'
+      VIRTUAL_HOST: 'demovms.grupoz.cl'
+      LETSENCRYPT_HOST: 'demovms.grupoz.cl'
       LETSENCRYPT_EMAIL: 'cavalos@grupoz.cl'
     depends_on:
       - migrations
