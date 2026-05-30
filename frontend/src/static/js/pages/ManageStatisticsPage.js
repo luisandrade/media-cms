@@ -204,7 +204,6 @@ export class ManageStatisticsPage extends Page {
                             </span>
                             <span className="manage-recent-activity-user-meta">
                               <span className="manage-recent-activity-user-name">{item.user_name}</span>
-                              <span className="manage-recent-activity-user-email">{item.user_email}</span>
                             </span>
                           </div>
 
