@@ -24,7 +24,7 @@ export function AdSelector({ onSelect }) {
   };
 
   return (
-    <div>
+    <div className="ads-selector-wrap">
       <label htmlFor="ads-select">Selecciona un anuncio:</label>
       <select id="ads-select" value={selectedAd} onChange={handleChange}>
         <option value="">-- Selecciona --</option>

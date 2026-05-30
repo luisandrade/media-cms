@@ -139,6 +139,7 @@ export class ManageUsersPage extends Page {
       <MediaListWrapper
         key="2"
         title={this.props.title + (null === this.state.resultsCount ? '' : ' (' + this.state.resultsCount + ')')}
+        className="search-results-wrap items-list-hor"
       >
         <FiltersToggleButton onClick={this.onToggleFiltersClick} />
         <ManageUsersFilters hidden={this.state.hiddenFilters} onFiltersUpdate={this.onFiltersUpdate} />

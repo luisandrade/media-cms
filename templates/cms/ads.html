@@ -11,17 +11,24 @@
     {% if error %}
     <div class="alert alert-danger">{{ error }}</div>
     {% endif %}
-    <div class="items-list-hor media-list-wrapper">
-        <div class="media-list-header"><h2>Anuncios</h2></div>
-        <div class="tabs-container">
-            <div class="tabs-header">
-                <button class="tab-button active" onclick="switchTab('ads')">Anuncios</button>
-                <button class="tab-button" onclick="switchTab('categories')">Categorías</button>
-            </div>
-            <div class="tabs-content">
-                <div id="tab-ads" class="tab-pane active">
-                    <div class="items-list-hor media-list-wrapper">
-                        <form id="ads-form" class="flex sm:flex-row flex-col column-gap-30 media-list-wrapper" method="POST">
+    <div class="user-action-form-wrap ads-manage-page">
+        <div class="user-action-form-inner">
+            <div class="ads-manage-shell">
+                <h1>Anuncios</h1>
+                <div class="media-edit-nav ads-manage-nav">
+                    <ul>
+                        <li>
+                            <button type="button" class="tab-button active" data-tab="ads">Anuncios</button>
+                        </li>
+                        <li>
+                            <button type="button" class="tab-button" data-tab="categories">Categorías</button>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="tabs-content ads-manage-tabs">
+                    <div id="tab-ads" class="tab-pane active">
+                        <form id="ads-form" class="post-form ads-manage-form" method="POST">
                             {% csrf_token %}
                             <div class="form-group">
                                 <label for="ads-name">Nombre del anuncio</label>
@@ -31,16 +38,19 @@
                                 <label for="ads-url">URL del anuncio</label>
                                 <input type="url" name="url" id="ads-url" class="form-control ads-input" required>
                             </div>
-                            <div class="form-group">
-                                <button type="submit" class="ads-button">Guardar anuncio</button>
-                            </div>
+                            <button type="submit" class="primaryAction ads-submit-button">Guardar anuncio</button>
                         </form>
-                        <hr>
+
+                        <div class="ads-manage-results">
+                            <div id="page-manage-ads"></div>
+                        </div>
                     </div>
-                    <div id="page-manage-ads"></div>
-                </div>
-                <div id="tab-categories" class="tab-pane">
-                    <div id="page-manage-category-ads"></div>
+
+                    <div id="tab-categories" class="tab-pane">
+                        <div class="ads-manage-results">
+                            <div id="page-manage-category-ads"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -54,13 +64,23 @@
     <script>
         function switchTab(tab) {
             const tabs = ['ads', 'categories'];
-            tabs.forEach((t) => {
-                document.getElementById(`tab-${t}`).classList.remove('active');
-                document.querySelector(`.tab-button[onclick="switchTab('${t}')"]`).classList.remove('active');
+
+            tabs.forEach((tabName) => {
+                document.getElementById(`tab-${tabName}`).classList.remove('active');
+            });
+
+            document.querySelectorAll('.ads-manage-nav .tab-button').forEach((button) => {
+                button.classList.remove('active');
             });
 
             document.getElementById(`tab-${tab}`).classList.add('active');
-            document.querySelector(`.tab-button[onclick="switchTab('${tab}')"]`).classList.add('active');
+            document.querySelector(`.ads-manage-nav .tab-button[data-tab="${tab}"]`).classList.add('active');
         }
+
+        document.querySelectorAll('.ads-manage-nav .tab-button').forEach((button) => {
+            button.addEventListener('click', function () {
+                switchTab(this.dataset.tab);
+            });
+        });
     </script>
 {% endblock bottomimports %}

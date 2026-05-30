@@ -85,7 +85,7 @@ export class ManageAdsPage extends Page {
   pageContent() {
     return (
       <MediaListWrapper
-        className="search-results-wrap items-list-hor"
+        className="search-results-wrap items-list-hor ads-manage-wrap ads-manage-wrap-library"
       >
         <ManageItemList
           pageItems={50}

@@ -79,8 +79,11 @@ function useManageItemListSync(props) {
   const [totalItems, setTotalItems] = useState(null);
 
   let classname = {
-    list: 'manage-items-list',
-    listOuter: 'items-list-outer' + ('string' === typeof props.className ? ' ' + props.className.trim() : ''),
+    list: 'manage-items-list' + ('string' === typeof props.manageType ? ' manage-items-list-' + props.manageType : ''),
+    listOuter:
+      'items-list-outer' +
+      ('string' === typeof props.manageType ? ' manage-items-outer-' + props.manageType : '') +
+      ('string' === typeof props.className ? ' ' + props.className.trim() : ''),
   };
 
   function onClickLoadMore() {

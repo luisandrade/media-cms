@@ -27,6 +27,7 @@ MediaCMS.url = {
     {% if IS_MEDIACMS_ADMIN %}admin: '/{{DJANGO_ADMIN_URL}}',{% endif %}
     /* Management pages */
     {% if IS_MEDIACMS_EDITOR %}manageMedia: "/manage/media",{% endif %}
+    {% if IS_MEDIACMS_EDITOR %}manageStatistics: "/manage/statistics",{% endif %}
     {% if IS_MEDIACMS_MANAGER %}manageUsers: "/manage/users",{% endif %}
     {% if IS_MEDIACMS_EDITOR %}manageComments: "/manage/comments",{% endif %}
     {% else %}

@@ -8,5 +8,7 @@
     <path fill="#e50914" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/>
   </g>
   <!-- text matching .sidebar-logo-text; nudged vertically and shifted horizontally -->
-  <text class="mv-text" x="43" y="20" fill="#e50914" dominant-baseline="middle">MediaVMS</text>
+  <text class="mv-text" x="43" y="20" dominant-baseline="middle">
+    <tspan fill="#000000">Media</tspan><tspan fill="#e50914">VMS</tspan>
+  </text>
 </svg>

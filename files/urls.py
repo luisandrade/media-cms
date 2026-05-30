@@ -94,11 +94,13 @@ urlpatterns = [
     re_path(r"^api/v1/manage_media$", management_views.MediaList.as_view()),
     re_path(r"^api/v1/manage_comments$", management_views.CommentList.as_view()),
     re_path(r"^api/v1/manage_users$", management_views.UserList.as_view()),
+    re_path(r"^api/v1/manage_statistics$", management_views.StatisticsView.as_view()),
     re_path(r"^api/v1/tasks$", views.TasksList.as_view()),
     re_path(r"^api/v1/tasks/$", views.TasksList.as_view()),
     re_path(r"^api/v1/tasks/(?P<friendly_token>[\w|\W]*)$", views.TaskDetail.as_view()),
     re_path(r"^manage/comments$", views.manage_comments, name="manage_comments"),
     re_path(r"^manage/media$", views.manage_media, name="manage_media"),
+    re_path(r"^manage/statistics$", views.manage_statistics, name="manage_statistics"),
     re_path(r"^manage/users$", views.manage_users, name="manage_users"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

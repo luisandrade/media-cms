@@ -84,6 +84,7 @@ const PAGES = {
   tags: { id: 'tags', title: 'Tags', component: 'TagsPage' },
   categories: { id: 'categories', title: 'Categories', component: 'CategoriesPage' },
   'manage-media': { id: 'manage-media', title: 'Manage media', component: 'ManageMediaPage' },
+  'manage-statistics': { id: 'manage-statistics', title: 'Statistics', component: 'ManageStatisticsPage' },
   'manage-users': { id: 'manage-users', title: 'Manage users', component: 'ManageUsersPage' },
   'manage-comments': { id: 'manage-comments', title: 'Manage comments', component: 'ManageCommentsPage' },
   'manage-ads': { id: 'manage-ads', title: 'Manage ads', component: 'ManageAdsPage' },

@@ -34,10 +34,11 @@ ENV CELERY_APP='cms'
 ENV VIRTUAL_ENV=/home/mediacms.io
 ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
-# Install runtime system dependencies
+# Install runtime system dependencies and build deps required to compile uWSGI
 RUN apt-get update -y && \
     apt-get -y upgrade && \
-    apt-get install --no-install-recommends supervisor nginx imagemagick procps -y && \
+    apt-get install --no-install-recommends supervisor nginx imagemagick procps \
+        build-essential python3-dev libpcre3-dev pkg-config -y && \
     rm -rf /var/lib/apt/lists/* && \
     apt-get purge --auto-remove && \
     apt-get clean

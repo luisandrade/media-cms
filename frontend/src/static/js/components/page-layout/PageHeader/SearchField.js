@@ -320,7 +320,6 @@ export function SearchField(props) {
                 </PopupMain>
               </PopupContent>
             </div>
-            <button type="submit" className="header-search-btn" aria-label="Buscar">Buscar</button>
           </div>
         </form>
       </div>

@@ -74,6 +74,7 @@ export function config(glbl) {
     },
     manage: {
       media: !glbl.user.is.anonymous ? glbl.url.manageMedia : '',
+      statistics: !glbl.user.is.anonymous ? glbl.url.manageStatistics : '',
       users: !glbl.user.is.anonymous ? glbl.url.manageUsers : '',
       comments: !glbl.user.is.anonymous ? glbl.url.manageComments : '',
     },

@@ -1,5 +1,6 @@
 from drf_yasg import openapi as openapi
 from drf_yasg.utils import swagger_auto_schema
+from django.db.utils import OperationalError, ProgrammingError
 from rest_framework import status
 from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
@@ -8,11 +9,103 @@ from rest_framework.views import APIView
 
 from users.models import User
 from users.serializers import UserSerializer
+from payments.models import Payment
 
 from .methods import is_mediacms_manager
-from .models import Comment, Media
+from .models import Category, Comment, Media
 from .permissions import IsMediacmsEditor
 from .serializers import CommentSerializer, MediaSerializer
+
+
+class StatisticsView(APIView):
+    """Statistics for admin dashboard cards."""
+
+    permission_classes = (IsMediacmsEditor,)
+    parser_classes = (JSONParser,)
+
+    @swagger_auto_schema(
+        manual_parameters=[],
+        tags=['Manage'],
+        operation_summary='Manage Statistics',
+        operation_description='Summary statistics for MediaCMS management pages',
+    )
+    def get(self, request, format=None):
+        try:
+            total_sales = Payment.objects.filter(status=Payment.STATUS_PAID).count()
+        except (OperationalError, ProgrammingError):
+            total_sales = 0
+
+        top_categories = [
+            {
+                "title": category.title,
+                "url": category.get_absolute_url(),
+                "media_count": category.media_count,
+            }
+            for category in Category.objects.order_by("-media_count", "title")[:6]
+        ]
+
+        recent_activity = []
+
+        for media in Media.objects.select_related("user").order_by("-add_date")[:5]:
+            recent_activity.append(
+                {
+                    "kind": "media",
+                    "user_name": media.user.name or media.user.username,
+                    "user_email": media.user.email,
+                    "user_thumbnail": media.user.thumbnail_url(),
+                    "media_title": media.title,
+                    "status": "Approved" if media.is_reviewed and media.state == "public" else "Pending",
+                    "date": media.add_date,
+                }
+            )
+
+        for comment in Comment.objects.select_related("user", "media").order_by("-add_date")[:5]:
+            recent_activity.append(
+                {
+                    "kind": "comment",
+                    "user_name": comment.user.name or comment.user.username,
+                    "user_email": comment.user.email,
+                    "user_thumbnail": comment.user.thumbnail_url(),
+                    "media_title": comment.media.title,
+                    "status": "Approved" if comment.media.is_reviewed and comment.media.state == "public" else "Pending",
+                    "date": comment.add_date,
+                }
+            )
+
+        recent_activity = sorted(recent_activity, key=lambda item: item["date"], reverse=True)[:5]
+
+        top_rated_videos = []
+        for index, media in enumerate(
+            Media.objects.filter(media_type="video")
+            .prefetch_related("category")
+            .order_by("-likes", "-views", "title")[:5],
+            start=1,
+        ):
+            primary_category = media.category.order_by("title").first()
+            top_rated_videos.append(
+                {
+                    "rank": index,
+                    "title": media.title,
+                    "url": media.get_absolute_url(),
+                    "thumbnail_url": media.poster_url or media.thumbnail_url,
+                    "year": media.add_date.year if media.add_date else None,
+                    "category": primary_category.title if primary_category else "",
+                    "views": media.views,
+                    "likes": media.likes,
+                }
+            )
+
+        return Response(
+            {
+                "total_videos": Media.objects.filter(media_type="video").count(),
+                "total_members": User.objects.count(),
+                "total_categories": Category.objects.count(),
+                "total_sales": total_sales,
+                "top_categories": top_categories,
+                "recent_activity": recent_activity,
+                "top_rated_videos": top_rated_videos,
+            }
+        )
 
 
 class MediaList(APIView):

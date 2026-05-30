@@ -8,6 +8,7 @@ export * from './LikedMediaPage';
 export * from './PurchasesPage';
 export * from './ManageCommentsPage';
 export * from './ManageMediaPage';
+export * from './ManageStatisticsPage';
 export * from './ManageUsersPage';
 export * from './MediaPage';
 export * from './MembersPage';

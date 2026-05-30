@@ -120,7 +120,7 @@ export class ManageMediaPage extends Page {
     return (
       <MediaListWrapper
         title={this.state.pageTitle + (null === this.state.resultsCount ? '' : ' (' + this.state.resultsCount + ')')}
-        className=""
+        className="search-results-wrap items-list-hor"
       >
         <FiltersToggleButton onClick={this.onToggleFiltersClick} />
         <ManageMediaFilters hidden={this.state.hiddenFilters} onFiltersUpdate={this.onFiltersUpdate} />

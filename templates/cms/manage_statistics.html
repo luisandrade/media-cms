@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block headtitle %}Statistics - {{PORTAL_NAME}}{% endblock headtitle %}
+
+{% block topimports %}
+<link href="{% static "css/manage-statistics.css" %}" rel="preload" as="style">
+<link href="{% static "css/manage-statistics.css" %}" rel="stylesheet">
+{% endblock topimports %}
+
+{% block headermeta %}
+
+<meta property="og:title" content="Statistics - {{PORTAL_NAME}}">
+<meta property="og:type" content="website">
+<meta property="og:description" content="">
+
+{% endblock headermeta %}
+
+{% block content %}<div id="page-manage-statistics"></div>{% endblock %}
+
+{% block bottomimports %}
+<script src="{% static "js/manage-statistics.js" %}"></script>
+{% endblock bottomimports %}

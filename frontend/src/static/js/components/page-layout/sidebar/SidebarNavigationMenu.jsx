@@ -146,7 +146,12 @@ export function SidebarNavigationMenu() {
       });
     });
 
-    return items.length ? <NavigationMenuList key="main-first" items={formatItems(items)} /> : null;
+    return items.length ? (
+      <div className="sidebar-section">
+        <div className="sidebar-section-title">{translateString('Main')}</div>
+        <NavigationMenuList key="main-first" items={formatItems(items)} />
+      </div>
+    ) : null;
   }
 
   function MainMenuSecondSection() {
@@ -266,6 +271,15 @@ export function SidebarNavigationMenu() {
 
   function AdminMenuSection() {
     const items = [];
+
+    if (userCan.manageMedia) {
+      items.push({
+        link: links.manage.statistics,
+        icon: 'query_stats',
+        text: translateString('Statistics'),
+        className: 'nav-item-manage-statistics',
+      });
+    }
 
     if (userCan.manageMedia) {
       items.push({

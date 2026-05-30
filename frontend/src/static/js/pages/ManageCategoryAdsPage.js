@@ -2,6 +2,7 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import { ApiUrlContext } from '../utils/contexts/';
 import { csrfToken } from '../utils/helpers/';
+import { translateString } from '../utils/helpers';
 import { PageActions } from '../utils/actions/';
 import { MediaListWrapper } from '../components/MediaListWrapper';
 import { ManageItemList } from '../components/management-table/ManageItemList/ManageItemList';
@@ -118,8 +119,16 @@ export class ManageCategoryAdsPage extends Page {
   pageContent() {
     return (
       <MediaListWrapper
-        className="search-results-wrap items-list-hor"
+        className="search-results-wrap items-list-hor ads-manage-wrap ads-manage-wrap-category"
       >
+        <AdSelector onSelect={this.handleAdSelect} />
+        <button
+          className="ads-button"
+          disabled={this.state.selectedCategoryIds.length === 0 || !this.state.selectedAdId}
+          onClick={() => assignAdToCategories(this.state.selectedCategoryIds, this.state.selectedAdId)}
+        >
+          {translateString('Assign')}
+        </button>
         <ManageItemList
           pageItems={50}
           manageType={'category-ads'}
@@ -134,16 +143,6 @@ export class ManageCategoryAdsPage extends Page {
           onClickColumnSort={this.onColumnSortClick}
           onSelectionChange={this.handleCategorySelect}
         />
-        <AdSelector onSelect={this.handleAdSelect} />
-        <button
-          class="ads-button"
-          disabled={this.state.selectedCategoryIds.length === 0 || !this.state.selectedAdId}
-          onClick={() =>
-            assignAdToCategories(this.state.selectedCategoryIds, this.state.selectedAdId)
-          }
-        >
-          Asignar
-        </button>
       </MediaListWrapper>
     );
   }

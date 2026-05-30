@@ -48,6 +48,7 @@ export function init(base_url, endpoints) {
     },
     manage: {
       media: endpoints.manage_media,
+      statistics: endpoints.manage_statistics,
       users: endpoints.manage_users,
       comments: endpoints.manage_comments,
     },

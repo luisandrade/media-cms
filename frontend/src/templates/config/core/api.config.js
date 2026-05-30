@@ -14,6 +14,7 @@ module.exports = {
   purchases: '/purchases',
   actions: '/actions',
   manage_media: '/manage_media',
+  manage_statistics: '/manage_statistics',
   manage_users: '/manage_users',
   manage_comments: '/manage_comments',
 };

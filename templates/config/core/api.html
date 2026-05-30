@@ -14,6 +14,7 @@ MediaCMS.api = {
     category_ads: '/category-ads',
 	actions: '/actions',
     {% if IS_MEDIACMS_ADMIN or IS_MEDIACMS_MANAGER or IS_MEDIACMS_EDITOR %}manage_media: '/manage_media',{% endif %}
+    {% if IS_MEDIACMS_ADMIN or IS_MEDIACMS_MANAGER or IS_MEDIACMS_EDITOR %}manage_statistics: '/manage_statistics',{% endif %}
     {% if IS_MEDIACMS_ADMIN or IS_MEDIACMS_MANAGER %}manage_users: '/manage_users',{% endif %}
     {% if IS_MEDIACMS_ADMIN or IS_MEDIACMS_MANAGER or IS_MEDIACMS_EDITOR %}manage_comments: '/manage_comments',{% endif %}
 };

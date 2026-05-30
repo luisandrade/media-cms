@@ -29,6 +29,7 @@ module.exports = {
   admin: '/admin',
   /* Management pages */
   manageMedia: './manage-media.html',
+  manageStatistics: './manage-statistics.html',
   manageUsers: './manage-users.html',
   manageComments: './manage-comments.html',
 };

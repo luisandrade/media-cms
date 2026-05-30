@@ -78,6 +78,97 @@ body {
   display: block;
 }
 
+.ads-manage-page.user-action-form-wrap {
+  margin: 2em 1em 1em;
+}
+
+.ads-manage-page .user-action-form-inner {
+  max-width: 960px;
+}
+
+.ads-manage-shell {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+}
+
+.dark_theme .ads-manage-shell {
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.24);
+}
+
+.ads-manage-nav {
+  background-color: #f0f0f0;
+  padding: 10px 0;
+  margin: 0 0 20px;
+  border-radius: 6px;
+}
+
+.dark_theme .ads-manage-nav {
+  background-color: rgba(255, 255, 255, 0.06);
+}
+
+.ads-manage-nav ul {
+  list-style: none;
+  display: flex;
+  justify-content: space-around;
+  margin: 0;
+  padding: 0;
+}
+
+.ads-manage-nav li {
+  display: inline-block;
+}
+
+.ads-manage-nav .tab-button {
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-weight: 400;
+  color: #666;
+}
+
+.ads-manage-nav .tab-button.active {
+  font-weight: 700;
+  color: #333;
+  padding-bottom: 3px;
+  border-bottom-color: #333;
+}
+
+.dark_theme .ads-manage-nav .tab-button {
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.dark_theme .ads-manage-nav .tab-button.active {
+  color: #fff;
+  border-bottom-color: #fff;
+}
+
+.ads-manage-form {
+  margin-bottom: 1.5em;
+}
+
+.ads-manage-form .form-group {
+  margin-bottom: 1.25em;
+}
+
+.ads-manage-form .ads-input {
+  display: block !important;
+  width: 100%;
+  max-width: 480px;
+}
+
+.ads-submit-button {
+  margin-top: 0;
+}
+
+.ads-manage-results {
+  margin-top: 1.5em;
+}
+
 a.title{
   color:white !important
 }

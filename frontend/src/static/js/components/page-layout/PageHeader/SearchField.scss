@@ -162,10 +162,14 @@
 
 .header-search .text-field-wrap {
   position: relative;
-  padding-right: 96px; /* room for button */
+  padding-right: 0;
   border: 1px solid var(--border-color);
   border-radius: 8px;
   background: var(--bg-input);
+
+  .popup {
+    right: 0;
+  }
 }
 
 .header-search .header-search-icon {
@@ -184,7 +188,7 @@
   padding: 10px 16px 10px 40px;
   background: transparent;
   border: none;
-  color: var(--text-primary);
+  color: rgba(255, 255, 255, 0.5);
   font-size: 14px;
 }
 
@@ -192,27 +196,3 @@
   color: var(--text-muted);
 }
 
-.header-search .header-search-btn {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--primary-color) !important;
-  color: #fff !important;
-  padding: 8px 16px !important;
-  border: none !important;
-  cursor: pointer;
-  font-size: 14px !important;
-  font-weight: 600 !important;
-  width: auto !important;
-  height: auto !important;
-  min-height: 30px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.35);
-}
-
-.header-search .header-search-btn:hover {
-  background: var(--primary-hover);
-}
