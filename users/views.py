@@ -1,8 +1,13 @@
+from urllib.parse import urlparse
+
+from allauth.account.views import LoginView as AllauthLoginView
+from allauth.core.exceptions import ImmediateHttpResponse
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.mail import EmailMessage
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
+from django.urls import reverse
 from drf_yasg import openapi as openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import generics, permissions, status
@@ -25,6 +30,24 @@ from files.methods import is_mediacms_editor, is_mediacms_manager
 from .forms import ChannelForm, UserForm
 from .models import Channel, User
 from .serializers import LoginSerializer, UserDetailSerializer, UserSerializer
+
+
+class AccountLoginView(AllauthLoginView):
+    @staticmethod
+    def _is_root_redirect(next_url):
+        parsed_next = urlparse(next_url or "")
+        return parsed_next.path in {"", "/"} and not parsed_next.query and not parsed_next.fragment
+
+    def form_valid(self, form):
+        next_url = self.request.POST.get(self.redirect_field_name) or self.request.GET.get(self.redirect_field_name)
+        if getattr(form.user, "is_superuser", False) and (not next_url or self._is_root_redirect(next_url)):
+            redirect_url = reverse("manage_statistics")
+        else:
+            redirect_url = self.get_success_url()
+        try:
+            return form.login(self.request, redirect_url=redirect_url)
+        except ImmediateHttpResponse as e:
+            return e.response
 
 
 def get_user(username):

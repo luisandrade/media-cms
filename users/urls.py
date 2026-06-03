@@ -3,6 +3,7 @@ from django.urls import path, re_path
 from . import views
 
 urlpatterns = [
+    path('accounts/login/', views.AccountLoginView.as_view(), name='account_login'),
     re_path(r"^user/(?P<username>[\w@._-]*)$", views.view_user, name="get_user"),
     re_path(r"^user/(?P<username>[\w@._-]*)/$", views.view_user, name="get_user"),
     re_path(

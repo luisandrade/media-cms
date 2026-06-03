@@ -1,4 +1,4 @@
-from django.test import RequestFactory, TestCase, override_settings
+from django.test import Client, RequestFactory, TestCase, override_settings
 from django.urls import reverse
 
 from files.tests import create_account
@@ -44,3 +44,35 @@ class TestMyAccountAdapter(TestCase):
 		redirect_url = self.adapter.get_login_redirect_url(request)
 
 		self.assertEqual(redirect_url, reverse("manage_statistics"))
+
+
+class TestAccountLoginView(TestCase):
+	fixtures = ["fixtures/categories.json", "fixtures/encoding_profiles.json"]
+
+	def setUp(self):
+		self.client = Client()
+		self.password = "pass1234"
+
+	def test_superuser_root_next_redirects_to_statistics_dashboard(self):
+		user = create_account(username="super-login", password=self.password, is_superuser=True)
+
+		response = self.client.post(
+			"/accounts/login/?next=/",
+			{"login": user.username, "password": self.password},
+			follow=False,
+		)
+
+		self.assertEqual(response.status_code, 302)
+		self.assertEqual(response["Location"], reverse("manage_statistics"))
+
+	def test_superuser_keeps_non_root_next_redirect(self):
+		user = create_account(username="super-next", password=self.password, is_superuser=True)
+
+		response = self.client.post(
+			"/accounts/login/?next=/requested-path/",
+			{"login": user.username, "password": self.password},
+			follow=False,
+		)
+
+		self.assertEqual(response.status_code, 302)
+		self.assertEqual(response["Location"], "/requested-path/")
