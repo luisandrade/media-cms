@@ -36,3 +36,11 @@ class TestMyAccountAdapter(TestCase):
 		redirect_url = self.adapter.get_login_redirect_url(request)
 
 		self.assertEqual(redirect_url, "/requested-path/")
+
+	def test_superuser_ignores_root_next_redirect(self):
+		request = self.factory.get("/accounts/login/", {"next": "/"})
+		request.user = create_account(is_superuser=True)
+
+		redirect_url = self.adapter.get_login_redirect_url(request)
+
+		self.assertEqual(redirect_url, reverse("manage_statistics"))

@@ -3,9 +3,15 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 from django.utils.http import url_has_allowed_host_and_scheme
+from urllib.parse import urlparse
 
 
 class MyAccountAdapter(DefaultAccountAdapter):
+    @staticmethod
+    def _is_root_redirect(next_url):
+        parsed_next = urlparse(next_url)
+        return parsed_next.path in {"", "/"} and not parsed_next.query and not parsed_next.fragment
+
     def get_email_confirmation_url_stub(self, request, emailconfirmation):
         url = reverse("account_confirm_email", args=[emailconfirmation.key])
         return settings.SSL_FRONTEND_HOST + url
@@ -17,7 +23,7 @@ class MyAccountAdapter(DefaultAccountAdapter):
             next_url,
             allowed_hosts=allowed_hosts,
             require_https=request.is_secure(),
-        ):
+        ) and not self._is_root_redirect(next_url):
             return next_url
         if getattr(request.user, "is_superuser", False):
             return reverse("manage_statistics")
