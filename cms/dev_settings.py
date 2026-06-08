@@ -27,6 +27,7 @@ INSTALLED_APPS = [
     'uploader.apps.UploaderConfig',
     'djcelery_email',
     'drf_yasg',
+    'payments.apps.PaymentsConfig',
     'corsheaders',
 ]
 
@@ -38,6 +39,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'cms.login_required_middleware.LoginRequiredMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'debug_toolbar.middleware.DebugToolbarMiddleware',
@@ -49,3 +51,14 @@ CORS_ORIGIN_ALLOW_ALL = True
 STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
 STATIC_ROOT = os.path.join(BASE_DIR, 'static_collected')
 GLOBAL_LOGIN_REQUIRED = True
+
+LOGIN_REQUIRED_IGNORE_PATHS = [
+    r'/accounts/login/$',
+    r'/accounts/logout/$',
+    r'/accounts/signup/$',
+    r'/accounts/password/.*/$',
+    r'/accounts/confirm-email/.*/$',
+    r'/payments/flow/confirm/?$',
+    r'/payments/flow/return/?$',
+    r'/api/',
+]

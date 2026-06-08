@@ -24,7 +24,7 @@ CAN_ADD_MEDIA = "all"
 CAN_COMMENT = "advancedUser"
 
 # valid choices here are 'public', 'private', 'unlisted
-PORTAL_WORKFLOW = "public"
+PORTAL_WORKFLOW = "private"
 
 # valid values: 'light', 'dark'.
 DEFAULT_THEME = "dark"
@@ -54,7 +54,7 @@ ALLOW_RATINGS_CONFIRMED_EMAIL_ONLY = True
 # ip of the server should be part of this
 ALLOWED_HOSTS = ["*", "mediacms.io", "127.0.0.1", "localhost"]
 
-FRONTEND_HOST = "https://demovms.grupoz.cl"
+FRONTEND_HOST = "https://rodevms.hnode.cl"
 # this variable - along with SSL_FRONTEND_HOST is used on several places
 # as email where a URL need appear etc
 
@@ -343,8 +343,9 @@ INSTALLED_APPS = [
 ]
 
 # --- Pagos / Flow (descargas pagadas de videos) ---
-VIDEO_DOWNLOAD_REQUIRES_PAYMENT = os.getenv("VIDEO_DOWNLOAD_REQUIRES_PAYMENT", "true").lower() in ("1", "true", "yes")
-VIDEO_DOWNLOAD_PRICE_CLP = int(os.getenv("VIDEO_DOWNLOAD_PRICE_CLP", "990"))
+VIDEO_DOWNLOAD_ENABLED = True
+VIDEO_DOWNLOAD_REQUIRES_PAYMENT = True
+VIDEO_DOWNLOAD_PRICE_CLP = "1200"
 VIDEO_DOWNLOAD_CURRENCY = os.getenv("VIDEO_DOWNLOAD_CURRENCY", "CLP")
 
 FLOW_API_KEY = os.getenv("FLOW_API_KEY", "6D8760F5-1AF4-41D5-957F-28LABF08FF87")
@@ -554,7 +555,7 @@ else:
 
 if GLOBAL_LOGIN_REQUIRED:
     # this should go after the AuthenticationMiddleware middleware
-    MIDDLEWARE.insert(6, "login_required.middleware.LoginRequiredMiddleware")
+    MIDDLEWARE.insert(6, "cms.login_required_middleware.LoginRequiredMiddleware")
     LOGIN_REQUIRED_IGNORE_PATHS = [
         r'/accounts/login/$',
         r'/accounts/logout/$',

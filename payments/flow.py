@@ -16,6 +16,12 @@ class FlowCreatePaymentResult:
     raw: dict[str, Any]
 
 
+class FlowAPIError(Exception):
+    def __init__(self, message: str, *, raw: dict[str, Any] | None = None) -> None:
+        super().__init__(message)
+        self.raw = raw or {}
+
+
 class FlowClient:
     """Minimal Flow client.
 
@@ -111,10 +117,20 @@ class FlowClient:
         # Common shapes seen in Flow integrations:
         # - {"url": "https://...", "token": "..."}
         # - {"redirect": "...", "token": "..."}
-        redirect_url = data.get("url") or data.get("redirect") or data.get("redirectUrl")
+        redirect_url = (
+            data.get("url")
+            or data.get("redirect")
+            or data.get("redirectUrl")
+            or data.get("urlPayment")
+            or data.get("paymentUrl")
+            or data.get("redirect_url")
+        )
         token = data.get("token")
         if not redirect_url:
-            raise ValueError("Flow create_payment response missing redirect url")
+            detail = data.get("message") or data.get("error") or data.get("detail")
+            if detail:
+                raise FlowAPIError(f"Flow create_payment failed: {detail}", raw=data)
+            raise FlowAPIError("Flow create_payment response missing redirect url", raw=data)
 
         # Flow commonly returns a base URL + token separately; payment page expects token.
         if token and "token=" not in redirect_url:

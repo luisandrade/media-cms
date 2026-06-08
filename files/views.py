@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+from functools import wraps
 import logging
 
 from django.conf import settings
@@ -88,23 +89,30 @@ logger = logging.getLogger(__name__)
 VALID_USER_ACTIONS = [action for action, name in USER_MEDIA_ACTIONS]
 
 def portal_login_required(view_func):
-    if getattr(settings, "GLOBAL_LOGIN_REQUIRED", False):
-        return login_required(view_func)
-    return view_func
+    @wraps(view_func)
+    def wrapped_view(request, *args, **kwargs):
+        if getattr(settings, "GLOBAL_LOGIN_REQUIRED", False):
+            return login_required(view_func)(request, *args, **kwargs)
+        return view_func(request, *args, **kwargs)
+
+    return wrapped_view
 
 
+@portal_login_required
 def about(request):
     """About view"""
 
     context = {}
     return render(request, "cms/about.html", context)
 
+@portal_login_required
 def stats(request):
     """About view"""
 
     context = {}
     return render(request, "cms/stats.html", context)
 
+@portal_login_required
 def setlanguage(request):
     """Set Language view"""
 
@@ -219,6 +227,7 @@ def create_add_ads_tag(request):
         'error': error,
     }
     return render(request, "cms/ads.html", context)
+@portal_login_required
 def contact(request):
     """Contact view"""
 
@@ -558,18 +567,21 @@ def embed_media(request):
         "playback_urls": json.dumps(playback_urls)
     })
 
+@portal_login_required
 def featured_media(request):
     """List featured media view"""
 
     context = {}
     return render(request, "cms/featured-media.html", context)
 
+@portal_login_required
 def index(request):
     """Index view"""
 
     context = {}
     return render(request, "cms/index.html", context)
 
+@portal_login_required
 def latest_media(request):
     """List latest media view"""
 
@@ -616,12 +628,14 @@ def manage_statistics(request):
     context = {}
     return render(request, "cms/manage_statistics.html", context)
 
+@portal_login_required
 def members(request):
     """List members view"""
 
     context = {}
     return render(request, "cms/members.html", context)
 
+@portal_login_required
 def recommended_media(request):
     """List recommended media view"""
 
@@ -629,6 +643,7 @@ def recommended_media(request):
     return render(request, "cms/recommended-media.html", context)
 
 
+@portal_login_required
 def search(request):
     """Search view"""
 
@@ -647,6 +662,7 @@ def sitemap(request):
     context["users"] = list(User.objects.filter())
     return render(request, "sitemap.xml", context, content_type="application/xml")
 
+@portal_login_required
 def tags(request):
     """List tags view"""
 
@@ -654,6 +670,7 @@ def tags(request):
     return render(request, "cms/tags.html", context)
 
 
+@portal_login_required
 def tos(request):
     """Terms of service view"""
 
@@ -675,6 +692,7 @@ def upload_media(request):
 
     return render(request, "cms/add-media.html", context)
 
+@portal_login_required
 def view_media(request):
     """View media view"""
     import hashlib, base64
@@ -899,6 +917,13 @@ class MediaList(APIView):
     permission_classes = (IsAuthorizedToAdd,)
     parser_classes = (MultiPartParser, FormParser, FileUploadParser)
 
+    def get_permissions(self):
+        if getattr(settings, "GLOBAL_LOGIN_REQUIRED", False) and self.request.method in permissions.SAFE_METHODS:
+            permission_classes = (permissions.IsAuthenticated,)
+        else:
+            permission_classes = self.permission_classes
+        return [permission() for permission in permission_classes]
+
     @swagger_auto_schema(
         manual_parameters=[
             openapi.Parameter(name='page', type=openapi.TYPE_INTEGER, in_=openapi.IN_QUERY, description='Page number'),
@@ -979,6 +1004,13 @@ class MediaDetail(APIView):
 
     permission_classes = (permissions.IsAuthenticatedOrReadOnly, IsUserOrEditor)
     parser_classes = (MultiPartParser, FormParser, FileUploadParser)
+
+    def get_permissions(self):
+        if getattr(settings, "GLOBAL_LOGIN_REQUIRED", False):
+            permission_classes = (permissions.IsAuthenticated, IsUserOrEditor)
+        else:
+            permission_classes = self.permission_classes
+        return [permission() for permission in permission_classes]
 
     def get_object(self, friendly_token, password=None):
         try:

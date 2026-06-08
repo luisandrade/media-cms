@@ -92,6 +92,7 @@ class SingleMediaSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source="user.username")
     url = serializers.SerializerMethodField()
     ads_tag = serializers.SerializerMethodField() 
+    allow_download = serializers.SerializerMethodField()
     download_requires_payment = serializers.SerializerMethodField()
     download_entitled = serializers.SerializerMethodField()
     download_price = serializers.SerializerMethodField()
@@ -118,9 +119,17 @@ class SingleMediaSerializer(serializers.ModelSerializer):
             }
         return None
 
+    def _video_download_enabled(self, obj) -> bool:
+        if obj.media_type != "video":
+            return bool(obj.allow_download)
+        return bool(obj.allow_download) and bool(getattr(settings, "VIDEO_DOWNLOAD_ENABLED", True))
+
+    def get_allow_download(self, obj):
+        return self._video_download_enabled(obj)
+
     def _video_download_requires_payment(self, obj) -> bool:
         request = self.context.get("request")
-        if not obj.allow_download:
+        if not self._video_download_enabled(obj):
             return False
         if obj.media_type != "video":
             return False
@@ -192,7 +201,7 @@ class SingleMediaSerializer(serializers.ModelSerializer):
         if not request:
             return []
 
-        if obj.media_type != "video" or not obj.allow_download:
+        if obj.media_type != "video" or not self._video_download_enabled(obj):
             return []
 
         # Si requiere pago y aún no está habilitado, no entregamos opciones descargables.
@@ -240,6 +249,8 @@ class SingleMediaSerializer(serializers.ModelSerializer):
         return items
 
     def get_original_media_url(self, obj):
+        if obj.media_type == "video" and not self._video_download_enabled(obj):
+            return None
         # Para videos con descarga pagada, ocultar URL directa del original si no hay entitlement.
         if obj.media_type == "video" and self._video_download_requires_payment(obj) and not self._user_entitled(obj):
             return None

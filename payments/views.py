@@ -23,7 +23,7 @@ from rest_framework.generics import ListAPIView
 from files.models import Encoding, Media
 from files.serializers import MediaSerializer
 
-from .flow import FlowClient
+from .flow import FlowAPIError, FlowClient
 from .emails import (
     send_download_purchase_confirmation_email,
     send_download_purchase_problem_email,
@@ -68,9 +68,16 @@ def _flow_terminal_failure(status_value: Any) -> str | None:
 
 def video_download_requires_payment(media: Media) -> bool:
     return (
-        media.media_type == "video"
+        video_download_is_enabled(media)
         and bool(getattr(settings, "VIDEO_DOWNLOAD_REQUIRES_PAYMENT", True))
+    )
+
+
+def video_download_is_enabled(media: Media) -> bool:
+    return (
+        media.media_type == "video"
         and bool(media.allow_download)
+        and bool(getattr(settings, "VIDEO_DOWNLOAD_ENABLED", True))
     )
 
 
@@ -132,7 +139,7 @@ class VideoDownloadCheckoutView(APIView):
     def get(self, request, friendly_token: str):
         media = get_object_or_404(Media, friendly_token=friendly_token)
 
-        if not media.allow_download:
+        if not video_download_is_enabled(media):
             return Response({"detail": "Download disabled."}, status=status.HTTP_403_FORBIDDEN)
 
         if media.media_type != "video":
@@ -194,7 +201,7 @@ class VideoDownloadCheckoutView(APIView):
             )
         except Exception as exc:  # noqa: BLE001
             payment.status = Payment.STATUS_FAILED
-            payment.raw_create_response = {"error": str(exc)}
+            payment.raw_create_response = exc.raw if isinstance(exc, FlowAPIError) else {"error": str(exc)}
             payment.save(update_fields=["status", "raw_create_response", "updated_at"])
             return Response(
                 {"detail": "Failed to create Flow payment.", "error": str(exc)},
@@ -272,7 +279,7 @@ class VideoStreamCheckoutView(APIView):
             )
         except Exception as exc:  # noqa: BLE001
             payment.status = Payment.STATUS_FAILED
-            payment.raw_create_response = {"error": str(exc)}
+            payment.raw_create_response = exc.raw if isinstance(exc, FlowAPIError) else {"error": str(exc)}
             payment.save(update_fields=["status", "raw_create_response", "updated_at"])
             return Response(
                 {"detail": "Failed to create Flow payment.", "error": str(exc)},
@@ -614,7 +621,7 @@ class VideoDownloadFileView(APIView):
     def get(self, request, friendly_token: str):
         media = get_object_or_404(Media, friendly_token=friendly_token)
 
-        if not media.allow_download:
+        if not video_download_is_enabled(media):
             return Response({"detail": "Download disabled."}, status=status.HTTP_403_FORBIDDEN)
 
         if media.media_type != "video":
