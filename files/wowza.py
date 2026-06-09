@@ -54,7 +54,10 @@ class WowzaClient:
             payload = {"body": response.text}
 
         if response.status_code >= 400:
-            detail = payload.get("message") or payload.get("error") or payload.get("body") or response.reason
+            if isinstance(payload, dict):
+                detail = payload.get("message") or payload.get("error") or payload.get("body") or response.reason
+            else:
+                detail = str(payload) or response.reason
             raise WowzaAPIError(detail, status_code=response.status_code, data=payload)
 
         return payload

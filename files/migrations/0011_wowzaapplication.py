@@ -19,8 +19,6 @@ class Migration(migrations.Migration):
                 ("schedule_id", models.CharField(db_index=True, max_length=80)),
                 ("app_type", models.CharField(default="Live", max_length=40)),
                 ("storage_dir", models.CharField(blank=True, max_length=255)),
-                ("publish_username", models.CharField(blank=True, max_length=80)),
-                ("publish_password", models.CharField(blank=True, max_length=128)),
                 ("is_active", models.BooleanField(db_index=True, default=True)),
                 ("add_date", models.DateTimeField(auto_now_add=True, db_index=True)),
                 ("update_date", models.DateTimeField(auto_now=True)),
