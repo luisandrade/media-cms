@@ -220,12 +220,12 @@ export class ManageWowzaPage extends Page {
   }
 
   onTogglePassword(appId) {
-    this.setState({
+    this.setState((prevState) => ({
       visiblePasswords: {
-        ...this.state.visiblePasswords,
-        [appId]: !this.state.visiblePasswords[appId],
+        ...prevState.visiblePasswords,
+        [appId]: !prevState.visiblePasswords[appId],
       },
-    });
+    }));
   }
 
   pageContent() {

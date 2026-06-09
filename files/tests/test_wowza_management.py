@@ -6,7 +6,7 @@ from django.urls import reverse
 
 from files.models import WowzaApplication
 from files.tests.user_utils import create_account
-from files.wowza import WowzaAPIError, WowzaClient, wowza_live_application_payload
+from files.wowza import WowzaAPIError, WowzaClient, generate_wowza_publish_password, wowza_live_application_payload
 
 
 class WowzaManagementTests(TestCase):
@@ -171,6 +171,11 @@ class WowzaManagementTests(TestCase):
 
         self.assertEqual(payload["securityConfig"]["publishRequirePassword"], True)
         self.assertEqual(payload["securityConfig"]["publishAuthenticationMethod"], "digest")
+
+    def test_generate_publish_password_uses_10_characters_by_default(self):
+        password = generate_wowza_publish_password()
+
+        self.assertEqual(len(password), 10)
 
     def test_wowza_client_continues_when_application_already_exists(self):
         client = WowzaClient(base_url="http://wowza.test", username="u", password="p")

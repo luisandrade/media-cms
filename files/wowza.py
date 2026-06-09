@@ -117,7 +117,7 @@ def validate_wowza_app_name(value):
     return value
 
 
-def generate_wowza_publish_password(length=28):
+def generate_wowza_publish_password(length=10):
     alphabet = string.ascii_letters + string.digits
     return "".join(secrets.choice(alphabet) for _ in range(length))
 
