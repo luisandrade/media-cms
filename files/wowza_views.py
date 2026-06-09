@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.core.paginator import EmptyPage, Paginator
+from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
@@ -102,6 +103,36 @@ class WowzaApplicationCreateView(APIView):
                 "wowza_application": serialize_wowza_application(app),
             },
             status=status.HTTP_201_CREATED,
+        )
+
+
+class WowzaApplicationDetailView(APIView):
+    permission_classes = (IsMediacmsAdmin,)
+    parser_classes = (JSONParser,)
+
+    def delete(self, request, app_id, format=None):
+        app = get_object_or_404(WowzaApplication, id=app_id)
+
+        try:
+            payload = WowzaClient().delete_live_application(name=app.name)
+        except WowzaAPIError as exc:
+            return Response(
+                {
+                    "success": False,
+                    "message": str(exc),
+                    "data": exc.data,
+                },
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        app_name = app.name
+        app.delete()
+        return Response(
+            {
+                "success": True,
+                "message": f"Aplicación {app_name} eliminada correctamente.",
+                "data": payload,
+            }
         )
 
 

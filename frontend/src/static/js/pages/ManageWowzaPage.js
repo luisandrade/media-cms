@@ -32,6 +32,7 @@ export class ManageWowzaPage extends Page {
       applicationsTotalPages: 1,
       result: null,
       activeAppName: '',
+      deletingApplicationId: null,
       error: null,
       validationError: '',
     };
@@ -40,6 +41,7 @@ export class ManageWowzaPage extends Page {
     this.loadApplications = this.loadApplications.bind(this);
     this.onInputChange = this.onInputChange.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
+    this.onDeleteApplication = this.onDeleteApplication.bind(this);
   }
 
   componentDidMount() {
@@ -174,6 +176,47 @@ export class ManageWowzaPage extends Page {
     }
   }
 
+  async onDeleteApplication(app) {
+    const confirmed = window.confirm(`¿Eliminar la aplicación ${app.name} de Wowza?`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    this.setState({
+      deletingApplicationId: app.id,
+      error: null,
+      result: null,
+    });
+
+    try {
+      const response = await fetch(`${ApiUrlContext._currentValue.manage.wowzaApplications}/${app.id}`, {
+        method: 'DELETE',
+        credentials: 'same-origin',
+        headers: {
+          'X-CSRFToken': csrfToken(),
+        },
+      });
+      const payload = await response.json();
+
+      if (!response.ok || false === payload.success) {
+        throw new Error(payload.message || 'No fue posible eliminar la aplicación.');
+      }
+
+      this.setState({
+        deletingApplicationId: null,
+        activeAppName: this.state.activeAppName === app.name ? '' : this.state.activeAppName,
+      });
+      this.loadApplications(this.state.applicationsPage);
+      this.loadStatus();
+    } catch (error) {
+      this.setState({
+        deletingApplicationId: null,
+        error: getErrorMessage(error),
+      });
+    }
+  }
+
   pageContent() {
     const {
       appName,
@@ -188,6 +231,7 @@ export class ManageWowzaPage extends Page {
       applicationsTotalPages,
       result,
       activeAppName,
+      deletingApplicationId,
       error,
       validationError,
     } = this.state;
@@ -308,6 +352,7 @@ export class ManageWowzaPage extends Page {
                     <span>Tipo</span>
                     <span>Estado</span>
                     <span>Creada por</span>
+                    <span>Acción</span>
                   </div>
                   {applications.map((app) => (
                     <div className={`manage-wowza-app-row ${activeAppName === app.name ? 'manage-wowza-app-row-active' : ''}`} key={app.id || app.name}>
@@ -319,6 +364,18 @@ export class ManageWowzaPage extends Page {
                       <span>{app.app_type}</span>
                       <span>{app.is_active ? 'Activa' : 'Inactiva'}</span>
                       <span>{app.created_by || '-'}</span>
+                      <span>
+                        <button
+                          className="manage-wowza-delete"
+                          type="button"
+                          onClick={() => this.onDeleteApplication(app)}
+                          disabled={deletingApplicationId === app.id}
+                          title="Eliminar aplicación"
+                        >
+                          {deletingApplicationId === app.id ? <SpinnerLoader size="small" /> : <MaterialIcon type="delete" />}
+                          <span>{deletingApplicationId === app.id ? 'Eliminando' : 'Eliminar'}</span>
+                        </button>
+                      </span>
                     </div>
                   ))}
                 </div>

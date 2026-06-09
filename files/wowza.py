@@ -67,6 +67,10 @@ class WowzaClient:
         advanced = self.update_advanced_settings(name=name, schedule_id=schedule_id)
         return {"success": True, "application": created, "advanced_settings": advanced}
 
+    def delete_live_application(self, *, name):
+        deleted = self.request("DELETE", f"applications/{name}")
+        return {"success": True, "application": deleted}
+
     def update_advanced_settings(self, *, name, schedule_id):
         return self.request("POST", f"applications/{name}/adv", wowza_advanced_settings_payload(schedule_id))
 

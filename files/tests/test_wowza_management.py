@@ -109,6 +109,40 @@ class WowzaManagementTests(TestCase):
         self.assertEqual(response.json()["page_size"], 1)
         self.assertEqual(len(response.json()["results"]), 1)
 
+    @patch("files.wowza_views.WowzaClient")
+    def test_delete_application_calls_wowza_and_removes_saved_app(self, wowza_client_cls):
+        app = WowzaApplication.objects.create(
+            name="eventoz08",
+            schedule_id="schedule08",
+            created_by=self.admin,
+            storage_dir=f"/nas/{self.admin.id}",
+        )
+        wowza_client = Mock()
+        wowza_client.delete_live_application.return_value = {"success": True}
+        wowza_client_cls.return_value = wowza_client
+        self.client.force_login(self.admin)
+
+        response = self.client.delete(f"/api/v1/manage_wowza/applications/{app.id}")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["success"], True)
+        self.assertFalse(WowzaApplication.objects.filter(id=app.id).exists())
+        wowza_client.delete_live_application.assert_called_once_with(name="eventoz08")
+
+    def test_delete_application_rejects_non_admin(self):
+        app = WowzaApplication.objects.create(
+            name="eventoz09",
+            schedule_id="schedule09",
+            created_by=self.admin,
+            storage_dir=f"/nas/{self.admin.id}",
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.delete(f"/api/v1/manage_wowza/applications/{app.id}")
+
+        self.assertEqual(response.status_code, 403)
+        self.assertTrue(WowzaApplication.objects.filter(id=app.id).exists())
+
     def test_create_application_validates_app_name(self):
         self.client.force_login(self.admin)
 

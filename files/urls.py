@@ -97,6 +97,7 @@ urlpatterns = [
     re_path(r"^api/v1/manage_statistics$", management_views.StatisticsView.as_view()),
     re_path(r"^api/v1/manage_wowza/status$", wowza_views.WowzaStatusView.as_view()),
     re_path(r"^api/v1/manage_wowza/applications$", wowza_views.WowzaApplicationCreateView.as_view()),
+    re_path(r"^api/v1/manage_wowza/applications/(?P<app_id>\d+)$", wowza_views.WowzaApplicationDetailView.as_view()),
     re_path(r"^api/v1/tasks$", views.TasksList.as_view()),
     re_path(r"^api/v1/tasks/$", views.TasksList.as_view()),
     re_path(r"^api/v1/tasks/(?P<friendly_token>[\w|\W]*)$", views.TaskDetail.as_view()),

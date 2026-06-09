@@ -334,7 +334,7 @@
 
 .manage-wowza-app-row {
   display: grid;
-  grid-template-columns: minmax(160px, 1.2fr) minmax(190px, 1.2fr) minmax(84px, 0.45fr) minmax(90px, 0.45fr) minmax(110px, 0.55fr);
+  grid-template-columns: minmax(150px, 1.15fr) minmax(180px, 1.15fr) minmax(74px, 0.4fr) minmax(84px, 0.42fr) minmax(98px, 0.5fr) minmax(106px, 0.5fr);
   gap: 16px;
   align-items: center;
   min-height: 46px;
@@ -432,6 +432,49 @@
 
   .dark_theme & {
     color: rgba(203, 209, 234, 0.72);
+  }
+}
+
+.manage-wowza-delete {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 4px;
+  color: #a3121b;
+  background: #fff1f2;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: default;
+    opacity: 0.65;
+  }
+
+  &:hover:not(:disabled) {
+    background: #ffdfe2;
+  }
+
+  .material-icons {
+    color: inherit;
+    font-size: 1.15rem;
+  }
+
+  .spinner-loader {
+    margin: 0;
+  }
+
+  .dark_theme & {
+    color: #ff9aa0;
+    background: rgba(255, 18, 31, 0.14);
+
+    &:hover:not(:disabled) {
+      background: rgba(255, 18, 31, 0.22);
+    }
   }
 }
 
