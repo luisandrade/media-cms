@@ -65,7 +65,12 @@ class WowzaClient:
     def create_live_application(self, *, name, storage_user_id, schedule_id=None, publish_username=None, publish_password=None):
         schedule_id = schedule_id or name
         app_data = wowza_live_application_payload(name=name, storage_user_id=storage_user_id)
-        created = self.request("POST", "applications", app_data)
+        try:
+            created = self.request("POST", "applications", app_data)
+        except WowzaAPIError as exc:
+            if exc.status_code != 409:
+                raise
+            created = {"success": True, "message": "La aplicación ya existía en Wowza.", "data": exc.data}
         advanced = self.update_advanced_settings(name=name, schedule_id=schedule_id)
         publisher = self.create_publisher(
             app_name=name,
@@ -79,14 +84,20 @@ class WowzaClient:
         return {"success": True, "application": deleted}
 
     def create_publisher(self, *, app_name, publisher_name, password):
+        payload = wowza_publisher_payload(publisher_name=publisher_name, password=password)
+        try:
+            return self.request("POST", f"applications/{app_name}/publishers", payload)
+        except WowzaAPIError as exc:
+            if exc.status_code != 409:
+                raise
+            updated = self.update_publisher(app_name=app_name, publisher_name=publisher_name, password=password)
+            return {"success": True, "message": "El publisher ya existía en Wowza y fue actualizado.", "data": updated}
+
+    def update_publisher(self, *, app_name, publisher_name, password):
         return self.request(
-            "POST",
-            f"applications/{app_name}/publishers",
-            {
-                "publisherName": publisher_name,
-                "password": password,
-                "description": f"Publisher {publisher_name} creado desde MediaCMS",
-            },
+            "PUT",
+            f"applications/{app_name}/publishers/{publisher_name}",
+            wowza_publisher_payload(publisher_name=publisher_name, password=password),
         )
 
     def delete_publisher(self, *, app_name, publisher_name):
@@ -106,6 +117,14 @@ def validate_wowza_app_name(value):
 def generate_wowza_publish_password(length=28):
     alphabet = string.ascii_letters + string.digits
     return "".join(secrets.choice(alphabet) for _ in range(length))
+
+
+def wowza_publisher_payload(*, publisher_name, password):
+    return {
+        "publisherName": publisher_name,
+        "password": password,
+        "description": f"Publisher {publisher_name} creado desde MediaCMS",
+    }
 
 
 def wowza_live_application_payload(*, name, storage_user_id):

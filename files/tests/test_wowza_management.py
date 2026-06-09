@@ -6,7 +6,7 @@ from django.urls import reverse
 
 from files.models import WowzaApplication
 from files.tests.user_utils import create_account
-from files.wowza import wowza_live_application_payload
+from files.wowza import WowzaAPIError, WowzaClient, wowza_live_application_payload
 
 
 class WowzaManagementTests(TestCase):
@@ -171,3 +171,42 @@ class WowzaManagementTests(TestCase):
 
         self.assertEqual(payload["securityConfig"]["publishRequirePassword"], True)
         self.assertEqual(payload["securityConfig"]["publishAuthenticationMethod"], "digest")
+
+    def test_wowza_client_continues_when_application_already_exists(self):
+        client = WowzaClient(base_url="http://wowza.test", username="u", password="p")
+        with patch.object(client, "request") as request:
+            request.side_effect = [
+                WowzaAPIError("conflict", status_code=409, data={"code": "409"}),
+                {"advanced": True},
+                {"publisher": True},
+            ]
+
+            response = client.create_live_application(
+                name="eventoz11",
+                storage_user_id=1,
+                schedule_id="schedule11",
+                publish_username="eventoz11",
+                publish_password="SecurePass1234567890",
+            )
+
+        self.assertEqual(response["success"], True)
+        self.assertEqual(response["application"]["message"], "La aplicación ya existía en Wowza.")
+        self.assertEqual(request.call_count, 3)
+
+    def test_wowza_client_updates_publisher_when_it_already_exists(self):
+        client = WowzaClient(base_url="http://wowza.test", username="u", password="p")
+        with patch.object(client, "request") as request:
+            request.side_effect = [
+                WowzaAPIError("conflict", status_code=409, data={"code": "409"}),
+                {"updated": True},
+            ]
+
+            response = client.create_publisher(
+                app_name="eventoz12",
+                publisher_name="eventoz12",
+                password="SecurePass1234567890",
+            )
+
+        self.assertEqual(response["success"], True)
+        self.assertEqual(response["message"], "El publisher ya existía en Wowza y fue actualizado.")
+        self.assertEqual(request.call_args_list[1][0][0], "PUT")
