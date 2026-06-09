@@ -54,6 +54,7 @@ translation_strings = {
     "Select": "Selecteer",
     "Sign in": "Inloggen",
     "Sign out": "Uitloggen",
+    "My subscription": "My subscription",
     "Subtitle was added": "Ondertitel is toegevoegd",
     "Tags": "Tags",
     "Terms": "Voorwaarden",

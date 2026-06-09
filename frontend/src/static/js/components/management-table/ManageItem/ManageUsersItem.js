@@ -222,6 +222,9 @@ export function ManageUsersItem(props) {
           '-'
         )}
       </div>
+      <div className="mi-featured mi-subscription">
+        {props.subscription && props.subscription.active ? <MaterialIcon type="check_circle" /> : '-'}
+      </div>
     </div>
   );
 }
@@ -240,6 +243,9 @@ ManageUsersItem.propTypes = {
   has_verified: PropTypes.bool,
   has_trusted: PropTypes.bool,
   roles: PropTypes.array,
+  subscription: PropTypes.shape({
+    active: PropTypes.bool,
+  }),
   is_verified: PropTypes.bool,
   is_trusted: PropTypes.bool,
 };

@@ -35,6 +35,7 @@ translation_strings = {
     "Members": "",
     "My media": "",
     "My purchases": "",
+    "My subscription": "",
     "My playlists": "",
     "No": "",
     "No comment yet": "",

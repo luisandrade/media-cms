@@ -27,6 +27,11 @@ class MyAccountAdapter(DefaultAccountAdapter):
             return next_url
         if getattr(request.user, "is_superuser", False):
             return reverse("manage_statistics")
+        if getattr(settings, "FLOW_SUBSCRIPTION_ENABLED", False):
+            from payments.models import user_has_active_subscription
+
+            if getattr(request.user, "is_authenticated", False) and not user_has_active_subscription(request.user):
+                return reverse("subscription_portal")
         return super().get_login_redirect_url(request)
 
     def clean_email(self, email):

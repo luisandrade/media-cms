@@ -15,6 +15,7 @@ MediaCMS.url = {
     likedMedia: "/liked",
     history: "/history",
     purchases: "/purchases",
+    {% if FLOW_SUBSCRIPTION_ENABLED %}subscription: "/subscriptions/",{% endif %}
     /* Add pages */
     addMedia: "/upload",
     /* Profile/account edit pages */

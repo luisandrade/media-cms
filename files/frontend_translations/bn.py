@@ -54,6 +54,7 @@ translation_strings = {
     "Select": "নির্বাচন করুন",
     "Sign in": "সাইন ইন করুন",
     "Sign out": "সাইন আউট করুন",
+    "My subscription": "My subscription",
     "Subtitle was added": "সাবটাইটেল যোগ করা হয়েছে",
     "Tags": "ট্যাগ",
     "Terms": "শর্তাবলী",

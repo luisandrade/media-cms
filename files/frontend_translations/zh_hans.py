@@ -54,6 +54,7 @@ translation_strings = {
     "Select": "选择",
     "Sign in": "登录",
     "Sign out": "登出",
+    "My subscription": "My subscription",
     "Subtitle was added": "字幕已添加",
     "Tags": "标签",
     "Terms": "条款",

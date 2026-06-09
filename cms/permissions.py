@@ -63,16 +63,7 @@ def user_allowed_to_upload(request):
         return False
     if request.user.is_superuser:
         return True
-
-    if settings.CAN_ADD_MEDIA == "all":
-        return True
-    elif settings.CAN_ADD_MEDIA == "email_verified":
-        if request.user.email_is_verified:
-            return True
-    elif settings.CAN_ADD_MEDIA == "advancedUser":
-        if request.user.advancedUser:
-            return True
-    return False
+    return is_mediacms_manager(request.user)
 
 
 def user_allowed_to_comment(request):

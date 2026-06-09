@@ -54,6 +54,7 @@ translation_strings = {
     "Select": "اختر",
     "Sign in": "تسجيل الدخول",
     "Sign out": "تسجيل الخروج",
+    "My subscription": "My subscription",
     "Subtitle was added": "تمت إضافة الترجمة",
     "Tags": "العلامات",
     "Terms": "الشروط",

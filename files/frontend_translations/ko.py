@@ -54,6 +54,7 @@ translation_strings = {
     "Select": "선택",
     "Sign in": "로그인",
     "Sign out": "로그아웃",
+    "My subscription": "My subscription",
     "Subtitle was added": "자막이 추가되었습니다",
     "Tags": "태그",
     "Terms": "약관",

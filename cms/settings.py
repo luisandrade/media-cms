@@ -361,6 +361,21 @@ FLOW_STATUS_PATH = os.getenv("FLOW_STATUS_PATH", "/payment/getStatus")
 # puedes fijar explícitamente estas URLs públicas.
 FLOW_URL_RETURN = os.getenv("FLOW_URL_RETURN")
 FLOW_URL_CONFIRMATION = os.getenv("FLOW_URL_CONFIRMATION")
+FLOW_SUBSCRIPTION_ENABLED = os.getenv("FLOW_SUBSCRIPTION_ENABLED", "false").lower() in ("1", "true", "yes")
+FLOW_SUBSCRIPTION_PLAN_ID = os.getenv("FLOW_SUBSCRIPTION_PLAN_ID", "pm")
+FLOW_SUBSCRIPTION_PLAN_NAME = os.getenv("FLOW_SUBSCRIPTION_PLAN_NAME", "PlanMensual")
+FLOW_SUBSCRIPTION_PRICE_CLP = int(os.getenv("FLOW_SUBSCRIPTION_PRICE_CLP", "0"))
+FLOW_SUBSCRIPTION_CURRENCY = os.getenv("FLOW_SUBSCRIPTION_CURRENCY", "CLP")
+FLOW_SUBSCRIPTION_INTERVAL = int(os.getenv("FLOW_SUBSCRIPTION_INTERVAL", "3"))
+FLOW_SUBSCRIPTION_INTERVAL_COUNT = int(os.getenv("FLOW_SUBSCRIPTION_INTERVAL_COUNT", "1"))
+FLOW_SUBSCRIPTION_TRIAL_DAYS = int(os.getenv("FLOW_SUBSCRIPTION_TRIAL_DAYS", "0"))
+FLOW_SUBSCRIPTION_DAYS_UNTIL_DUE = int(os.getenv("FLOW_SUBSCRIPTION_DAYS_UNTIL_DUE", "3"))
+FLOW_SUBSCRIPTION_PERIODS_NUMBER = int(os.getenv("FLOW_SUBSCRIPTION_PERIODS_NUMBER", "0"))
+FLOW_SUBSCRIPTION_CHARGES_RETRIES = int(os.getenv("FLOW_SUBSCRIPTION_CHARGES_RETRIES", "3"))
+FLOW_SUBSCRIPTION_CURRENCY_CONVERT_OPTION = int(os.getenv("FLOW_SUBSCRIPTION_CURRENCY_CONVERT_OPTION", "1"))
+FLOW_SUBSCRIPTION_PUBLIC = os.getenv("FLOW_SUBSCRIPTION_PUBLIC", "false").lower() in ("1", "true", "yes")
+FLOW_SUBSCRIPTION_PLAN_CALLBACK_URL = os.getenv("FLOW_SUBSCRIPTION_PLAN_CALLBACK_URL")
+FLOW_SUBSCRIPTION_REGISTER_RETURN_URL = os.getenv("FLOW_SUBSCRIPTION_REGISTER_RETURN_URL")
 
 # Solo para desarrollo: si Flow no está configurado, auto-aprueba y concede entitlement.
 FLOW_FAKE_SUCCESS = os.getenv("FLOW_FAKE_SUCCESS", "false").lower() in ("1", "true", "yes")
@@ -565,6 +580,7 @@ if GLOBAL_LOGIN_REQUIRED:
         # Flow callbacks must be publicly reachable (server-to-server + browser return)
         r'/payments/flow/confirm/?$',
         r'/payments/flow/return/?$',
+        r'/payments/flow/subscription/register-return/?$',
         #        r'/api/v[0-9]+/',
     ]
 

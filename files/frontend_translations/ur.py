@@ -54,6 +54,7 @@ translation_strings = {
     "Select": "منتخب کریں",
     "Sign in": "سائن ان کریں",
     "Sign out": "سائن آؤٹ کریں",
+    "My subscription": "My subscription",
     "Subtitle was added": "سب ٹائٹل شامل کیا گیا",
     "Tags": "ٹیگز",
     "Terms": "شرائط",

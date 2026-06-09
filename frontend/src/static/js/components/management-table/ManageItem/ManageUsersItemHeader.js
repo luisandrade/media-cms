@@ -46,6 +46,7 @@ export function ManageUsersItemHeader(props) {
       {props.has_verified ? <div className="mi-verified">Verified</div> : null}
       {props.has_trusted ? <div className="mi-trusted">Trusted</div> : null}
       <div className="mi-featured">Featured</div>
+      <div className="mi-featured mi-subscription">Subscription</div>
     </div>
   );
 }

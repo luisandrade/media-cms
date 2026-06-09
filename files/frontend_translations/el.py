@@ -54,6 +54,7 @@ translation_strings = {
     "Select": "Επιλογή",
     "Sign in": "Σύνδεση",
     "Sign out": "Αποσύνδεση",
+    "My subscription": "My subscription",
     "Subtitle was added": "Οι υπότιτλοι προστέθηκαν",
     "Tags": "Ετικέτες",
     "Terms": "Όροι",

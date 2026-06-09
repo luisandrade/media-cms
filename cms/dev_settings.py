@@ -51,6 +51,10 @@ CORS_ORIGIN_ALLOW_ALL = True
 STATICFILES_DIRS = (os.path.join(BASE_DIR, 'static'),)
 STATIC_ROOT = os.path.join(BASE_DIR, 'static_collected')
 GLOBAL_LOGIN_REQUIRED = True
+FLOW_SUBSCRIPTION_ENABLED = os.getenv('FLOW_SUBSCRIPTION_ENABLED', 'true').lower() in ('1', 'true', 'yes')
+FLOW_SUBSCRIPTION_PLAN_ID = os.getenv('FLOW_SUBSCRIPTION_PLAN_ID', 'pm')
+FLOW_SUBSCRIPTION_PLAN_NAME = os.getenv('FLOW_SUBSCRIPTION_PLAN_NAME', 'PlanMensual')
+FLOW_SUBSCRIPTION_PRICE_CLP = int(os.getenv('FLOW_SUBSCRIPTION_PRICE_CLP', '1200'))
 
 LOGIN_REQUIRED_IGNORE_PATHS = [
     r'/accounts/login/$',
@@ -60,5 +64,6 @@ LOGIN_REQUIRED_IGNORE_PATHS = [
     r'/accounts/confirm-email/.*/$',
     r'/payments/flow/confirm/?$',
     r'/payments/flow/return/?$',
+    r'/payments/flow/subscription/register-return/?$',
     r'/api/',
 ]

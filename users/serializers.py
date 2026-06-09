@@ -3,6 +3,8 @@ from django.contrib.auth import authenticate
 from rest_framework import serializers
 from rest_framework.authtoken.models import Token
 
+from payments.models import UserSubscription
+
 from .models import User
 
 
@@ -10,6 +12,7 @@ class UserSerializer(serializers.ModelSerializer):
     url = serializers.SerializerMethodField()
     api_url = serializers.SerializerMethodField()
     thumbnail_url = serializers.SerializerMethodField()
+    subscription = serializers.SerializerMethodField()
 
     def get_url(self, obj):
         return self.context["request"].build_absolute_uri(obj.get_absolute_url())
@@ -19,6 +22,17 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_thumbnail_url(self, obj):
         return self.context["request"].build_absolute_uri(obj.thumbnail_url())
+
+    def get_subscription(self, obj):
+        subscription = getattr(obj, "subscription", None)
+        if not subscription:
+            return {"status": "none", "active": False}
+        return {
+            "status": subscription.status,
+            "active": subscription.status in (UserSubscription.STATUS_ACTIVE, UserSubscription.STATUS_TRIAL),
+            "subscription_id": subscription.flow_subscription_id,
+            "plan_id": subscription.plan.flow_plan_id,
+        }
 
     class Meta:
         model = User
@@ -31,6 +45,7 @@ class UserSerializer(serializers.ModelSerializer):
             "is_editor",
             "is_manager",
             "email_is_verified",
+            "subscription",
         )
         fields = (
             "description",
@@ -45,6 +60,7 @@ class UserSerializer(serializers.ModelSerializer):
             "is_editor",
             "is_manager",
             "email_is_verified",
+            "subscription",
         )
 
 
@@ -52,6 +68,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
     url = serializers.SerializerMethodField()
     api_url = serializers.SerializerMethodField()
     thumbnail_url = serializers.SerializerMethodField()
+    subscription = serializers.SerializerMethodField()
 
     def get_url(self, obj):
         return self.context["request"].build_absolute_uri(obj.get_absolute_url())
@@ -61,6 +78,19 @@ class UserDetailSerializer(serializers.ModelSerializer):
 
     def get_thumbnail_url(self, obj):
         return self.context["request"].build_absolute_uri(obj.thumbnail_url())
+
+    def get_subscription(self, obj):
+        subscription = getattr(obj, "subscription", None)
+        if not subscription:
+            return {"status": "none", "active": False}
+        return {
+            "status": subscription.status,
+            "active": subscription.status in (UserSubscription.STATUS_ACTIVE, UserSubscription.STATUS_TRIAL),
+            "subscription_id": subscription.flow_subscription_id,
+            "plan_id": subscription.plan.flow_plan_id,
+            "cancel_at_period_end": subscription.cancel_at_period_end,
+            "next_invoice_date": subscription.next_invoice_date,
+        }
 
     class Meta:
         model = User
@@ -78,6 +108,7 @@ class UserDetailSerializer(serializers.ModelSerializer):
             "api_url",
             "edit_url",
             "default_channel_edit_url",
+            "subscription",
         )
         extra_kwargs = {"name": {"required": False}}
 

@@ -54,6 +54,7 @@ translation_strings = {
     "Select": "Pilih",
     "Sign in": "Masuk",
     "Sign out": "Keluar",
+    "My subscription": "My subscription",
     "Subtitle was added": "Subtitle telah ditambahkan",
     "Tags": "Tag",
     "Terms": "Ketentuan",

@@ -54,6 +54,7 @@ translation_strings = {
     "Select": "Seç",
     "Sign in": "Giriş Yap",
     "Sign out": "Çıkış Yap",
+    "My subscription": "My subscription",
     "Subtitle was added": "Alt yazı eklendi",
     "Tags": "Etiketler",
     "Terms": "Şartlar",

@@ -93,6 +93,7 @@ function useManageItemListSync(props) {
   function itemsCountCallback(itemsSumm) {
     setTotalItems(itemsSumm);
   }
+      // This is a new line added for context
 
   function afterItemsLoad() {}
 

@@ -62,6 +62,7 @@ export function config(glbl) {
       liked: glbl.url.likedMedia,
       history: glbl.url.history,
       purchases: glbl.url.purchases,
+      subscription: glbl.url.subscription,
       addMedia: glbl.url.addMedia,
       editChannel: glbl.url.editChannel,
       editProfile: glbl.url.editProfile,

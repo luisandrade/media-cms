@@ -34,6 +34,16 @@
   }
 }
 
+.manage-items-outer-users {
+  .items-list-wrap {
+    display: block;
+    overflow-x: auto;
+    overflow-y: hidden;
+    width: auto;
+    min-width: 100%;
+  }
+}
+
 .media-list-header {
   display: block;
   padding: 12px 0;
@@ -306,8 +316,12 @@
   }
 
   &.manage-users-item {
+    width: max-content;
+    min-width: 100%;
+    max-width: none;
+
     > * {
-      width: math.div(1,8) * 100%;
+      width: auto;
     }
 
     .mi-added,
@@ -321,12 +335,18 @@
 
     .mi-name,
     .mi-username {
-      min-width: 240px;
-      min-width: 200px;
       width: 50%;
       padding-left: 16px;
       padding-right: 16px;
       font-weight: 500;
+    }
+
+    .mi-name {
+      min-width: 220px;
+    }
+
+    .mi-username {
+      min-width: 180px;
     }
 
     .mi-checkbox {
@@ -335,11 +355,15 @@
     }
 
     .mi-added {
-      min-width: 168px;
+      min-width: 160px;
+    }
 
-      @media (min-width: 768px) {
-        min-width: 200px;
-      }
+    .mi-role,
+    .mi-verified,
+    .mi-trusted,
+    .mi-featured,
+    .mi-subscription {
+      min-width: 110px;
     }
   }
 
@@ -789,7 +813,8 @@
     .mi-role,
     .mi-featured,
     .mi-verified,
-    .mi-trusted {
+    .mi-trusted,
+    .mi-subscription {
       min-width: 110px;
     }
   }
@@ -844,7 +869,8 @@
   }
 }
 
-.manage-items-outer-media {
+.manage-items-outer-media,
+.manage-items-outer-users {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 
@@ -861,7 +887,8 @@
     overflow-y: visible;
   }
 
-  .manage-media-item {
+  .manage-media-item,
+  .manage-users-item {
     width: max-content;
     min-width: 100%;
   }

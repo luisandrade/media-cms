@@ -10,6 +10,7 @@ from django.core.mail import EmailMessage
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render, redirect
+from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from drf_yasg import openapi as openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -87,6 +88,32 @@ from .cdn_balancer import get_balanced_hosts_for_request
 logger = logging.getLogger(__name__)
 
 VALID_USER_ACTIONS = [action for action, name in USER_MEDIA_ACTIONS]
+
+
+def _user_requires_active_subscription_for_media_access(user) -> bool:
+    if not user or not getattr(user, "is_authenticated", False):
+        return False
+    return not is_mediacms_editor(user)
+
+
+def _user_has_media_access(user) -> bool:
+    if not _user_requires_active_subscription_for_media_access(user):
+        return True
+
+    try:
+        from payments.models import user_has_active_subscription
+
+        return user_has_active_subscription(user)
+    except Exception:
+        return False
+
+
+def _subscription_required_context() -> dict:
+    try:
+        subscription_url = reverse("subscription_portal")
+    except Exception:
+        subscription_url = "/subscriptions/"
+    return {"subscription_portal_url": subscription_url}
 
 def portal_login_required(view_func):
     @wraps(view_func)
@@ -698,6 +725,9 @@ def view_media(request):
     import hashlib, base64
     from django.conf import settings
 
+    if _user_requires_active_subscription_for_media_access(request.user) and not _user_has_media_access(request.user):
+        return render(request, "cms/subscription_required.html", _subscription_required_context(), status=403)
+
     friendly_token = request.GET.get("m", "").strip()
     context = {}
     media = Media.objects.filter(friendly_token=friendly_token).first()
@@ -1046,6 +1076,14 @@ class MediaDetail(APIView):
     )
     def get(self, request, friendly_token, format=None):
         # Get media details
+        if _user_requires_active_subscription_for_media_access(request.user) and not _user_has_media_access(request.user):
+            data = {
+                "detail": "No tienes una suscripcion activa.",
+                "subscription_required": True,
+                **_subscription_required_context(),
+            }
+            return Response(data, status=status.HTTP_403_FORBIDDEN)
+
         password = request.GET.get("password")
         media = self.get_object(friendly_token, password=password)
         if isinstance(media, Response):

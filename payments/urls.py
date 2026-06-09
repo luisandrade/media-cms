@@ -25,6 +25,26 @@ urlpatterns = [
         name="purchases_list",
     ),
     path(
+        "api/v1/subscription/",
+        views.SubscriptionStatusView.as_view(),
+        name="subscription_status",
+    ),
+    path(
+        "subscriptions/",
+        views.SubscriptionPortalView.as_view(),
+        name="subscription_portal",
+    ),
+    path(
+        "subscriptions/activate/",
+        views.SubscriptionActivateView.as_view(),
+        name="subscription_activate",
+    ),
+    path(
+        "subscriptions/cancel/",
+        views.SubscriptionCancelView.as_view(),
+        name="subscription_cancel",
+    ),
+    path(
         "payments/flow/confirm/",
         views.FlowConfirmView.as_view(),
         name="flow_confirm",
@@ -43,5 +63,15 @@ urlpatterns = [
         "payments/flow/return",
         views.FlowReturnView.as_view(),
         name="flow_return_noslash",
+    ),
+    path(
+        "payments/flow/subscription/register-return/",
+        views.SubscriptionRegisterReturnView.as_view(),
+        name="subscription_register_return",
+    ),
+    path(
+        "payments/flow/subscription/register-return",
+        views.SubscriptionRegisterReturnView.as_view(),
+        name="subscription_register_return_noslash",
     ),
 ]

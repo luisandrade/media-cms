@@ -70,6 +70,7 @@ translation_strings = {
     "Members": "Miembros",
     "My media": "Mis medios",
     "My purchases": "Mis compras",
+    "My subscription": "Mi suscripción",
     "My playlists": "Playlists",
         "This month": "Este mes",
         "This week": "Esta semana",

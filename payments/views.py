@@ -6,7 +6,7 @@ from typing import Any
 from django.conf import settings
 from django.contrib import messages
 from django.http import FileResponse, HttpResponse, HttpResponseRedirect
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.text import slugify
@@ -14,8 +14,9 @@ from django.views.decorators.csrf import csrf_exempt
 from urllib.parse import urlsplit, urlunsplit
 import logging
 from django.db.models import Max, Q
+from django.db import transaction
 from rest_framework import permissions, status
-from rest_framework.parsers import FormParser, JSONParser
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.generics import ListAPIView
@@ -29,7 +30,15 @@ from .emails import (
     send_download_purchase_problem_email,
     send_payment_integration_error_to_admins,
 )
-from .models import DownloadEntitlement, Payment
+from .models import (
+    DownloadEntitlement,
+    FlowCustomer,
+    Payment,
+    SubscriptionPlan,
+    UserSubscription,
+    parse_flow_datetime,
+    user_has_active_subscription,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -118,6 +127,188 @@ def grant_entitlement(*, user, media: Media, paid_at: datetime | None = None) ->
     ent.paid_at = paid_at or timezone.now()
     ent.save(update_fields=["status", "paid_at", "updated_at"])
     return ent
+
+
+def subscription_feature_enabled() -> bool:
+    return bool(getattr(settings, "FLOW_SUBSCRIPTION_ENABLED", False))
+
+
+def _subscription_status_from_flow(value: Any) -> str:
+    try:
+        numeric = int(value)
+    except Exception:  # noqa: BLE001
+        numeric = None
+
+    if numeric == 1:
+        return UserSubscription.STATUS_ACTIVE
+    if numeric == 2:
+        return UserSubscription.STATUS_TRIAL
+    if numeric == 4:
+        return UserSubscription.STATUS_CANCELED
+    if numeric == 0:
+        return UserSubscription.STATUS_INACTIVE
+    return UserSubscription.STATUS_INACTIVE
+
+
+def _subscription_plan_defaults() -> dict[str, Any]:
+    return {
+        "name": getattr(settings, "FLOW_SUBSCRIPTION_PLAN_NAME", "Suscripción mensual"),
+        "currency": getattr(settings, "FLOW_SUBSCRIPTION_CURRENCY", "CLP"),
+        "amount": int(getattr(settings, "FLOW_SUBSCRIPTION_PRICE_CLP", 0)),
+        "interval": int(getattr(settings, "FLOW_SUBSCRIPTION_INTERVAL", SubscriptionPlan.INTERVAL_MONTHLY)),
+        "interval_count": int(getattr(settings, "FLOW_SUBSCRIPTION_INTERVAL_COUNT", 1)),
+        "trial_period_days": int(getattr(settings, "FLOW_SUBSCRIPTION_TRIAL_DAYS", 0)),
+        "days_until_due": int(getattr(settings, "FLOW_SUBSCRIPTION_DAYS_UNTIL_DUE", 3)),
+        "periods_number": int(getattr(settings, "FLOW_SUBSCRIPTION_PERIODS_NUMBER", 0)),
+        "charges_retries_number": int(getattr(settings, "FLOW_SUBSCRIPTION_CHARGES_RETRIES", 3)),
+        "currency_convert_option": int(getattr(settings, "FLOW_SUBSCRIPTION_CURRENCY_CONVERT_OPTION", 1)),
+        "is_public": bool(getattr(settings, "FLOW_SUBSCRIPTION_PUBLIC", False)),
+        "is_active": True,
+    }
+
+
+def get_default_subscription_plan() -> SubscriptionPlan:
+    plan_id = getattr(settings, "FLOW_SUBSCRIPTION_PLAN_ID", "media-cms-monthly")
+    defaults = _subscription_plan_defaults()
+    plan, _created = SubscriptionPlan.objects.update_or_create(flow_plan_id=plan_id, defaults=defaults)
+    return plan
+
+
+def ensure_remote_subscription_plan(flow: FlowClient, plan: SubscriptionPlan, request) -> SubscriptionPlan:
+    callback_url = getattr(settings, "FLOW_SUBSCRIPTION_PLAN_CALLBACK_URL", None)
+    if callback_url:
+        callback_url = _coerce_https_if_forwarded(request, callback_url)
+
+    data = flow.get_plan(plan_id=plan.flow_plan_id)
+    if data.get("planId"):
+        plan.raw_flow_response = data
+        plan.save(update_fields=["raw_flow_response", "updated_at"])
+        return plan
+
+    data = flow.create_plan(
+        plan_id=plan.flow_plan_id,
+        name=plan.name,
+        amount=plan.amount,
+        currency=plan.currency,
+        interval=plan.interval,
+        interval_count=plan.interval_count,
+        trial_period_days=plan.trial_period_days,
+        days_until_due=plan.days_until_due,
+        periods_number=plan.periods_number,
+        url_callback=callback_url,
+        charges_retries_number=plan.charges_retries_number,
+        currency_convert_option=plan.currency_convert_option,
+    )
+    plan.raw_flow_response = data
+    plan.save(update_fields=["raw_flow_response", "updated_at"])
+    return plan
+
+
+def _user_display_name(user) -> str:
+    full_name = (getattr(user, "name", "") or getattr(user, "get_full_name", lambda: "")()).strip()
+    if full_name:
+        return full_name
+    return getattr(user, "username", str(user.pk))
+
+
+def _flow_text(value: Any, default: str = "") -> str:
+    if value is None:
+        return default
+    return str(value)
+
+
+def sync_flow_customer(customer: FlowCustomer, data: dict[str, Any]) -> FlowCustomer:
+    customer.status = _flow_text(data.get("status"), customer.status or "")
+    customer.pay_mode = _flow_text(data.get("pay_mode"), customer.pay_mode or "")
+    customer.credit_card_type = _flow_text(data.get("creditCardType"), customer.credit_card_type or "")
+    customer.last4_card_digits = _flow_text(data.get("last4CardDigits"), customer.last4_card_digits or "")
+    customer.card_number = _flow_text(data.get("cardNumber"), customer.card_number or "")
+    customer.issuer_bank = _flow_text(data.get("issuerBank"), customer.issuer_bank or "")
+    customer.register_date = parse_flow_datetime(data.get("registerDate")) or customer.register_date
+    customer.raw_last_register_status = data
+    customer.save(
+        update_fields=[
+            "status",
+            "pay_mode",
+            "credit_card_type",
+            "last4_card_digits",
+            "card_number",
+            "issuer_bank",
+            "register_date",
+            "raw_last_register_status",
+            "updated_at",
+        ]
+    )
+    return customer
+
+
+def sync_user_subscription(subscription: UserSubscription, data: dict[str, Any], *, raw_status: dict[str, Any] | None = None) -> UserSubscription:
+    flow_status = data.get("status")
+    try:
+        subscription.flow_status = int(flow_status) if flow_status is not None else subscription.flow_status
+    except Exception:  # noqa: BLE001
+        pass
+    subscription.flow_subscription_id = data.get("subscriptionId", subscription.flow_subscription_id)
+    subscription.status = _subscription_status_from_flow(flow_status)
+    subscription.subscription_start = parse_flow_datetime(data.get("subscription_start"))
+    subscription.subscription_end = parse_flow_datetime(data.get("subscription_end"))
+    subscription.period_start = parse_flow_datetime(data.get("period_start"))
+    subscription.period_end = parse_flow_datetime(data.get("period_end"))
+    subscription.next_invoice_date = parse_flow_datetime(data.get("next_invoice_date"))
+    subscription.trial_start = parse_flow_datetime(data.get("trial_start"))
+    subscription.trial_end = parse_flow_datetime(data.get("trial_end"))
+    subscription.cancel_at_period_end = bool(int(data.get("cancel_at_period_end", 0) or 0))
+    subscription.cancel_at = parse_flow_datetime(data.get("cancel_at"))
+    subscription.last_synced_at = timezone.now()
+    subscription.raw_subscription_response = data
+    if raw_status is not None:
+        subscription.raw_subscription_status = raw_status
+    subscription.save(
+        update_fields=[
+            "flow_subscription_id",
+            "status",
+            "flow_status",
+            "subscription_start",
+            "subscription_end",
+            "period_start",
+            "period_end",
+            "next_invoice_date",
+            "trial_start",
+            "trial_end",
+            "cancel_at_period_end",
+            "cancel_at",
+            "last_synced_at",
+            "raw_subscription_response",
+            "raw_subscription_status",
+            "updated_at",
+        ]
+    )
+    return subscription
+
+
+def serialize_subscription(subscription: UserSubscription | None) -> dict[str, Any]:
+    if not subscription:
+        return {"status": "none", "active": False}
+    return {
+        "status": subscription.status,
+        "active": subscription.is_active,
+        "plan": {
+            "id": subscription.plan.flow_plan_id,
+            "name": subscription.plan.name,
+            "amount": subscription.plan.amount,
+            "currency": subscription.plan.currency,
+            "interval": subscription.plan.interval,
+            "interval_count": subscription.plan.interval_count,
+            "trial_period_days": subscription.plan.trial_period_days,
+        },
+        "customer_id": subscription.customer.flow_customer_id,
+        "subscription_id": subscription.flow_subscription_id,
+        "cancel_at_period_end": subscription.cancel_at_period_end,
+        "next_invoice_date": subscription.next_invoice_date,
+        "period_end": subscription.period_end,
+        "last4_card_digits": subscription.customer.last4_card_digits,
+        "credit_card_type": subscription.customer.credit_card_type,
+    }
 
 
 def _download_filename(*, title: str, suffix: str) -> str:
@@ -595,6 +786,227 @@ class FlowConfirmView(APIView):
             send_download_purchase_confirmation_email(payment=payment)
 
         return HttpResponse("OK", status=200, content_type="text/plain")
+
+
+class SubscriptionPortalView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        if not subscription_feature_enabled():
+            return HttpResponse("Not found", status=404)
+
+        plan = get_default_subscription_plan()
+        subscription = UserSubscription.objects.filter(user=request.user).select_related("plan", "customer").first()
+        context = {
+            "plan": plan,
+            "subscription": subscription,
+            "subscription_data": serialize_subscription(subscription),
+            "flow_subscription_enabled": True,
+        }
+        return render(request, "payments/subscription_portal.html", context)
+
+
+class SubscriptionStatusView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        if not subscription_feature_enabled():
+            return Response({"detail": "Subscriptions disabled."}, status=status.HTTP_404_NOT_FOUND)
+
+        plan = get_default_subscription_plan()
+        subscription = UserSubscription.objects.filter(user=request.user).select_related("plan", "customer").first()
+        return Response(
+            {
+                "enabled": True,
+                "plan": {
+                    "id": plan.flow_plan_id,
+                    "name": plan.name,
+                    "amount": plan.amount,
+                    "currency": plan.currency,
+                    "interval": plan.interval,
+                    "interval_count": plan.interval_count,
+                    "trial_period_days": plan.trial_period_days,
+                },
+                "subscription": serialize_subscription(subscription),
+            }
+        )
+
+
+class SubscriptionActivateView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [FormParser, MultiPartParser, JSONParser]
+
+    def post(self, request):
+        if not subscription_feature_enabled():
+            return Response({"detail": "Subscriptions disabled."}, status=status.HTTP_404_NOT_FOUND)
+
+        if user_has_active_subscription(request.user):
+            messages.info(request, "Tu suscripción ya está activa.")
+            return HttpResponseRedirect(reverse("subscription_portal"))
+
+        flow = FlowClient()
+        if not flow.is_configured():
+            return Response(
+                {"detail": "Flow is not configured. Set FLOW_API_KEY and FLOW_SECRET_KEY."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        email = (getattr(request.user, "email", "") or "").strip()
+        if not email:
+            messages.error(request, "Tu cuenta no tiene un email válido para registrar la suscripción.")
+            return HttpResponseRedirect(reverse("subscription_portal"))
+
+        plan = get_default_subscription_plan()
+        try:
+            ensure_remote_subscription_plan(flow, plan, request)
+        except Exception as exc:  # noqa: BLE001
+            detail = str(exc)
+            if isinstance(exc, FlowAPIError) and exc.raw:
+                detail = str(exc.raw.get("message") or exc.raw.get("error") or detail)
+            messages.error(request, f"No fue posible preparar el plan en Flow: {detail}")
+            return HttpResponseRedirect(reverse("subscription_portal"))
+
+        with transaction.atomic():
+            customer = FlowCustomer.objects.filter(user=request.user).first()
+            if not customer:
+                customer_data = flow.create_customer(
+                    name=_user_display_name(request.user),
+                    email=email,
+                    external_id=f"user-{request.user.pk}",
+                )
+                if not customer_data.get("customerId"):
+                    detail = customer_data.get("message") or customer_data.get("error") or "Flow no devolvió customerId."
+                    messages.error(request, f"No fue posible crear el cliente en Flow: {detail}")
+                    return HttpResponseRedirect(reverse("subscription_portal"))
+                customer = FlowCustomer.objects.create(
+                    user=request.user,
+                    flow_customer_id=_flow_text(customer_data.get("customerId")),
+                    external_id=_flow_text(customer_data.get("externalId"), f"user-{request.user.pk}"),
+                    email=_flow_text(customer_data.get("email"), email),
+                    name=_flow_text(customer_data.get("name"), _user_display_name(request.user)),
+                    pay_mode=_flow_text(customer_data.get("pay_mode")),
+                    status=_flow_text(customer_data.get("status")),
+                    credit_card_type=_flow_text(customer_data.get("creditCardType")),
+                    last4_card_digits=_flow_text(customer_data.get("last4CardDigits")),
+                    card_number=_flow_text(customer_data.get("cardNumber")),
+                    issuer_bank=_flow_text(customer_data.get("issuerBank")),
+                    raw_create_response=customer_data,
+                )
+
+            subscription, _created = UserSubscription.objects.update_or_create(
+                user=request.user,
+                defaults={
+                    "plan": plan,
+                    "customer": customer,
+                    "status": UserSubscription.STATUS_PENDING_CARD,
+                    "raw_subscription_response": None,
+                },
+            )
+
+            callback_url = getattr(settings, "FLOW_SUBSCRIPTION_REGISTER_RETURN_URL", None) or request.build_absolute_uri(
+                reverse("subscription_register_return")
+            )
+            callback_url = _coerce_https_if_forwarded(request, callback_url)
+            try:
+                register_result = flow.register_customer(customer_id=customer.flow_customer_id, url_return=callback_url)
+            except Exception as exc:  # noqa: BLE001
+                detail = str(exc)
+                if isinstance(exc, FlowAPIError) and exc.raw:
+                    detail = str(exc.raw.get("message") or exc.raw.get("error") or detail)
+                messages.error(request, f"No fue posible iniciar el registro de tarjeta en Flow: {detail}")
+                return HttpResponseRedirect(reverse("subscription_portal"))
+
+            subscription.register_token = register_result.token or ""
+            subscription.raw_register_response = register_result.raw
+            subscription.status = UserSubscription.STATUS_PENDING_CARD
+            subscription.save(update_fields=["register_token", "raw_register_response", "status", "updated_at"])
+
+        return HttpResponseRedirect(register_result.redirect_url)
+
+
+class SubscriptionRegisterReturnView(APIView):
+    permission_classes = [permissions.AllowAny]
+    authentication_classes: list = []
+    parser_classes = [FormParser, MultiPartParser, JSONParser]
+
+    @csrf_exempt
+    def dispatch(self, *args, **kwargs):  # type: ignore[override]
+        return super().dispatch(*args, **kwargs)
+
+    def _handle(self, request):
+        if not subscription_feature_enabled():
+            return HttpResponseRedirect("/")
+
+        token = request.POST.get("token") or request.GET.get("token") or getattr(request, "data", {}).get("token")
+        if not token:
+            messages.error(request, "Flow no devolvió el token de registro de la tarjeta.")
+            return HttpResponseRedirect(reverse("subscription_portal"))
+
+        subscription = UserSubscription.objects.filter(register_token=str(token)).select_related("customer", "plan", "user").first()
+        if not subscription:
+            logger.error("Subscription register return without local subscription. token=%s", token)
+            return HttpResponseRedirect(reverse("subscription_portal"))
+
+        flow = FlowClient()
+        try:
+            register_status = flow.get_customer_register_status(token=str(token))
+        except Exception as exc:  # noqa: BLE001
+            subscription.status = UserSubscription.STATUS_REGISTRATION_FAILED
+            subscription.raw_register_response = {"error": str(exc)}
+            subscription.save(update_fields=["status", "raw_register_response", "updated_at"])
+            messages.error(request, f"No fue posible confirmar el registro de la tarjeta: {exc}")
+            return HttpResponseRedirect(reverse("subscription_portal"))
+
+        sync_flow_customer(subscription.customer, register_status)
+        subscription.raw_register_response = register_status
+
+        if str(register_status.get("status")) != "1":
+            subscription.status = UserSubscription.STATUS_REGISTRATION_FAILED
+            subscription.save(update_fields=["status", "raw_register_response", "updated_at"])
+            messages.error(request, "Flow no pudo registrar la tarjeta para la suscripción.")
+            return HttpResponseRedirect(reverse("subscription_portal"))
+
+        subscription_data = flow.create_subscription(
+            plan_id=subscription.plan.flow_plan_id,
+            customer_id=subscription.customer.flow_customer_id,
+            trial_period_days=subscription.plan.trial_period_days if subscription.plan.trial_period_days else None,
+            periods_number=subscription.plan.periods_number if subscription.plan.periods_number else None,
+        )
+
+        sync_user_subscription(subscription, subscription_data)
+        subscription.register_token = ""
+        subscription.save(update_fields=["register_token", "updated_at"])
+        messages.info(request, "Tu suscripción quedó activada correctamente.")
+        return HttpResponseRedirect(reverse("subscription_portal"))
+
+    def get(self, request):
+        return self._handle(request)
+
+    def post(self, request):
+        return self._handle(request)
+
+
+class SubscriptionCancelView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [FormParser, MultiPartParser, JSONParser]
+
+    def post(self, request):
+        if not subscription_feature_enabled():
+            return Response({"detail": "Subscriptions disabled."}, status=status.HTTP_404_NOT_FOUND)
+
+        subscription = UserSubscription.objects.filter(user=request.user).select_related("plan", "customer").first()
+        if not subscription or not subscription.flow_subscription_id:
+            return Response({"detail": "No active subscription."}, status=status.HTTP_400_BAD_REQUEST)
+
+        flow = FlowClient()
+        at_period_end = str(request.data.get("at_period_end", request.POST.get("at_period_end", "1"))) != "0"
+        response_data = flow.cancel_subscription(
+            subscription_id=subscription.flow_subscription_id,
+            at_period_end=at_period_end,
+        )
+        sync_user_subscription(subscription, response_data)
+        messages.info(request, "Tu solicitud de cancelación fue enviada a Flow.")
+        return HttpResponseRedirect(reverse("subscription_portal"))
 
 
 class PurchasedMediaListView(ListAPIView):

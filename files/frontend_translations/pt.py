@@ -54,6 +54,7 @@ translation_strings = {
     "Select": "Selecionar",
     "Sign in": "Entrar",
     "Sign out": "Sair",
+    "My subscription": "My subscription",
     "Subtitle was added": "Legenda foi adicionada",
     "Tags": "Tags",
     "Terms": "Termos",

@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block innercontent %}
+<div class="user-action-form-wrap">
+    <div class="user-action-form-inner">
+        <h1>Mi suscripción</h1>
+
+        <div class="post-form">
+            <p><strong>{{ plan.name }}</strong></p>
+            <p>Monto: {{ plan.amount }} {{ plan.currency }}</p>
+            <p>Frecuencia: {% if plan.interval == 3 %}mensual{% elif plan.interval == 4 %}anual{% elif plan.interval == 2 %}semanal{% else %}diaria{% endif %}</p>
+            {% if plan.trial_period_days %}
+            <p>Trial: {{ plan.trial_period_days }} días</p>
+            {% endif %}
+
+            <hr>
+
+            <h2>Estado actual</h2>
+            {% if subscription %}
+            <p>Estado: {{ subscription.get_status_display }}</p>
+            {% if subscription.customer.last4_card_digits %}
+            <p>Tarjeta: {{ subscription.customer.credit_card_type }} terminada en {{ subscription.customer.last4_card_digits }}</p>
+            {% endif %}
+            {% if subscription.next_invoice_date %}
+            <p>Próximo cobro: {{ subscription.next_invoice_date }}</p>
+            {% endif %}
+            {% if subscription.period_end %}
+            <p>Período vigente hasta: {{ subscription.period_end }}</p>
+            {% endif %}
+            {% else %}
+            <p>No tienes una suscripción activa todavía.</p>
+            {% endif %}
+
+            {% if not subscription or not subscription.is_active %}
+            <form action="{% url 'subscription_activate' %}" method="post">
+                {% csrf_token %}
+                <button class="primaryAction" type="submit">Activar suscripción</button>
+            </form>
+            {% endif %}
+
+            {% if subscription and subscription.flow_subscription_id and subscription.is_active %}
+            <form action="{% url 'subscription_cancel' %}" method="post" style="margin-top: 16px;">
+                {% csrf_token %}
+                <input type="hidden" name="at_period_end" value="1">
+                <button class="primaryAction" type="submit">Cancelar al fin del período</button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock innercontent %}

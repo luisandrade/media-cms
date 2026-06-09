@@ -30,13 +30,15 @@ function popupTopNavItems() {
           icon: 'video_library',
           text: translateString('My media'),
         });
-
-        items.push({
-          link: links.user.purchases,
-          icon: 'shopping_bag',
-          text: translateString('My purchases'),
-        });
       }
+    }
+
+    if (links.user.purchases) {
+      items.push({
+        link: links.user.purchases,
+        icon: 'shopping_bag',
+        text: translateString('My purchases'),
+      });
     }
 
     items.push({
@@ -97,6 +99,14 @@ function popupMiddleNavItems() {
       icon: 'brush',
       text: translateString('Edit profile'),
     });
+
+    if (links.user.subscription) {
+      items.push({
+        link: links.user.subscription,
+        icon: 'bookmark',
+        text: translateString('My subscription'),
+      });
+    }
 
     if (user.can.changePassword) {
       items.push({

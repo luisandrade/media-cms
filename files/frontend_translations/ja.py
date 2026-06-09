@@ -54,6 +54,7 @@ translation_strings = {
     "Select": "選択",
     "Sign in": "サインイン",
     "Sign out": "サインアウト",
+    "My subscription": "My subscription",
     "Subtitle was added": "字幕が追加されました",
     "Tags": "タグ",
     "Terms": "利用規約",

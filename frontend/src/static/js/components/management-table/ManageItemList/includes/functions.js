@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { ManageMediaItem } from '../../ManageItem/ManageMediaItem';
 import { ManageUsersItem } from '../../ManageItem/ManageUsersItem';
@@ -68,6 +69,7 @@ function ListManageUserItem(props) {
     add_date: itemData.date_added,
     is_featured: itemData.is_featured,
     roles: roles,
+    subscription: itemData.subscription,
     is_verified: true === itemData.email_is_verified,
     is_trusted: true === itemData.advancedUser,
     has_roles: void 0 !== itemData.is_editor || void 0 !== itemData.is_manager,
@@ -204,8 +206,6 @@ export function renderManageItems(items, props) {
     />,
     ...items.map((item, index) => (
       <ListManageItem
-        key={index + 1}
-        order={index + 1}
         item={item}
         type={props.manageType}
         onCheckRow={props.onRowCheck}

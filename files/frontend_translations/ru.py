@@ -54,6 +54,7 @@ translation_strings = {
     "Select": "Выбрать",
     "Sign in": "Войти",
     "Sign out": "Выйти",
+    "My subscription": "My subscription",
     "Subtitle was added": "Субтитры были добавлены",
     "Tags": "Теги",
     "Terms": "Условия",

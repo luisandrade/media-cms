@@ -54,6 +54,7 @@ translation_strings = {
     "Select": "चुनें",
     "Sign in": "साइन इन करें",
     "Sign out": "साइन आउट करें",
+    "My subscription": "My subscription",
     "Subtitle was added": "उपशीर्षक जोड़ा गया",
     "Tags": "टैग",
     "Terms": "शर्तें",

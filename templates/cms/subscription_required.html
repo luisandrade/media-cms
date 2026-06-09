@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block innercontent %}
+<div class="container py-5" style="max-width: 720px;">
+    <div class="card shadow-sm">
+        <div class="card-body p-4 p-md-5 text-center">
+            <h1 class="h3 mb-3">No tienes una suscripcion activa</h1>
+            <p class="mb-4">Puedes seguir viendo los listados de videos y playlists, pero para ingresar al contenido necesitas activar una suscripcion.</p>
+            <a class="btn btn-primary" href="{{ subscription_portal_url }}">Ir a suscripciones</a>
+        </div>
+    </div>
+</div>
+{% endblock innercontent %}
