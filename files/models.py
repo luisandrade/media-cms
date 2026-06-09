@@ -1036,6 +1036,30 @@ class VideoTrimRequest(models.Model):
         return f"Trim request for {self.media.title} ({self.status})"
 
 
+class WowzaApplication(models.Model):
+    """Wowza live application created from MediaCMS."""
+
+    name = models.CharField(max_length=80, unique=True, db_index=True)
+    schedule_id = models.CharField(max_length=80, db_index=True)
+    app_type = models.CharField(max_length=40, default="Live")
+    storage_dir = models.CharField(max_length=255, blank=True)
+    is_active = models.BooleanField(default=True, db_index=True)
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, related_name="wowza_applications", null=True, blank=True)
+    add_date = models.DateTimeField(auto_now_add=True, db_index=True)
+    update_date = models.DateTimeField(auto_now=True)
+    response_payload = models.JSONField(default=dict, blank=True)
+
+    class Meta:
+        ordering = ["-add_date", "name"]
+        indexes = [
+            models.Index(fields=["-add_date", "name"]),
+            models.Index(fields=["is_active", "-add_date"]),
+        ]
+
+    def __str__(self):
+        return self.name
+
+
 class License(models.Model):
     """A Base license model to be used in Media"""
 
@@ -1825,5 +1849,4 @@ def encoding_file_delete(sender, instance, **kwargs):
             instance.media.post_encode_actions(encoding=instance, action="delete")
     # delete local chunks, and remote chunks + media file. Only when the
     # last encoding of a media is complete
-
 

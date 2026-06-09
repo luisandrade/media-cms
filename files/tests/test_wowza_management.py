@@ -4,6 +4,7 @@ from unittest.mock import Mock, patch
 from django.test import Client, TestCase
 from django.urls import reverse
 
+from files.models import WowzaApplication
 from files.tests.user_utils import create_account
 
 
@@ -74,11 +75,39 @@ class WowzaManagementTests(TestCase):
 
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()["success"], True)
+        app = WowzaApplication.objects.get(name="eventoz06")
+        self.assertEqual(app.schedule_id, "schedule06")
+        self.assertEqual(app.created_by, self.admin)
+        self.assertEqual(app.storage_dir, f"/nas/{self.admin.id}")
         wowza_client.create_live_application.assert_called_once_with(
             name="eventoz06",
             storage_user_id=self.admin.id,
             schedule_id="schedule06",
         )
+
+    def test_list_applications_returns_only_saved_platform_apps(self):
+        WowzaApplication.objects.create(
+            name="eventoz06",
+            schedule_id="schedule06",
+            created_by=self.admin,
+            storage_dir=f"/nas/{self.admin.id}",
+        )
+        WowzaApplication.objects.create(
+            name="eventoz07",
+            schedule_id="schedule07",
+            created_by=self.staff_admin,
+            storage_dir=f"/nas/{self.staff_admin.id}",
+        )
+        self.client.force_login(self.admin)
+
+        response = self.client.get("/api/v1/manage_wowza/applications?page=1&page_size=1")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["success"], True)
+        self.assertEqual(response.json()["count"], 2)
+        self.assertEqual(response.json()["page"], 1)
+        self.assertEqual(response.json()["page_size"], 1)
+        self.assertEqual(len(response.json()["results"]), 1)
 
     def test_create_application_validates_app_name(self):
         self.client.force_login(self.admin)

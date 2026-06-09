@@ -1,8 +1,11 @@
+from django.conf import settings
+from django.core.paginator import EmptyPage, Paginator
 from rest_framework import status
 from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .models import WowzaApplication
 from .permissions import IsMediacmsAdmin
 from .wowza import WowzaAPIError, WowzaClient, validate_wowza_app_name
 
@@ -31,6 +34,28 @@ class WowzaApplicationCreateView(APIView):
     permission_classes = (IsMediacmsAdmin,)
     parser_classes = (JSONParser,)
 
+    def get(self, request, format=None):
+        page = parse_positive_int(request.GET.get("page"), default=1)
+        page_size = min(parse_positive_int(request.GET.get("page_size"), default=10), 50)
+        applications = WowzaApplication.objects.select_related("created_by").order_by("-add_date", "name")
+        paginator = Paginator(applications, page_size)
+
+        try:
+            page_obj = paginator.page(page)
+        except EmptyPage:
+            page_obj = paginator.page(paginator.num_pages or 1)
+
+        return Response(
+            {
+                "success": True,
+                "count": paginator.count,
+                "page": page_obj.number,
+                "page_size": page_size,
+                "total_pages": paginator.num_pages,
+                "results": [serialize_wowza_application(app) for app in page_obj.object_list],
+            }
+        )
+
     def post(self, request, format=None):
         try:
             name = validate_wowza_app_name(request.data.get("name"))
@@ -58,4 +83,45 @@ class WowzaApplicationCreateView(APIView):
                 status=status.HTTP_502_BAD_GATEWAY,
             )
 
-        return Response(payload, status=status.HTTP_201_CREATED)
+        app, created = WowzaApplication.objects.update_or_create(
+            name=name,
+            defaults={
+                "schedule_id": schedule_id,
+                "app_type": "Live",
+                "storage_dir": f"{settings.WOWZA_APP_STORAGE_ROOT.rstrip('/')}/{request.user.id}",
+                "is_active": True,
+                "created_by": request.user,
+                "response_payload": payload,
+            },
+        )
+
+        return Response(
+            {
+                **payload,
+                "created_in_mediacms": created,
+                "wowza_application": serialize_wowza_application(app),
+            },
+            status=status.HTTP_201_CREATED,
+        )
+
+
+def serialize_wowza_application(app):
+    return {
+        "id": app.id,
+        "name": app.name,
+        "schedule_id": app.schedule_id,
+        "app_type": app.app_type,
+        "storage_dir": app.storage_dir,
+        "is_active": app.is_active,
+        "created_by": app.created_by.username if app.created_by else "",
+        "add_date": app.add_date.isoformat() if app.add_date else "",
+        "update_date": app.update_date.isoformat() if app.update_date else "",
+    }
+
+
+def parse_positive_int(value, *, default):
+    try:
+        parsed = int(value or default)
+    except (TypeError, ValueError):
+        return default
+    return max(parsed, 1)
