@@ -15,6 +15,82 @@ function getErrorMessage(error) {
   return 'No fue posible completar la operación.';
 }
 
+function getApplicationsSource(status) {
+  if (!status) {
+    return [];
+  }
+
+  if (Array.isArray(status)) {
+    return status;
+  }
+
+  if (Array.isArray(status.applications)) {
+    return status.applications;
+  }
+
+  if (status.applications && Array.isArray(status.applications.application)) {
+    return status.applications.application;
+  }
+
+  if (status.data && Array.isArray(status.data.applications)) {
+    return status.data.applications;
+  }
+
+  return [];
+}
+
+function getAppName(app) {
+  if ('string' === typeof app) {
+    return app;
+  }
+
+  const name = app.name || app.id || app.appName || app.applicationName;
+
+  if (name) {
+    return name;
+  }
+
+  if (app.href) {
+    const parts = app.href.split('/').filter(Boolean);
+    return parts[parts.length - 1];
+  }
+
+  return '';
+}
+
+function normalizeWowzaApplications(status, activeAppName) {
+  const applications = getApplicationsSource(status)
+    .map((app) => {
+      const name = getAppName(app);
+
+      if (!name) {
+        return null;
+      }
+
+      return {
+        name,
+        type: 'string' === typeof app ? 'Live' : app.appType || app.type || app.applicationType || 'Live',
+        status: 'string' === typeof app ? '' : app.status || app.state || app.applicationStatus || '',
+        href: 'string' === typeof app ? '' : app.href || '',
+        active: activeAppName === name,
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.name.localeCompare(b.name));
+
+  if (activeAppName && !applications.some((app) => app.name === activeAppName)) {
+    applications.unshift({
+      name: activeAppName,
+      type: 'Live',
+      status: 'Creada ahora',
+      href: '',
+      active: true,
+    });
+  }
+
+  return applications;
+}
+
 export class ManageWowzaPage extends Page {
   constructor(props) {
     super(props, 'manage-wowza');
@@ -26,6 +102,7 @@ export class ManageWowzaPage extends Page {
       isSubmitting: false,
       status: null,
       result: null,
+      activeAppName: '',
       error: null,
       validationError: '',
     };
@@ -118,6 +195,7 @@ export class ManageWowzaPage extends Page {
         appName: '',
         scheduleId: '',
         result: payload,
+        activeAppName: appName,
         error: null,
         isSubmitting: false,
       });
@@ -132,9 +210,10 @@ export class ManageWowzaPage extends Page {
   }
 
   pageContent() {
-    const { appName, scheduleId, isLoadingStatus, isSubmitting, status, result, error, validationError } = this.state;
+    const { appName, scheduleId, isLoadingStatus, isSubmitting, status, result, activeAppName, error, validationError } = this.state;
     const previewAppName = appName.trim() || 'nombre_app';
     const previewScheduleId = scheduleId.trim() || previewAppName;
+    const applications = normalizeWowzaApplications(status, activeAppName);
 
     return (
       <MediaListWrapper className="items-list-hor manage-wowza-wrapper">
@@ -165,6 +244,46 @@ export class ManageWowzaPage extends Page {
               </span>
             </div>
           </div>
+
+          <section className="manage-wowza-apps">
+            <div className="manage-wowza-apps-head">
+              <div>
+                <h2>Aplicaciones Wowza</h2>
+                <span>{applications.length ? `${applications.length} aplicaciones disponibles` : 'Sin aplicaciones reportadas'}</span>
+              </div>
+              {activeAppName ? <strong>Activa: {activeAppName}</strong> : null}
+            </div>
+
+            {isLoadingStatus ? (
+              <div className="manage-wowza-apps-empty">
+                <SpinnerLoader size="small" />
+                <span>Cargando aplicaciones</span>
+              </div>
+            ) : applications.length ? (
+              <div className="manage-wowza-apps-list">
+                <div className="manage-wowza-app-row manage-wowza-app-row-head">
+                  <span>Aplicación</span>
+                  <span>Tipo</span>
+                  <span>Estado</span>
+                </div>
+                {applications.map((app) => (
+                  <div className={`manage-wowza-app-row ${app.active ? 'manage-wowza-app-row-active' : ''}`} key={app.name}>
+                    <span>
+                      <MaterialIcon type={app.active ? 'radio_button_checked' : 'radio_button_unchecked'} />
+                      <strong>{app.name}</strong>
+                    </span>
+                    <span>{app.type}</span>
+                    <span>{app.active ? 'Activa' : app.status || 'Disponible'}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="manage-wowza-apps-empty">
+                <MaterialIcon type="info" />
+                <span>Crea una aplicación para verla en este listado.</span>
+              </div>
+            )}
+          </section>
 
           <div className="manage-wowza-layout">
             <form className="manage-wowza-form" onSubmit={this.onSubmit}>

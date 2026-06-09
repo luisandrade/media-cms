@@ -18,6 +18,7 @@
 .manage-wowza-head,
 .manage-wowza-form-head,
 .manage-wowza-preview-head,
+.manage-wowza-apps-head,
 .manage-wowza-status,
 .manage-wowza-refresh,
 .manage-wowza-submit {
@@ -156,6 +157,7 @@
 
 .manage-wowza-form,
 .manage-wowza-preview,
+.manage-wowza-apps,
 .manage-wowza-result {
   border: 1px solid #dedede;
   border-radius: 6px;
@@ -168,7 +170,8 @@
 }
 
 .manage-wowza-form,
-.manage-wowza-preview {
+.manage-wowza-preview,
+.manage-wowza-apps {
   padding: 20px;
 }
 
@@ -269,6 +272,168 @@
   }
 }
 
+.manage-wowza-apps {
+  margin-bottom: 22px;
+}
+
+.manage-wowza-apps-head {
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+
+  h2,
+  span,
+  strong {
+    margin: 0;
+  }
+
+  h2 {
+    font-size: 1rem;
+    line-height: 1.2;
+    font-weight: 800;
+  }
+
+  span {
+    display: block;
+    margin-top: 4px;
+    color: rgba(68, 68, 68, 0.72);
+    font-size: 0.86rem;
+
+    .dark_theme & {
+      color: rgba(203, 209, 234, 0.72);
+    }
+  }
+
+  strong {
+    flex: 0 0 auto;
+    padding: 6px 10px;
+    border-radius: 4px;
+    color: #16713a;
+    background: #edf9f1;
+    font-size: 0.82rem;
+    line-height: 1.2;
+    font-weight: 800;
+
+    .dark_theme & {
+      color: #88dfa8;
+      background: rgba(47, 157, 85, 0.16);
+    }
+  }
+}
+
+.manage-wowza-apps-list {
+  border: 1px solid #e2e2e2;
+  border-radius: 4px;
+  overflow: hidden;
+
+  .dark_theme & {
+    border-color: #31364a;
+  }
+}
+
+.manage-wowza-app-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.4fr) minmax(100px, 0.55fr) minmax(110px, 0.55fr);
+  gap: 16px;
+  align-items: center;
+  min-height: 46px;
+  padding: 10px 14px;
+  border-top: 1px solid #e2e2e2;
+  color: rgba(68, 68, 68, 0.82);
+  font-size: 0.9rem;
+
+  &:first-child {
+    border-top: 0;
+  }
+
+  > span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+
+  > span:first-child {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+  }
+
+  strong {
+    color: #1f1f1f;
+    font-weight: 800;
+
+    .dark_theme & {
+      color: #ffffff;
+    }
+  }
+
+  .material-icons {
+    flex: 0 0 auto;
+    color: rgba(68, 68, 68, 0.52);
+    font-size: 1.25rem;
+
+    .dark_theme & {
+      color: rgba(203, 209, 234, 0.58);
+    }
+  }
+
+  .dark_theme & {
+    border-color: #31364a;
+    color: rgba(203, 209, 234, 0.78);
+  }
+}
+
+.manage-wowza-app-row-head {
+  min-height: 38px;
+  background: #f7f7f7;
+  color: rgba(68, 68, 68, 0.68);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+
+  .dark_theme & {
+    background: #171a27;
+    color: rgba(203, 209, 234, 0.68);
+  }
+}
+
+.manage-wowza-app-row-active {
+  background: #f2fbf5;
+
+  > span:last-child {
+    color: #16713a;
+    font-weight: 800;
+  }
+
+  .material-icons {
+    color: #2f9d55;
+  }
+
+  .dark_theme & {
+    background: rgba(47, 157, 85, 0.12);
+
+    > span:last-child {
+      color: #88dfa8;
+    }
+  }
+}
+
+.manage-wowza-apps-empty {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: rgba(68, 68, 68, 0.72);
+  font-size: 0.9rem;
+
+  .material-icons {
+    color: #ff121f;
+  }
+
+  .dark_theme & {
+    color: rgba(203, 209, 234, 0.72);
+  }
+}
+
 .manage-wowza-preview {
   dl {
     display: grid;
@@ -349,8 +514,19 @@
   }
 
   .manage-wowza-form,
+  .manage-wowza-apps,
   .manage-wowza-preview {
     padding: 16px;
+  }
+
+  .manage-wowza-apps-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .manage-wowza-app-row {
+    grid-template-columns: 1fr;
+    gap: 5px;
   }
 
   .manage-wowza-preview dl {
