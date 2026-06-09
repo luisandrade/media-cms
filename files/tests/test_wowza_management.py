@@ -6,7 +6,13 @@ from django.urls import reverse
 
 from files.models import WowzaApplication
 from files.tests.user_utils import create_account
-from files.wowza import WowzaAPIError, WowzaClient, generate_wowza_publish_password, wowza_live_application_payload
+from files.wowza import (
+    WowzaAPIError,
+    WowzaClient,
+    generate_wowza_publish_password,
+    validate_wowza_app_name,
+    wowza_live_application_payload,
+)
 
 
 class WowzaManagementTests(TestCase):
@@ -164,6 +170,30 @@ class WowzaManagementTests(TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()["success"], False)
+
+    def test_wowza_app_name_validator_rejects_forbidden_wowza_characters(self):
+        invalid_names = [
+            "bad<name",
+            "bad>name",
+            "bad:name",
+            "bad'name",
+            'bad"name',
+            "bad/name",
+            "bad\\name",
+            "bad|name",
+            "bad?name",
+            "bad*name",
+            "bad..name",
+            "bad~name",
+        ]
+
+        for name in invalid_names:
+            with self.subTest(name=name):
+                with self.assertRaisesMessage(ValueError, "no puede contener"):
+                    validate_wowza_app_name(name)
+
+    def test_wowza_app_name_validator_allows_names_without_forbidden_characters(self):
+        self.assertEqual(validate_wowza_app_name("evento.live 01"), "evento.live 01")
 
     @override_settings(WOWZA_PUBLISH_AUTH_METHOD="digest", WOWZA_PUBLISH_PASSWORD_FILE="")
     def test_live_application_payload_requires_publish_password(self):

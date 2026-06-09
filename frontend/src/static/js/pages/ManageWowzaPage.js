@@ -6,7 +6,26 @@ import { MediaListWrapper } from '../components/MediaListWrapper';
 import { Page } from './_Page';
 import './ManageWowzaPage.scss';
 
-const APP_NAME_RE = /^[A-Za-z0-9_-]{3,80}$/;
+const WOWZA_APP_NAME_INVALID_RE = /[<>:'"\/\\|?*~]/;
+const WOWZA_APP_NAME_INVALID_MESSAGE = 'no puede contener <, >, :, comillas, /, \\, |, ?, *, .. o ~.';
+
+function validateWowzaName(value, label) {
+  const normalized = (value || '').trim();
+
+  if (!normalized) {
+    return `${label} no puede estar vacío.`;
+  }
+
+  if (80 < normalized.length) {
+    return `${label} no puede superar 80 caracteres.`;
+  }
+
+  if (WOWZA_APP_NAME_INVALID_RE.test(normalized) || -1 < normalized.indexOf('..')) {
+    return `${label} ${WOWZA_APP_NAME_INVALID_MESSAGE}`;
+  }
+
+  return '';
+}
 
 function getErrorMessage(error) {
   if (error && error.message) {
@@ -125,10 +144,12 @@ export class ManageWowzaPage extends Page {
 
     const appName = this.state.appName.trim();
     const scheduleId = this.state.scheduleId.trim() || appName;
+    const appNameError = validateWowzaName(appName, 'El nombre de la aplicación');
+    const scheduleIdError = validateWowzaName(scheduleId, 'El ID schedule SMIL');
 
-    if (!APP_NAME_RE.test(appName)) {
+    if (appNameError || scheduleIdError) {
       this.setState({
-        validationError: 'Usa 3 a 80 caracteres: letras, números, guion o guion bajo.',
+        validationError: appNameError || scheduleIdError,
       });
       return;
     }

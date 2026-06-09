@@ -2,13 +2,15 @@ import re
 import secrets
 import string
 from dataclasses import dataclass
+from urllib.parse import quote
 
 import requests
 from django.conf import settings
 from requests.auth import HTTPDigestAuth
 
 
-WOWZA_APP_NAME_RE = re.compile(r"^[A-Za-z0-9_-]{3,80}$")
+WOWZA_APP_NAME_INVALID_CHARS_RE = re.compile(r"[<>:'\"/\\|?*~]")
+WOWZA_APP_NAME_INVALID_MESSAGE = 'El nombre no puede contener <, >, :, comillas, /, \\, |, ?, *, .. o ~.'
 
 
 class WowzaAPIError(Exception):
@@ -83,13 +85,13 @@ class WowzaClient:
         return {"success": True, "application": created, "advanced_settings": advanced, "publisher": publisher}
 
     def delete_live_application(self, *, name):
-        deleted = self.request("DELETE", f"applications/{name}")
+        deleted = self.request("DELETE", f"applications/{quote_wowza_path_segment(name)}")
         return {"success": True, "application": deleted}
 
     def create_publisher(self, *, app_name, publisher_name, password):
         payload = wowza_publisher_payload(publisher_name=publisher_name, password=password)
         try:
-            return self.request("POST", f"applications/{app_name}/publishers", payload)
+            return self.request("POST", f"applications/{quote_wowza_path_segment(app_name)}/publishers", payload)
         except WowzaAPIError as exc:
             if exc.status_code != 409:
                 raise
@@ -99,22 +101,33 @@ class WowzaClient:
     def update_publisher(self, *, app_name, publisher_name, password):
         return self.request(
             "PUT",
-            f"applications/{app_name}/publishers/{publisher_name}",
+            f"applications/{quote_wowza_path_segment(app_name)}/publishers/{quote_wowza_path_segment(publisher_name)}",
             wowza_publisher_payload(publisher_name=publisher_name, password=password),
         )
 
     def delete_publisher(self, *, app_name, publisher_name):
-        return self.request("DELETE", f"applications/{app_name}/publishers/{publisher_name}")
+        return self.request(
+            "DELETE",
+            f"applications/{quote_wowza_path_segment(app_name)}/publishers/{quote_wowza_path_segment(publisher_name)}",
+        )
 
     def update_advanced_settings(self, *, name, schedule_id):
-        return self.request("POST", f"applications/{name}/adv", wowza_advanced_settings_payload(schedule_id))
+        return self.request("POST", f"applications/{quote_wowza_path_segment(name)}/adv", wowza_advanced_settings_payload(schedule_id))
 
 
 def validate_wowza_app_name(value):
     value = (value or "").strip()
-    if not WOWZA_APP_NAME_RE.match(value):
-        raise ValueError("Usa 3 a 80 caracteres: letras, números, guion o guion bajo.")
+    if not value:
+        raise ValueError("Ingresa un nombre para la aplicación.")
+    if len(value) > 80:
+        raise ValueError("El nombre no puede superar 80 caracteres.")
+    if WOWZA_APP_NAME_INVALID_CHARS_RE.search(value) or ".." in value:
+        raise ValueError(WOWZA_APP_NAME_INVALID_MESSAGE)
     return value
+
+
+def quote_wowza_path_segment(value):
+    return quote(str(value), safe="")
 
 
 def generate_wowza_publish_password(length=10):
