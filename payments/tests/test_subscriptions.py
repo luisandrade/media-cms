@@ -1,5 +1,6 @@
 from unittest.mock import Mock, patch
 
+from django.contrib.messages import get_messages
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
@@ -90,6 +91,25 @@ class SubscriptionViewsTests(TestCase):
         self.assertEqual(customer.last4_card_digits, "")
         self.assertEqual(customer.card_number, "")
         self.assertEqual(customer.issuer_bank, "")
+
+    @patch("payments.views.FlowClient")
+    def test_activate_subscription_hides_duplicate_flow_customer_error(self, flow_client_cls):
+        flow_client = Mock()
+        flow_client.is_configured.return_value = True
+        flow_client.get_plan.return_value = {"planId": "media-cms-monthly"}
+        flow_client.create_customer.return_value = {
+            "error": f"There is a customer with this externalId: user-{self.user.pk}",
+        }
+        flow_client_cls.return_value = flow_client
+
+        response = self.client.post(reverse("subscription_activate"), follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        rendered_messages = [str(message) for message in get_messages(response.wsgi_request)]
+        self.assertTrue(
+            any("Ya existe un registro de suscripción asociado a tu cuenta" in message for message in rendered_messages)
+        )
+        self.assertFalse(any("There is a customer with this externalId" in message for message in rendered_messages))
 
     @patch("payments.views.FlowClient")
     def test_register_return_creates_active_subscription(self, flow_client_cls):

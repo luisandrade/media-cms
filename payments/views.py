@@ -133,6 +133,13 @@ def subscription_feature_enabled() -> bool:
     return bool(getattr(settings, "FLOW_SUBSCRIPTION_ENABLED", False))
 
 
+def _flow_duplicate_customer_external_id(data: dict[str, Any] | None) -> bool:
+    if not data:
+        return False
+    detail = str(data.get("message") or data.get("error") or data.get("detail") or "").lower()
+    return "externalid" in detail and "customer" in detail
+
+
 def _subscription_status_from_flow(value: Any) -> str:
     try:
         numeric = int(value)
@@ -869,12 +876,33 @@ class SubscriptionActivateView(APIView):
         with transaction.atomic():
             customer = FlowCustomer.objects.filter(user=request.user).first()
             if not customer:
-                customer_data = flow.create_customer(
-                    name=_user_display_name(request.user),
-                    email=email,
-                    external_id=f"user-{request.user.pk}",
-                )
+                try:
+                    customer_data = flow.create_customer(
+                        name=_user_display_name(request.user),
+                        email=email,
+                        external_id=f"user-{request.user.pk}",
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    if isinstance(exc, FlowAPIError) and _flow_duplicate_customer_external_id(exc.raw):
+                        messages.warning(
+                            request,
+                            "Ya existe un registro de suscripción asociado a tu cuenta. "
+                            "Si no ves tu suscripción activa, contáctanos para sincronizarla.",
+                        )
+                    else:
+                        messages.error(
+                            request,
+                            "No fue posible crear el cliente en Flow. Inténtalo nuevamente en unos minutos.",
+                        )
+                    return HttpResponseRedirect(reverse("subscription_portal"))
                 if not customer_data.get("customerId"):
+                    if _flow_duplicate_customer_external_id(customer_data):
+                        messages.warning(
+                            request,
+                            "Ya existe un registro de suscripción asociado a tu cuenta. "
+                            "Si no ves tu suscripción activa, contáctanos para sincronizarla.",
+                        )
+                        return HttpResponseRedirect(reverse("subscription_portal"))
                     detail = customer_data.get("message") or customer_data.get("error") or "Flow no devolvió customerId."
                     messages.error(request, f"No fue posible crear el cliente en Flow: {detail}")
                     return HttpResponseRedirect(reverse("subscription_portal"))
