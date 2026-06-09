@@ -361,7 +361,7 @@ FLOW_STATUS_PATH = os.getenv("FLOW_STATUS_PATH", "/payment/getStatus")
 # puedes fijar explícitamente estas URLs públicas.
 FLOW_URL_RETURN = os.getenv("FLOW_URL_RETURN")
 FLOW_URL_CONFIRMATION = os.getenv("FLOW_URL_CONFIRMATION")
-FLOW_SUBSCRIPTION_ENABLED = os.getenv("FLOW_SUBSCRIPTION_ENABLED", "false").lower() in ("1", "true", "yes")
+FLOW_SUBSCRIPTION_ENABLED = os.getenv("FLOW_SUBSCRIPTION_ENABLED", "true").lower() in ("1", "true", "yes")
 FLOW_SUBSCRIPTION_PLAN_ID = os.getenv("FLOW_SUBSCRIPTION_PLAN_ID", "pm")
 FLOW_SUBSCRIPTION_PLAN_NAME = os.getenv("FLOW_SUBSCRIPTION_PLAN_NAME", "PlanMensual")
 FLOW_SUBSCRIPTION_PRICE_CLP = int(os.getenv("FLOW_SUBSCRIPTION_PRICE_CLP", "0"))
