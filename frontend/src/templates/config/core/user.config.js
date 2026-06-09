@@ -25,6 +25,7 @@ module.exports = {
     manageMedia: true,
     manageUsers: true,
     manageComments: true,
+    manageWowza: true,
     contactUser: false,
   },
   pages: {

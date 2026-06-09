@@ -78,6 +78,7 @@ export function config(glbl) {
       statistics: !glbl.user.is.anonymous ? glbl.url.manageStatistics : '',
       users: !glbl.user.is.anonymous ? glbl.url.manageUsers : '',
       comments: !glbl.user.is.anonymous ? glbl.url.manageComments : '',
+      wowza: !glbl.user.is.anonymous ? glbl.url.manageWowza : '',
     },
   });
 

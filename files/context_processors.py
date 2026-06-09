@@ -27,6 +27,7 @@ def stuff(request):
     ret["PRE_UPLOAD_MEDIA_MESSAGE"] = settings.PRE_UPLOAD_MEDIA_MESSAGE
     ret["POST_UPLOAD_AUTHOR_MESSAGE_UNLISTED_NO_COMMENTARY"] = settings.POST_UPLOAD_AUTHOR_MESSAGE_UNLISTED_NO_COMMENTARY
     ret["IS_MEDIACMS_ADMIN"] = request.user.is_superuser
+    ret["CAN_MANAGE_WOWZA"] = request.user.is_authenticated and (request.user.is_superuser or request.user.is_staff)
     ret["IS_MEDIACMS_EDITOR"] = is_mediacms_editor(request.user)
     ret["IS_MEDIACMS_MANAGER"] = is_mediacms_manager(request.user)
     ret["FLOW_SUBSCRIPTION_ENABLED"] = settings.FLOW_SUBSCRIPTION_ENABLED

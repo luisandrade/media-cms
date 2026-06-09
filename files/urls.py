@@ -3,7 +3,7 @@ from django.conf.urls import include
 from django.conf.urls.static import static
 from django.urls import path, re_path
 
-from . import management_views, views
+from . import management_views, views, wowza_views
 from .feeds import IndexRSSFeed, SearchRSSFeed
 
 urlpatterns = [
@@ -95,6 +95,8 @@ urlpatterns = [
     re_path(r"^api/v1/manage_comments$", management_views.CommentList.as_view()),
     re_path(r"^api/v1/manage_users$", management_views.UserList.as_view()),
     re_path(r"^api/v1/manage_statistics$", management_views.StatisticsView.as_view()),
+    re_path(r"^api/v1/manage_wowza/status$", wowza_views.WowzaStatusView.as_view()),
+    re_path(r"^api/v1/manage_wowza/applications$", wowza_views.WowzaApplicationCreateView.as_view()),
     re_path(r"^api/v1/tasks$", views.TasksList.as_view()),
     re_path(r"^api/v1/tasks/$", views.TasksList.as_view()),
     re_path(r"^api/v1/tasks/(?P<friendly_token>[\w|\W]*)$", views.TaskDetail.as_view()),
@@ -102,6 +104,7 @@ urlpatterns = [
     re_path(r"^manage/media$", views.manage_media, name="manage_media"),
     re_path(r"^manage/statistics$", views.manage_statistics, name="manage_statistics"),
     re_path(r"^manage/users$", views.manage_users, name="manage_users"),
+    re_path(r"^manage/wowza$", views.manage_wowza, name="manage_wowza"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 if hasattr(settings, "GENERATE_SITEMAP") and settings.GENERATE_SITEMAP:

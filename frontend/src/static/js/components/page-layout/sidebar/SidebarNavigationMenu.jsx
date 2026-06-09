@@ -308,6 +308,15 @@ export function SidebarNavigationMenu() {
       });
     }
 
+    if (userCan.manageWowza) {
+      items.push({
+        link: links.manage.wowza,
+        icon: 'settings_input_antenna',
+        text: 'Wowza control',
+        className: 'nav-item-manage-wowza',
+      });
+    }
+
     return items.length ? (
       <div className="sidebar-section">
         <div className="sidebar-section-title">{translateString('Administración')}</div>

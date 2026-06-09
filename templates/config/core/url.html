@@ -31,6 +31,7 @@ MediaCMS.url = {
     {% if IS_MEDIACMS_EDITOR %}manageStatistics: "/manage/statistics",{% endif %}
     {% if IS_MEDIACMS_MANAGER %}manageUsers: "/manage/users",{% endif %}
     {% if IS_MEDIACMS_EDITOR %}manageComments: "/manage/comments",{% endif %}
+    {% if CAN_MANAGE_WOWZA %}manageWowza: "/manage/wowza",{% endif %}
     {% else %}
     signin: "/accounts/login/",
     register: "/accounts/signup/",

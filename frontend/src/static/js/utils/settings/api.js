@@ -51,6 +51,8 @@ export function init(base_url, endpoints) {
       statistics: endpoints.manage_statistics,
       users: endpoints.manage_users,
       comments: endpoints.manage_comments,
+      wowzaStatus: endpoints.manage_wowza_status,
+      wowzaApplications: endpoints.manage_wowza_applications,
     },
     search: {
       query: endpoints.search + '?q=',

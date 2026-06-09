@@ -17,4 +17,6 @@ MediaCMS.api = {
     {% if IS_MEDIACMS_ADMIN or IS_MEDIACMS_MANAGER or IS_MEDIACMS_EDITOR %}manage_statistics: '/manage_statistics',{% endif %}
     {% if IS_MEDIACMS_ADMIN or IS_MEDIACMS_MANAGER %}manage_users: '/manage_users',{% endif %}
     {% if IS_MEDIACMS_ADMIN or IS_MEDIACMS_MANAGER or IS_MEDIACMS_EDITOR %}manage_comments: '/manage_comments',{% endif %}
+    {% if CAN_MANAGE_WOWZA %}manage_wowza_status: '/manage_wowza/status',{% endif %}
+    {% if CAN_MANAGE_WOWZA %}manage_wowza_applications: '/manage_wowza/applications',{% endif %}
 };

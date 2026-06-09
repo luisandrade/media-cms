@@ -222,6 +222,14 @@ WOWZA_HOST_DEFAULT = os.getenv("WOWZA_HOST_DEFAULT", "scl.edge.grupoz.cl")
 WOWZA_TOKEN_NAME = os.getenv("WOWZA_TOKEN_NAME", "wowzatoken")
 WOWZA_LIVE_SECRET = os.getenv("WOWZA_LIVE_SECRET", "c1bcbdc0c1eac962")
 WOWZA_VOD_SECRET = os.getenv("WOWZA_VOD_SECRET", "45c2a1f252003a0a")
+WOWZA_ADMIN_API_BASE = os.getenv(
+    "WOWZA_ADMIN_API_BASE",
+    f"http://{WOWZA_HOST_DEFAULT}:8087/v2/servers/_defaultServer_/vhosts/_defaultVHost_",
+)
+WOWZA_ADMIN_USERNAME = os.getenv("WOWZA_ADMIN_USERNAME", "wowadmingz")
+WOWZA_ADMIN_PASSWORD = os.getenv("WOWZA_ADMIN_PASSWORD", "hgBHF8NqsT")
+WOWZA_ADMIN_TIMEOUT_SECONDS = int(os.getenv("WOWZA_ADMIN_TIMEOUT_SECONDS", "5"))
+WOWZA_APP_STORAGE_ROOT = os.getenv("WOWZA_APP_STORAGE_ROOT", "/nas")
 
 # VOD por SMIL (si tu Wowza VOD expone playlists por SMIL)
 WOWZA_VOD_SMIL_PATH_TEMPLATE = os.getenv(

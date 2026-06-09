@@ -17,4 +17,6 @@ module.exports = {
   manage_statistics: '/manage_statistics',
   manage_users: '/manage_users',
   manage_comments: '/manage_comments',
+  manage_wowza_status: '/manage_wowza/status',
+  manage_wowza_applications: '/manage_wowza/applications',
 };

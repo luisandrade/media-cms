@@ -87,6 +87,7 @@ const PAGES = {
   'manage-statistics': { id: 'manage-statistics', title: 'Statistics', component: 'ManageStatisticsPage' },
   'manage-users': { id: 'manage-users', title: 'Manage users', component: 'ManageUsersPage' },
   'manage-comments': { id: 'manage-comments', title: 'Manage comments', component: 'ManageCommentsPage' },
+  'manage-wowza': { id: 'manage-wowza', title: 'Wowza control', component: 'ManageWowzaPage' },
   'manage-ads': { id: 'manage-ads', title: 'Manage ads', component: 'ManageAdsPage' },
   'manage-category-ads': { id: 'manage-category-ads', title: 'Manage Category ads', component: 'ManageCategoryAdsPage' },
   'add-media': {

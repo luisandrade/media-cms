@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block headtitle %}Wowza control - {{PORTAL_NAME}}{% endblock headtitle %}
+
+{% block topimports %}
+<link href="{% static "css/manage-wowza.css" %}" rel="preload" as="style">
+<link href="{% static "css/manage-wowza.css" %}" rel="stylesheet">
+{% endblock topimports %}
+
+{% block headermeta %}
+
+<meta property="og:title" content="Wowza control - {{PORTAL_NAME}}">
+<meta property="og:type" content="website">
+<meta property="og:description" content="">
+
+{% endblock headermeta %}
+
+{% block content %}<div id="page-manage-wowza"></div>{% endblock %}
+
+{% block bottomimports %}
+<script src="{% static "js/manage-wowza.js" %}"></script>
+{% endblock bottomimports %}

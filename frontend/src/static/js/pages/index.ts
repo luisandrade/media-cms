@@ -10,6 +10,7 @@ export * from './ManageCommentsPage';
 export * from './ManageMediaPage';
 export * from './ManageStatisticsPage';
 export * from './ManageUsersPage';
+export * from './ManageWowzaPage';
 export * from './MediaPage';
 export * from './MembersPage';
 export * from './PlaylistPage';

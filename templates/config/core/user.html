@@ -19,6 +19,7 @@ MediaCMS.user = {
 		manageMedia: {% if IS_MEDIACMS_ADMIN or IS_MEDIACMS_MANAGER or IS_MEDIACMS_EDITOR %}true{% else %}false{% endif %},
 		manageUsers: {% if IS_MEDIACMS_ADMIN or IS_MEDIACMS_MANAGER %}true{% else %}false{% endif %},
 		manageComments: {% if IS_MEDIACMS_ADMIN or IS_MEDIACMS_MANAGER or IS_MEDIACMS_EDITOR %}true{% else %}false{% endif %},
+		manageWowza: {% if CAN_MANAGE_WOWZA %}true{% else %}false{% endif %},
 	},
 	pages: {
 		media: '/user/{{request.user.username}}',

@@ -33,4 +33,5 @@ module.exports = {
   manageStatistics: './manage-statistics.html',
   manageUsers: './manage-users.html',
   manageComments: './manage-comments.html',
+  manageWowza: './manage-wowza.html',
 };

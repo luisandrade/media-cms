@@ -632,6 +632,17 @@ def manage_users(request):
 
 
 @portal_login_required
+def manage_wowza(request):
+    """Wowza management view."""
+
+    if not (request.user.is_superuser or request.user.is_staff):
+        return HttpResponse("Forbidden", status=403)
+
+    context = {}
+    return render(request, "cms/manage_wowza.html", context)
+
+
+@portal_login_required
 def manage_media(request):
     """List media management view"""
 
