@@ -1043,6 +1043,8 @@ class WowzaApplication(models.Model):
     schedule_id = models.CharField(max_length=80, db_index=True)
     app_type = models.CharField(max_length=40, default="Live")
     storage_dir = models.CharField(max_length=255, blank=True)
+    publish_username = models.CharField(max_length=80, blank=True)
+    publish_password = models.CharField(max_length=128, blank=True)
     is_active = models.BooleanField(default=True, db_index=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, related_name="wowza_applications", null=True, blank=True)
     add_date = models.DateTimeField(auto_now_add=True, db_index=True)
@@ -1849,4 +1851,3 @@ def encoding_file_delete(sender, instance, **kwargs):
             instance.media.post_encode_actions(encoding=instance, action="delete")
     # delete local chunks, and remote chunks + media file. Only when the
     # last encoding of a media is complete
-

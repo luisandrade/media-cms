@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 
 from .models import WowzaApplication
 from .permissions import IsMediacmsAdmin
-from .wowza import WowzaAPIError, WowzaClient, validate_wowza_app_name
+from .wowza import WowzaAPIError, WowzaClient, generate_wowza_publish_password, validate_wowza_app_name
 
 
 class WowzaStatusView(APIView):
@@ -68,11 +68,16 @@ class WowzaApplicationCreateView(APIView):
         except ValueError as exc:
             return Response({"success": False, "message": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
 
+        publish_username = name
+        publish_password = generate_wowza_publish_password()
+
         try:
             payload = WowzaClient().create_live_application(
                 name=name,
                 storage_user_id=request.user.id,
                 schedule_id=schedule_id,
+                publish_username=publish_username,
+                publish_password=publish_password,
             )
         except WowzaAPIError as exc:
             return Response(
@@ -90,6 +95,8 @@ class WowzaApplicationCreateView(APIView):
                 "schedule_id": schedule_id,
                 "app_type": "Live",
                 "storage_dir": f"{settings.WOWZA_APP_STORAGE_ROOT.rstrip('/')}/{request.user.id}",
+                "publish_username": publish_username,
+                "publish_password": publish_password,
                 "is_active": True,
                 "created_by": request.user,
                 "response_payload": payload,
@@ -112,9 +119,16 @@ class WowzaApplicationDetailView(APIView):
 
     def delete(self, request, app_id, format=None):
         app = get_object_or_404(WowzaApplication, id=app_id)
+        client = WowzaClient()
 
         try:
-            payload = WowzaClient().delete_live_application(name=app.name)
+            if app.publish_username:
+                try:
+                    client.delete_publisher(app_name=app.name, publisher_name=app.publish_username)
+                except WowzaAPIError as exc:
+                    if exc.status_code != 404:
+                        raise
+            payload = client.delete_live_application(name=app.name)
         except WowzaAPIError as exc:
             return Response(
                 {
@@ -143,6 +157,8 @@ def serialize_wowza_application(app):
         "schedule_id": app.schedule_id,
         "app_type": app.app_type,
         "storage_dir": app.storage_dir,
+        "publish_username": app.publish_username,
+        "publish_password": app.publish_password,
         "is_active": app.is_active,
         "created_by": app.created_by.username if app.created_by else "",
         "add_date": app.add_date.isoformat() if app.add_date else "",

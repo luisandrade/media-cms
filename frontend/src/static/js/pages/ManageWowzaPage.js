@@ -33,6 +33,7 @@ export class ManageWowzaPage extends Page {
       result: null,
       activeAppName: '',
       deletingApplicationId: null,
+      visiblePasswords: {},
       error: null,
       validationError: '',
     };
@@ -42,6 +43,7 @@ export class ManageWowzaPage extends Page {
     this.onInputChange = this.onInputChange.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
     this.onDeleteApplication = this.onDeleteApplication.bind(this);
+    this.onTogglePassword = this.onTogglePassword.bind(this);
   }
 
   componentDidMount() {
@@ -217,6 +219,15 @@ export class ManageWowzaPage extends Page {
     }
   }
 
+  onTogglePassword(appId) {
+    this.setState({
+      visiblePasswords: {
+        ...this.state.visiblePasswords,
+        [appId]: !this.state.visiblePasswords[appId],
+      },
+    });
+  }
+
   pageContent() {
     const {
       appName,
@@ -232,6 +243,7 @@ export class ManageWowzaPage extends Page {
       result,
       activeAppName,
       deletingApplicationId,
+      visiblePasswords,
       error,
       validationError,
     } = this.state;
@@ -349,9 +361,9 @@ export class ManageWowzaPage extends Page {
                   <div className="manage-wowza-app-row manage-wowza-app-row-head">
                     <span>Aplicación</span>
                     <span>SMIL</span>
-                    <span>Tipo</span>
+                    <span>Usuario</span>
+                    <span>Password</span>
                     <span>Estado</span>
-                    <span>Creada por</span>
                     <span>Acción</span>
                   </div>
                   {applications.map((app) => (
@@ -361,9 +373,16 @@ export class ManageWowzaPage extends Page {
                         <strong>{app.name}</strong>
                       </span>
                       <span>{`streamschedule-${app.schedule_id}.smil`}</span>
-                      <span>{app.app_type}</span>
+                      <span>{app.publish_username || app.name}</span>
+                      <span>
+                        <span className="manage-wowza-secret">
+                          <span>{visiblePasswords[app.id] ? app.publish_password : '************'}</span>
+                          <button type="button" onClick={() => this.onTogglePassword(app.id)} title={visiblePasswords[app.id] ? 'Ocultar password' : 'Ver password'}>
+                            <MaterialIcon type={visiblePasswords[app.id] ? 'visibility_off' : 'visibility'} />
+                          </button>
+                        </span>
+                      </span>
                       <span>{app.is_active ? 'Activa' : 'Inactiva'}</span>
-                      <span>{app.created_by || '-'}</span>
                       <span>
                         <button
                           className="manage-wowza-delete"

@@ -1,11 +1,12 @@
 import json
 from unittest.mock import Mock, patch
 
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
 from files.models import WowzaApplication
 from files.tests.user_utils import create_account
+from files.wowza import wowza_live_application_payload
 
 
 class WowzaManagementTests(TestCase):
@@ -60,8 +61,10 @@ class WowzaManagementTests(TestCase):
 
         self.assertEqual(response.status_code, 403)
 
+    @patch("files.wowza_views.generate_wowza_publish_password")
     @patch("files.wowza_views.WowzaClient")
-    def test_create_application_uses_wowza_client_for_admin(self, wowza_client_cls):
+    def test_create_application_uses_wowza_client_for_admin(self, wowza_client_cls, generate_password):
+        generate_password.return_value = "SecurePass1234567890"
         wowza_client = Mock()
         wowza_client.create_live_application.return_value = {"success": True, "application": {"name": "eventoz06"}}
         wowza_client_cls.return_value = wowza_client
@@ -79,10 +82,14 @@ class WowzaManagementTests(TestCase):
         self.assertEqual(app.schedule_id, "schedule06")
         self.assertEqual(app.created_by, self.admin)
         self.assertEqual(app.storage_dir, f"/nas/{self.admin.id}")
+        self.assertEqual(app.publish_username, "eventoz06")
+        self.assertEqual(app.publish_password, "SecurePass1234567890")
         wowza_client.create_live_application.assert_called_once_with(
             name="eventoz06",
             storage_user_id=self.admin.id,
             schedule_id="schedule06",
+            publish_username="eventoz06",
+            publish_password="SecurePass1234567890",
         )
 
     def test_list_applications_returns_only_saved_platform_apps(self):
@@ -108,12 +115,14 @@ class WowzaManagementTests(TestCase):
         self.assertEqual(response.json()["page"], 1)
         self.assertEqual(response.json()["page_size"], 1)
         self.assertEqual(len(response.json()["results"]), 1)
+        self.assertIn("publish_password", response.json()["results"][0])
 
     @patch("files.wowza_views.WowzaClient")
     def test_delete_application_calls_wowza_and_removes_saved_app(self, wowza_client_cls):
         app = WowzaApplication.objects.create(
             name="eventoz08",
             schedule_id="schedule08",
+            publish_username="eventoz08",
             created_by=self.admin,
             storage_dir=f"/nas/{self.admin.id}",
         )
@@ -127,6 +136,7 @@ class WowzaManagementTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["success"], True)
         self.assertFalse(WowzaApplication.objects.filter(id=app.id).exists())
+        wowza_client.delete_publisher.assert_called_once_with(app_name="eventoz08", publisher_name="eventoz08")
         wowza_client.delete_live_application.assert_called_once_with(name="eventoz08")
 
     def test_delete_application_rejects_non_admin(self):
@@ -154,3 +164,10 @@ class WowzaManagementTests(TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()["success"], False)
+
+    @override_settings(WOWZA_PUBLISH_AUTH_METHOD="digest", WOWZA_PUBLISH_PASSWORD_FILE="")
+    def test_live_application_payload_requires_publish_password(self):
+        payload = wowza_live_application_payload(name="eventoz10", storage_user_id=1)
+
+        self.assertEqual(payload["securityConfig"]["publishRequirePassword"], True)
+        self.assertEqual(payload["securityConfig"]["publishAuthenticationMethod"], "digest")

@@ -1,4 +1,6 @@
 import re
+import secrets
+import string
 from dataclasses import dataclass
 
 import requests
@@ -60,16 +62,35 @@ class WowzaClient:
     def status(self):
         return self.request("GET", "applications")
 
-    def create_live_application(self, *, name, storage_user_id, schedule_id=None):
+    def create_live_application(self, *, name, storage_user_id, schedule_id=None, publish_username=None, publish_password=None):
         schedule_id = schedule_id or name
         app_data = wowza_live_application_payload(name=name, storage_user_id=storage_user_id)
         created = self.request("POST", "applications", app_data)
         advanced = self.update_advanced_settings(name=name, schedule_id=schedule_id)
-        return {"success": True, "application": created, "advanced_settings": advanced}
+        publisher = self.create_publisher(
+            app_name=name,
+            publisher_name=publish_username or name,
+            password=publish_password,
+        )
+        return {"success": True, "application": created, "advanced_settings": advanced, "publisher": publisher}
 
     def delete_live_application(self, *, name):
         deleted = self.request("DELETE", f"applications/{name}")
         return {"success": True, "application": deleted}
+
+    def create_publisher(self, *, app_name, publisher_name, password):
+        return self.request(
+            "POST",
+            f"applications/{app_name}/publishers",
+            {
+                "publisherName": publisher_name,
+                "password": password,
+                "description": f"Publisher {publisher_name} creado desde MediaCMS",
+            },
+        )
+
+    def delete_publisher(self, *, app_name, publisher_name):
+        return self.request("DELETE", f"applications/{app_name}/publishers/{publisher_name}")
 
     def update_advanced_settings(self, *, name, schedule_id):
         return self.request("POST", f"applications/{name}/adv", wowza_advanced_settings_payload(schedule_id))
@@ -82,7 +103,19 @@ def validate_wowza_app_name(value):
     return value
 
 
+def generate_wowza_publish_password(length=28):
+    alphabet = string.ascii_letters + string.digits
+    return "".join(secrets.choice(alphabet) for _ in range(length))
+
+
 def wowza_live_application_payload(*, name, storage_user_id):
+    security_config = {
+        "publishRequirePassword": True,
+        "publishAuthenticationMethod": settings.WOWZA_PUBLISH_AUTH_METHOD,
+    }
+    if settings.WOWZA_PUBLISH_PASSWORD_FILE:
+        security_config["publishPasswordFile"] = settings.WOWZA_PUBLISH_PASSWORD_FILE
+
     return {
         "name": name,
         "appType": "Live",
@@ -96,9 +129,7 @@ def wowza_live_application_payload(*, name, storage_user_id):
         },
         "httpCORSHeadersEnabled": True,
         "httpStreamers": ["cupertinostreaming"],
-        "securityConfig": {
-            "publishRequirePassword": False,
-        },
+        "securityConfig": security_config,
     }
 
 
