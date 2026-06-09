@@ -107,9 +107,34 @@ class SubscriptionViewsTests(TestCase):
         self.assertEqual(response.status_code, 200)
         rendered_messages = [str(message) for message in get_messages(response.wsgi_request)]
         self.assertTrue(
-            any("Ya existe un registro de suscripción asociado a tu cuenta" in message for message in rendered_messages)
+            any("La cuenta de suscripción ya existe para tu usuario" in message for message in rendered_messages)
         )
         self.assertFalse(any("There is a customer with this externalId" in message for message in rendered_messages))
+
+    @patch("payments.views.FlowClient")
+    def test_activate_subscription_with_existing_flow_customer_stays_on_portal(self, flow_client_cls):
+        FlowCustomer.objects.create(
+            user=self.user,
+            flow_customer_id="cus_existing",
+            external_id=f"user-{self.user.pk}",
+            email=self.user.email,
+            name=self.user.name,
+        )
+
+        flow_client = Mock()
+        flow_client.is_configured.return_value = True
+        flow_client.get_plan.return_value = {"planId": "media-cms-monthly"}
+        flow_client_cls.return_value = flow_client
+
+        response = self.client.post(reverse("subscription_activate"), follow=True)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.redirect_chain[-1][0], reverse("subscription_portal"))
+        flow_client.register_customer.assert_not_called()
+        rendered_messages = [str(message) for message in get_messages(response.wsgi_request)]
+        self.assertTrue(
+            any("La cuenta de suscripción ya existe para tu usuario" in message for message in rendered_messages)
+        )
 
     @patch("payments.views.FlowClient")
     def test_register_return_creates_active_subscription(self, flow_client_cls):
