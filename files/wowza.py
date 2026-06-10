@@ -226,7 +226,11 @@ def wowza_live_application_payload(*, name, storage_user_id):
         "streamConfig": {
             "streamType": "live",
             "storageDir": f"{settings.WOWZA_APP_STORAGE_ROOT.rstrip('/')}/{storage_user_id}",
-            "liveStreamPacketizer": ["cupertinostreamingpacketizer"],
+            "liveStreamPacketizer": [
+                "cupertinostreamingpacketizer",
+                "sanjosestreamingpacketizer",
+                "smoothstreamingpacketizer",
+            ],
         },
         "httpCORSHeadersEnabled": True,
         "httpStreamers": ["cupertinostreaming"],
@@ -235,6 +239,8 @@ def wowza_live_application_payload(*, name, storage_user_id):
 
 
 def wowza_advanced_settings_payload(schedule_id):
+    publish_password_file = wowza_publish_password_file()
+
     return {
         "modules": [
             {
@@ -274,6 +280,14 @@ def wowza_advanced_settings_payload(schedule_id):
                 "canRemove": True,
                 "name": "streamPublisherSmilFile",
                 "value": f"streamschedule-{schedule_id}.smil",
+                "type": "String",
+                "section": "/Root/Application",
+            },
+            {
+                "enabled": True,
+                "canRemove": True,
+                "name": "rtmpEncoderAuthenticateFile",
+                "value": publish_password_file,
                 "type": "String",
                 "section": "/Root/Application",
             },

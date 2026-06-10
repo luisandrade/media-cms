@@ -207,14 +207,25 @@ class WowzaManagementTests(TestCase):
             payload["securityConfig"]["publishPasswordFile"],
             "${com.wowza.wms.context.VHostConfigHome}/conf/${com.wowza.wms.context.Application}/publish.password",
         )
+        self.assertEqual(
+            payload["streamConfig"]["liveStreamPacketizer"],
+            ["cupertinostreamingpacketizer", "sanjosestreamingpacketizer", "smoothstreamingpacketizer"],
+        )
 
-    def test_advanced_settings_uses_standard_wowza_publish_authentication(self):
+    def test_advanced_settings_configures_encoder_auth_file_without_extra_auth_module(self):
         payload = wowza_advanced_settings_payload("schedule10")
         module_names = [module["name"] for module in payload["modules"]]
-        setting_names = [setting["name"] for setting in payload["advancedSettings"]]
+        auth_setting = next(
+            setting for setting in payload["advancedSettings"] if setting["name"] == "rtmpEncoderAuthenticateFile"
+        )
 
         self.assertNotIn("rtmpAuthenticate", module_names)
-        self.assertNotIn("rtmpEncoderAuthenticateFile", setting_names)
+        self.assertEqual(auth_setting["section"], "/Root/Application")
+        self.assertEqual(auth_setting["type"], "String")
+        self.assertEqual(
+            auth_setting["value"],
+            "${com.wowza.wms.context.VHostConfigHome}/conf/${com.wowza.wms.context.Application}/publish.password",
+        )
 
     @override_settings(
         WOWZA_PUSH_PUBLISH_ENTRY_NAME="live",
