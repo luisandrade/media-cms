@@ -83,12 +83,19 @@ class WowzaClient:
                 "updated": updated,
             }
         advanced = self.update_advanced_settings(name=name, schedule_id=schedule_id)
+        push_publish_map_entry = self.create_push_publish_map_entry(app_name=name)
         publisher = self.create_publisher(
             app_name=name,
             publisher_name=publish_username or name,
             password=publish_password,
         )
-        return {"success": True, "application": created, "advanced_settings": advanced, "publisher": publisher}
+        return {
+            "success": True,
+            "application": created,
+            "advanced_settings": advanced,
+            "push_publish_map_entry": push_publish_map_entry,
+            "publisher": publisher,
+        }
 
     def update_live_application(self, *, name, storage_user_id):
         return self.request(
@@ -122,6 +129,35 @@ class WowzaClient:
         return self.request(
             "DELETE",
             f"applications/{quote_wowza_path_segment(app_name)}/publishers/{quote_wowza_path_segment(publisher_name)}",
+        )
+
+    def create_push_publish_map_entry(self, *, app_name):
+        entry_name = settings.WOWZA_PUSH_PUBLISH_ENTRY_NAME
+        payload = wowza_push_publish_map_entry_payload()
+        try:
+            return self.request(
+                "POST",
+                f"applications/{quote_wowza_path_segment(app_name)}/pushpublish/mapentries",
+                payload,
+            )
+        except WowzaAPIError as exc:
+            if exc.status_code != 409:
+                raise
+            updated = self.update_push_publish_map_entry(app_name=app_name, entry_name=entry_name)
+            return {
+                "success": True,
+                "message": "El map entry PushPublish ya existía en Wowza y fue actualizado.",
+                "data": updated,
+            }
+
+    def update_push_publish_map_entry(self, *, app_name, entry_name):
+        return self.request(
+            "PUT",
+            (
+                f"applications/{quote_wowza_path_segment(app_name)}/pushpublish/mapentries/"
+                f"{quote_wowza_path_segment(entry_name)}"
+            ),
+            wowza_push_publish_map_entry_payload(),
         )
 
     def update_advanced_settings(self, *, name, schedule_id):
@@ -161,6 +197,17 @@ def wowza_publish_password_file():
         "${com.wowza.wms.context.VHostConfigHome}/conf/"
         "${com.wowza.wms.context.Application}/publish.password"
     )
+
+
+def wowza_push_publish_map_entry_payload():
+    return {
+        "entryName": settings.WOWZA_PUSH_PUBLISH_ENTRY_NAME,
+        "profile": settings.WOWZA_PUSH_PUBLISH_PROFILE,
+        "application": settings.WOWZA_PUSH_PUBLISH_APPLICATION,
+        "destinationName": settings.WOWZA_PUSH_PUBLISH_DESTINATION_NAME,
+        "host": settings.WOWZA_PUSH_PUBLISH_HOST,
+        "streamName": settings.WOWZA_PUSH_PUBLISH_STREAM_NAME,
+    }
 
 
 def wowza_live_application_payload(*, name, storage_user_id):

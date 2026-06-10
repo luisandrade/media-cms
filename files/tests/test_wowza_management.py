@@ -13,6 +13,7 @@ from files.wowza import (
     validate_wowza_app_name,
     wowza_advanced_settings_payload,
     wowza_live_application_payload,
+    wowza_push_publish_map_entry_payload,
 )
 
 
@@ -220,6 +221,29 @@ class WowzaManagementTests(TestCase):
             "${com.wowza.wms.context.VHostConfigHome}/conf/${com.wowza.wms.context.Application}/publish.password",
         )
 
+    @override_settings(
+        WOWZA_PUSH_PUBLISH_ENTRY_NAME="live",
+        WOWZA_PUSH_PUBLISH_PROFILE="rtmp",
+        WOWZA_PUSH_PUBLISH_APPLICATION="miradio2restream",
+        WOWZA_PUSH_PUBLISH_DESTINATION_NAME="wowzastreamingengine",
+        WOWZA_PUSH_PUBLISH_HOST="scl.edge.grupoz.cl",
+        WOWZA_PUSH_PUBLISH_STREAM_NAME="live",
+    )
+    def test_push_publish_map_entry_payload_uses_configured_destination(self):
+        payload = wowza_push_publish_map_entry_payload()
+
+        self.assertEqual(
+            payload,
+            {
+                "entryName": "live",
+                "profile": "rtmp",
+                "application": "miradio2restream",
+                "destinationName": "wowzastreamingengine",
+                "host": "scl.edge.grupoz.cl",
+                "streamName": "live",
+            },
+        )
+
     def test_generate_publish_password_uses_10_characters_by_default(self):
         password = generate_wowza_publish_password()
 
@@ -232,6 +256,7 @@ class WowzaManagementTests(TestCase):
                 WowzaAPIError("conflict", status_code=409, data={"code": "409"}),
                 {"updated": True},
                 {"advanced": True},
+                {"push_publish_map_entry": True},
                 {"publisher": True},
             ]
 
@@ -246,10 +271,13 @@ class WowzaManagementTests(TestCase):
         self.assertEqual(response["success"], True)
         self.assertEqual(response["application"]["message"], "La aplicación ya existía en Wowza y fue actualizada.")
         self.assertEqual(response["application"]["updated"], {"updated": True})
-        self.assertEqual(request.call_count, 4)
+        self.assertEqual(response["push_publish_map_entry"], {"push_publish_map_entry": True})
+        self.assertEqual(request.call_count, 5)
         self.assertEqual(request.call_args_list[1][0][0], "PUT")
         self.assertEqual(request.call_args_list[1][0][1], "applications/eventoz11")
         self.assertEqual(request.call_args_list[1][0][2]["securityConfig"]["publishRequirePassword"], True)
+        self.assertEqual(request.call_args_list[3][0][0], "POST")
+        self.assertEqual(request.call_args_list[3][0][1], "applications/eventoz11/pushpublish/mapentries")
 
     def test_wowza_client_updates_publisher_when_it_already_exists(self):
         client = WowzaClient(base_url="http://wowza.test", username="u", password="p")
