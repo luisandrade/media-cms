@@ -235,8 +235,6 @@ def wowza_live_application_payload(*, name, storage_user_id):
 
 
 def wowza_advanced_settings_payload(schedule_id):
-    publish_password_file = wowza_publish_password_file()
-
     return {
         "modules": [
             {
@@ -259,18 +257,12 @@ def wowza_advanced_settings_payload(schedule_id):
             },
             {
                 "order": 3,
-                "name": "rtmpAuthenticate",
-                "description": "RTMP Publishing Authentication",
-                "class": "com.wowza.wms.security.ModuleRTMPAuthenticate",
-            },
-            {
-                "order": 4,
                 "name": "streamPublisher",
                 "description": "Schedules streams and playlists.",
                 "class": "com.wowza.wms.plugin.streampublisher.ModuleStreamPublisher",
             },
             {
-                "order": 5,
+                "order": 4,
                 "name": "modulePushPublish",
                 "description": "ModulePushPublish enable StreamTarget.",
                 "class": "com.wowza.wms.pushpublish.module.ModulePushPublish",
@@ -282,14 +274,6 @@ def wowza_advanced_settings_payload(schedule_id):
                 "canRemove": True,
                 "name": "streamPublisherSmilFile",
                 "value": f"streamschedule-{schedule_id}.smil",
-                "type": "String",
-                "section": "/Root/Application",
-            },
-            {
-                "enabled": True,
-                "canRemove": True,
-                "name": "rtmpEncoderAuthenticateFile",
-                "value": publish_password_file,
                 "type": "String",
                 "section": "/Root/Application",
             },
