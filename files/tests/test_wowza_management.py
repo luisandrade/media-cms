@@ -212,6 +212,7 @@ class WowzaManagementTests(TestCase):
         with patch.object(client, "request") as request:
             request.side_effect = [
                 WowzaAPIError("conflict", status_code=409, data={"code": "409"}),
+                {"updated": True},
                 {"advanced": True},
                 {"publisher": True},
             ]
@@ -225,8 +226,12 @@ class WowzaManagementTests(TestCase):
             )
 
         self.assertEqual(response["success"], True)
-        self.assertEqual(response["application"]["message"], "La aplicación ya existía en Wowza.")
-        self.assertEqual(request.call_count, 3)
+        self.assertEqual(response["application"]["message"], "La aplicación ya existía en Wowza y fue actualizada.")
+        self.assertEqual(response["application"]["updated"], {"updated": True})
+        self.assertEqual(request.call_count, 4)
+        self.assertEqual(request.call_args_list[1][0][0], "PUT")
+        self.assertEqual(request.call_args_list[1][0][1], "applications/eventoz11")
+        self.assertEqual(request.call_args_list[1][0][2]["securityConfig"]["publishRequirePassword"], True)
 
     def test_wowza_client_updates_publisher_when_it_already_exists(self):
         client = WowzaClient(base_url="http://wowza.test", username="u", password="p")

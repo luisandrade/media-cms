@@ -75,7 +75,13 @@ class WowzaClient:
         except WowzaAPIError as exc:
             if exc.status_code != 409:
                 raise
-            created = {"success": True, "message": "La aplicación ya existía en Wowza.", "data": exc.data}
+            updated = self.update_live_application(name=name, storage_user_id=storage_user_id)
+            created = {
+                "success": True,
+                "message": "La aplicación ya existía en Wowza y fue actualizada.",
+                "data": exc.data,
+                "updated": updated,
+            }
         advanced = self.update_advanced_settings(name=name, schedule_id=schedule_id)
         publisher = self.create_publisher(
             app_name=name,
@@ -83,6 +89,13 @@ class WowzaClient:
             password=publish_password,
         )
         return {"success": True, "application": created, "advanced_settings": advanced, "publisher": publisher}
+
+    def update_live_application(self, *, name, storage_user_id):
+        return self.request(
+            "PUT",
+            f"applications/{quote_wowza_path_segment(name)}",
+            wowza_live_application_payload(name=name, storage_user_id=storage_user_id),
+        )
 
     def delete_live_application(self, *, name):
         deleted = self.request("DELETE", f"applications/{quote_wowza_path_segment(name)}")
