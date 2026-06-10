@@ -213,7 +213,9 @@ class WowzaManagementTests(TestCase):
         auth_setting = next(
             setting for setting in payload["advancedSettings"] if setting["name"] == "rtmpEncoderAuthenticateFile"
         )
+        auth_module = next(module for module in payload["modules"] if module["name"] == "rtmpAuthenticate")
 
+        self.assertEqual(auth_module["class"], "com.wowza.wms.security.ModuleRTMPAuthenticate")
         self.assertEqual(auth_setting["section"], "/Root/Application")
         self.assertEqual(auth_setting["type"], "String")
         self.assertEqual(

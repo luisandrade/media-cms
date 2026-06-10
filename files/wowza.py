@@ -259,12 +259,18 @@ def wowza_advanced_settings_payload(schedule_id):
             },
             {
                 "order": 3,
+                "name": "rtmpAuthenticate",
+                "description": "RTMP Publishing Authentication",
+                "class": "com.wowza.wms.security.ModuleRTMPAuthenticate",
+            },
+            {
+                "order": 4,
                 "name": "streamPublisher",
                 "description": "Schedules streams and playlists.",
                 "class": "com.wowza.wms.plugin.streampublisher.ModuleStreamPublisher",
             },
             {
-                "order": 4,
+                "order": 5,
                 "name": "modulePushPublish",
                 "description": "ModulePushPublish enable StreamTarget.",
                 "class": "com.wowza.wms.pushpublish.module.ModulePushPublish",
