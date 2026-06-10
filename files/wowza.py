@@ -156,13 +156,19 @@ def wowza_publisher_payload(*, publisher_name, password):
     }
 
 
+def wowza_publish_password_file():
+    return settings.WOWZA_PUBLISH_PASSWORD_FILE or (
+        "${com.wowza.wms.context.VHostConfigHome}/conf/"
+        "${com.wowza.wms.context.Application}/publish.password"
+    )
+
+
 def wowza_live_application_payload(*, name, storage_user_id):
     security_config = {
         "publishRequirePassword": True,
         "publishAuthenticationMethod": settings.WOWZA_PUBLISH_AUTH_METHOD,
+        "publishPasswordFile": wowza_publish_password_file(),
     }
-    if settings.WOWZA_PUBLISH_PASSWORD_FILE:
-        security_config["publishPasswordFile"] = settings.WOWZA_PUBLISH_PASSWORD_FILE
 
     return {
         "name": name,
@@ -182,6 +188,8 @@ def wowza_live_application_payload(*, name, storage_user_id):
 
 
 def wowza_advanced_settings_payload(schedule_id):
+    publish_password_file = wowza_publish_password_file()
+
     return {
         "modules": [
             {
@@ -221,6 +229,14 @@ def wowza_advanced_settings_payload(schedule_id):
                 "canRemove": True,
                 "name": "streamPublisherSmilFile",
                 "value": f"streamschedule-{schedule_id}.smil",
+                "type": "String",
+                "section": "/Root/Application",
+            },
+            {
+                "enabled": True,
+                "canRemove": True,
+                "name": "rtmpEncoderAuthenticateFile",
+                "value": publish_password_file,
                 "type": "String",
                 "section": "/Root/Application",
             },
