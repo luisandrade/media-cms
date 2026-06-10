@@ -279,6 +279,14 @@ def wowza_advanced_settings_payload(schedule_id):
             {
                 "enabled": True,
                 "canRemove": True,
+                "name": "securityPublishPasswordFile",
+                "value": publish_password_file,
+                "type": "String",
+                "section": "/Root/Application",
+            },
+            {
+                "enabled": True,
+                "canRemove": True,
                 "name": "rtmpEncoderAuthenticateFile",
                 "value": publish_password_file,
                 "type": "String",

@@ -209,11 +209,20 @@ class WowzaManagementTests(TestCase):
     def test_advanced_settings_configures_encoder_auth_file_without_extra_auth_module(self):
         payload = wowza_advanced_settings_payload("schedule10")
         module_names = [module["name"] for module in payload["modules"]]
+        security_password_file_setting = next(
+            setting for setting in payload["advancedSettings"] if setting["name"] == "securityPublishPasswordFile"
+        )
         auth_setting = next(
             setting for setting in payload["advancedSettings"] if setting["name"] == "rtmpEncoderAuthenticateFile"
         )
 
         self.assertNotIn("rtmpAuthenticate", module_names)
+        self.assertEqual(security_password_file_setting["section"], "/Root/Application")
+        self.assertEqual(security_password_file_setting["type"], "String")
+        self.assertEqual(
+            security_password_file_setting["value"],
+            "${com.wowza.wms.context.VHostConfigHome}/conf/${com.wowza.wms.context.Application}/publish.password",
+        )
         self.assertEqual(auth_setting["section"], "/Root/Application")
         self.assertEqual(auth_setting["type"], "String")
         self.assertEqual(
