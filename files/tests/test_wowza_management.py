@@ -126,6 +126,8 @@ class WowzaManagementTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["success"], True)
         self.assertEqual(response.json()["count"], 2)
+        self.assertEqual(response.json()["max_applications"], 10)
+        self.assertEqual(response.json()["available_applications"], 8)
         self.assertEqual(response.json()["page"], 1)
         self.assertEqual(response.json()["page_size"], 1)
         self.assertEqual(len(response.json()["results"]), 1)
@@ -186,6 +188,28 @@ class WowzaManagementTests(TestCase):
 
         self.assertEqual(response.status_code, 400)
         self.assertEqual(response.json()["success"], False)
+
+    @override_settings(WOWZA_MAX_APPLICATIONS=1)
+    @patch("files.wowza_views.WowzaClient")
+    def test_create_application_rejects_when_max_applications_is_reached(self, wowza_client_cls):
+        WowzaApplication.objects.create(
+            name="eventoz10",
+            schedule_id="schedule10",
+            created_by=self.admin,
+            storage_dir=f"/nas/{self.admin.id}",
+        )
+        self.client.force_login(self.admin)
+
+        response = self.client.post(
+            "/api/v1/manage_wowza/applications",
+            data=json.dumps({"name": "eventoz11"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["success"], False)
+        self.assertIn("1 aplicaciones", response.json()["message"])
+        wowza_client_cls.assert_not_called()
 
     def test_wowza_app_name_validator_rejects_forbidden_wowza_characters(self):
         invalid_names = [

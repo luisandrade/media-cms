@@ -81,6 +81,8 @@ export class ManageWowzaPage extends Page {
       status: null,
       applications: [],
       applicationsCount: 0,
+      maxApplications: 0,
+      availableApplications: null,
       applicationsPage: 1,
       applicationsTotalPages: 1,
       result: null,
@@ -156,6 +158,8 @@ export class ManageWowzaPage extends Page {
       this.setState({
         applications: payload.results || [],
         applicationsCount: payload.count || 0,
+        maxApplications: payload.max_applications || 0,
+        availableApplications: payload.available_applications,
         applicationsPage: payload.page || 1,
         applicationsTotalPages: payload.total_pages || 1,
         isLoadingApplications: false,
@@ -164,6 +168,8 @@ export class ManageWowzaPage extends Page {
       this.setState({
         applications: [],
         applicationsCount: 0,
+        maxApplications: 0,
+        availableApplications: null,
         applicationsPage: 1,
         applicationsTotalPages: 1,
         error: getErrorMessage(error),
@@ -188,10 +194,18 @@ export class ManageWowzaPage extends Page {
     const scheduleId = this.state.scheduleId.trim() || appName;
     const appNameError = validateWowzaName(appName, 'El nombre de la aplicación');
     const scheduleIdError = validateWowzaName(scheduleId, 'El ID schedule SMIL');
+    const isExistingApplication = this.state.applications.some((app) => app.name === appName);
 
     if (appNameError || scheduleIdError) {
       this.setState({
         validationError: appNameError || scheduleIdError,
+      });
+      return;
+    }
+
+    if (!isExistingApplication && this.state.maxApplications > 0 && this.state.availableApplications <= 0) {
+      this.setState({
+        validationError: `Ya llegaste al límite de ${this.state.maxApplications} aplicaciones disponibles en la plataforma.`,
       });
       return;
     }
@@ -442,6 +456,8 @@ export class ManageWowzaPage extends Page {
       status,
       applications,
       applicationsCount,
+      maxApplications,
+      availableApplications,
       applicationsPage,
       applicationsTotalPages,
       result,
@@ -455,6 +471,19 @@ export class ManageWowzaPage extends Page {
     const previewAppName = appName.trim() || 'nombre_app';
     const previewScheduleId = scheduleId.trim() || previewAppName;
     const connectionApplication = applications.find((app) => app.id === connectionApplicationId);
+    const currentAppName = appName.trim();
+    const isExistingApplication = applications.some((app) => app.name === currentAppName);
+    const hasApplicationLimit = maxApplications > 0;
+    const hasReachedApplicationLimit = hasApplicationLimit && availableApplications <= 0;
+    const canSubmitApplication = status && (!hasReachedApplicationLimit || isExistingApplication);
+    const quotaText = hasApplicationLimit
+      ? `${applicationsCount} de ${maxApplications} aplicaciones creadas`
+      : `${applicationsCount} aplicaciones creadas`;
+    const availabilityText = hasApplicationLimit
+      ? hasReachedApplicationLimit
+        ? 'Límite alcanzado'
+        : `${availableApplications} disponibles`
+      : 'Sin límite configurado';
 
     return (
       <MediaListWrapper className="items-list-hor manage-wowza-wrapper">
@@ -484,6 +513,14 @@ export class ManageWowzaPage extends Page {
                   : 'Revisa conectividad, credenciales o permisos del API Manager.'}
               </span>
             </div>
+          </div>
+
+          <div className={`manage-wowza-quota ${hasReachedApplicationLimit ? 'manage-wowza-quota-full' : ''}`}>
+            <div>
+              <strong>Cupo de aplicaciones</strong>
+              <span>{quotaText}</span>
+            </div>
+            <span>{availabilityText}</span>
           </div>
 
           <div className="manage-wowza-layout">
@@ -522,8 +559,8 @@ export class ManageWowzaPage extends Page {
               <button
                 className="manage-wowza-submit"
                 type="submit"
-                disabled={isSubmitting || !status}
-                title={!status ? 'Wowza API no disponible' : ''}
+                disabled={isSubmitting || !canSubmitApplication}
+                title={!status ? 'Wowza API no disponible' : hasReachedApplicationLimit && !isExistingApplication ? 'Límite de aplicaciones alcanzado' : ''}
               >
                 {isSubmitting ? <SpinnerLoader size="tiny" /> : <MaterialIcon type="add_circle" />}
                 <span>{isSubmitting ? 'Creando aplicación' : 'Crear aplicación'}</span>
@@ -556,7 +593,7 @@ export class ManageWowzaPage extends Page {
             <div className="manage-wowza-apps-head">
               <div>
                 <h2>Aplicaciones creadas en la plataforma</h2>
-                <span>{applicationsCount ? `${applicationsCount} aplicaciones guardadas` : 'Sin aplicaciones guardadas'}</span>
+                <span>{applicationsCount ? `${quotaText} (${availabilityText})` : `Sin aplicaciones guardadas (${availabilityText})`}</span>
               </div>
               {activeAppName ? <strong>Última creada: {activeAppName}</strong> : null}
             </div>

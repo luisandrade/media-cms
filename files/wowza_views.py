@@ -53,6 +53,8 @@ class WowzaApplicationCreateView(APIView):
             {
                 "success": True,
                 "count": paginator.count,
+                "max_applications": get_wowza_max_applications(),
+                "available_applications": available_wowza_applications_count(paginator.count),
                 "page": page_obj.number,
                 "page_size": page_size,
                 "total_pages": paginator.num_pages,
@@ -70,6 +72,16 @@ class WowzaApplicationCreateView(APIView):
             schedule_id = validate_wowza_app_name(request.data.get("schedule_id") or name)
         except ValueError as exc:
             return Response({"success": False, "message": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not can_create_wowza_application(name):
+            max_applications = get_wowza_max_applications()
+            return Response(
+                {
+                    "success": False,
+                    "message": f"No se pueden crear más de {max_applications} aplicaciones Wowza.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         publish_username = name
         publish_password = generate_wowza_publish_password()
@@ -191,6 +203,29 @@ def hls_playlist_is_live(url):
     content_type = response.headers.get("Content-Type", "")
     body = response.text or ""
     return "#EXTM3U" in body or "mpegurl" in content_type.lower()
+
+
+def can_create_wowza_application(name):
+    max_applications = get_wowza_max_applications()
+    if max_applications <= 0:
+        return True
+    if WowzaApplication.objects.filter(name=name).exists():
+        return True
+    return WowzaApplication.objects.count() < max_applications
+
+
+def available_wowza_applications_count(current_count):
+    max_applications = get_wowza_max_applications()
+    if max_applications <= 0:
+        return None
+    return max(max_applications - current_count, 0)
+
+
+def get_wowza_max_applications():
+    try:
+        return int(getattr(settings, "WOWZA_MAX_APPLICATIONS", 10))
+    except (TypeError, ValueError):
+        return 10
 
 
 def serialize_wowza_application(app, *, is_live=False):
