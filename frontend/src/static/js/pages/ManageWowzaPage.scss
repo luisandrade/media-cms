@@ -128,70 +128,6 @@
   }
 }
 
-.manage-wowza-quota {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin: -8px 0 22px;
-  padding: 12px 16px;
-  border: 1px solid #dedede;
-  border-radius: 6px;
-  background: #ffffff;
-
-  strong,
-  span {
-    display: block;
-  }
-
-  strong {
-    margin-bottom: 3px;
-    font-size: 0.9rem;
-    font-weight: 800;
-  }
-
-  span {
-    color: rgba(68, 68, 68, 0.76);
-    font-size: 0.86rem;
-    line-height: 1.35;
-  }
-
-  > span {
-    flex: 0 0 auto;
-    padding: 5px 9px;
-    border-radius: 4px;
-    color: #16713a;
-    background: #edf9f1;
-    font-weight: 800;
-  }
-
-  .dark_theme & {
-    border-color: #31364a;
-    background: #1e2130;
-
-    span {
-      color: rgba(203, 209, 234, 0.76);
-    }
-
-    > span {
-      color: #88dfa8;
-      background: rgba(47, 157, 85, 0.16);
-    }
-  }
-}
-
-.manage-wowza-quota-full {
-  > span {
-    color: #a3121b;
-    background: #fff1f2;
-  }
-
-  .dark_theme & > span {
-    color: #ff9aa0;
-    background: rgba(255, 18, 31, 0.14);
-  }
-}
-
 .manage-wowza-status-available .material-icons {
   color: #2f9d55;
 }
@@ -1091,11 +1027,6 @@
   }
 
   .manage-wowza-apps-head {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  .manage-wowza-quota {
     align-items: flex-start;
     flex-direction: column;
   }

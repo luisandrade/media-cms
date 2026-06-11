@@ -515,14 +515,6 @@ export class ManageWowzaPage extends Page {
             </div>
           </div>
 
-          <div className={`manage-wowza-quota ${hasReachedApplicationLimit ? 'manage-wowza-quota-full' : ''}`}>
-            <div>
-              <strong>Cupo de aplicaciones</strong>
-              <span>{quotaText}</span>
-            </div>
-            <span>{availabilityText}</span>
-          </div>
-
           <div className="manage-wowza-layout">
             <form className="manage-wowza-form" onSubmit={this.onSubmit}>
               <div className="manage-wowza-form-head">
