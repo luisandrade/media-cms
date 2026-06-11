@@ -6,6 +6,7 @@ from django.urls import reverse
 
 from files.models import WowzaApplication
 from files.tests.user_utils import create_account
+from files.wowza_views import hls_playlist_is_live
 from files.wowza import (
     WowzaAPIError,
     WowzaClient,
@@ -274,6 +275,26 @@ class WowzaManagementTests(TestCase):
     def test_wowza_has_incoming_streams_detects_live_payload(self):
         self.assertEqual(wowza_has_incoming_streams({"incomingStreams": [{"name": "live"}]}), True)
         self.assertEqual(wowza_has_incoming_streams({"incomingStreams": []}), False)
+
+    @patch("files.wowza_views.requests.get")
+    def test_hls_playlist_is_live_detects_valid_playlist(self, requests_get):
+        response = Mock()
+        response.status_code = 200
+        response.headers = {"Content-Type": "application/vnd.apple.mpegurl"}
+        response.text = "#EXTM3U\n#EXT-X-VERSION:3\n"
+        requests_get.return_value = response
+
+        self.assertEqual(hls_playlist_is_live("https://scl.edge.grupoz.cl/app/live/playlist.m3u8"), True)
+
+    @patch("files.wowza_views.requests.get")
+    def test_hls_playlist_is_live_rejects_missing_playlist(self, requests_get):
+        response = Mock()
+        response.status_code = 404
+        response.headers = {}
+        response.text = ""
+        requests_get.return_value = response
+
+        self.assertEqual(hls_playlist_is_live("https://scl.edge.grupoz.cl/app/live/playlist.m3u8"), False)
 
     def test_wowza_client_continues_when_application_already_exists(self):
         client = WowzaClient(base_url="http://wowza.test", username="u", password="p")

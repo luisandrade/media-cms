@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.core.paginator import EmptyPage, Paginator
 from django.shortcuts import get_object_or_404
+import requests
 from rest_framework import status
 from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
@@ -162,7 +163,34 @@ def live_statuses_for_applications(applications):
         except WowzaAPIError:
             statuses[app.name] = False
 
+        if not statuses[app.name]:
+            statuses[app.name] = hls_playlist_is_live(hls_url_for_application(app.name))
+
     return statuses
+
+
+def hls_url_for_application(app_name):
+    stream_name = settings.WOWZA_PUSH_PUBLISH_STREAM_NAME
+    wowza_host = settings.WOWZA_HOST_DEFAULT
+    return f"https://{wowza_host}/{app_name}/{stream_name}/playlist.m3u8"
+
+
+def hls_playlist_is_live(url):
+    try:
+        response = requests.get(
+            url,
+            headers={"Cache-Control": "no-cache", "Pragma": "no-cache"},
+            timeout=getattr(settings, "WOWZA_LIVE_STATUS_TIMEOUT_SECONDS", 3),
+        )
+    except requests.RequestException:
+        return False
+
+    if response.status_code >= 400:
+        return False
+
+    content_type = response.headers.get("Content-Type", "")
+    body = response.text or ""
+    return "#EXTM3U" in body or "mpegurl" in content_type.lower()
 
 
 def serialize_wowza_application(app, *, is_live=False):
@@ -179,7 +207,7 @@ def serialize_wowza_application(app, *, is_live=False):
         "publish_password": app.publish_password,
         "rtmp_url": f"rtmp://{wowza_host}/{app.name}",
         "stream_name": stream_name,
-        "hls_url": f"https://{wowza_host}/{app.name}/{stream_name}/playlist.m3u8",
+        "hls_url": hls_url_for_application(app.name),
         "is_live": is_live,
         "is_active": app.is_active,
         "created_by": app.created_by.username if app.created_by else "",
