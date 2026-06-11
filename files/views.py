@@ -890,6 +890,7 @@ def view_wowza_live(request, app_name):
         "debug_hls_url": debug_hls_url,
         "debug_hls_path": parsed_hls_url.path,
         "debug_hls_params": parse_qsl(parsed_hls_url.query),
+        "debug_hls_hash_algorithm": getattr(settings, "WOWZA_SECURE_TOKEN_HASH_ALGORITHM", "SHA-256"),
     }
     return render(request, "cms/wowza_live.html", context)
 

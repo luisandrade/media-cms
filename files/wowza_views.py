@@ -238,6 +238,7 @@ def hls_url_for_application(app_name, *, secure_token=None):
         f"{app_name}/{stream_name}",
         getattr(settings, "WOWZA_LIVE_SECRET", ""),
         token_name=getattr(settings, "WOWZA_TOKEN_NAME", "wowzatoken"),
+        hash_algorithm=getattr(settings, "WOWZA_SECURE_TOKEN_HASH_ALGORITHM", "SHA-256"),
         start=0,
         end=endtime,
     )

@@ -22,14 +22,38 @@ class WowzaAPIError(Exception):
         self.data = data
 
 
-def generate_wowza_token(stream, secret, *, token_name="wowzatoken", client_ip=None, start=0, end=0):
-    if client_ip:
-        to_hash = f"{stream}?{client_ip}&{secret}&{token_name}endtime={end}&{token_name}starttime={start}"
-    else:
-        to_hash = f"{stream}?{secret}&{token_name}endtime={end}&{token_name}starttime={start}"
+WOWZA_TOKEN_HASHERS = {
+    "SHA-256": hashlib.sha256,
+    "SHA256": hashlib.sha256,
+    "SHA-384": hashlib.sha384,
+    "SHA384": hashlib.sha384,
+    "SHA-512": hashlib.sha512,
+    "SHA512": hashlib.sha512,
+}
 
-    hash_bytes = hashlib.sha384(to_hash.encode("utf-8")).digest()
-    base64_hash = base64.urlsafe_b64encode(hash_bytes).decode("utf-8").rstrip("=")
+
+def generate_wowza_token(
+    stream,
+    secret,
+    *,
+    token_name="wowzatoken",
+    client_ip=None,
+    start=0,
+    end=0,
+    hash_algorithm=None,
+):
+    hash_algorithm = hash_algorithm or getattr(settings, "WOWZA_SECURE_TOKEN_HASH_ALGORITHM", "SHA-256")
+    hasher = WOWZA_TOKEN_HASHERS.get(str(hash_algorithm).upper(), hashlib.sha256)
+
+    if client_ip:
+        hash_parts = [client_ip, secret, f"{token_name}endtime={end}", f"{token_name}starttime={start}"]
+    else:
+        hash_parts = [secret, f"{token_name}endtime={end}", f"{token_name}starttime={start}"]
+
+    to_hash = f"{stream}?{'&'.join(sorted(hash_parts))}"
+
+    hash_bytes = hasher(to_hash.encode("utf-8")).digest()
+    base64_hash = base64.urlsafe_b64encode(hash_bytes).decode("utf-8")
 
     params = [
         f"{token_name}starttime={start}",
