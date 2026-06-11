@@ -457,10 +457,17 @@ class WowzaManagementTests(TestCase):
             payload["securityConfig"]["publishPasswordFile"],
             "${com.wowza.wms.context.VHostConfigHome}/conf/${com.wowza.wms.context.Application}/publish.password",
         )
+        self.assertEqual(payload["streamConfig"]["streamType"], "live-record")
         self.assertEqual(
             payload["streamConfig"]["liveStreamPacketizer"],
             ["cupertinostreamingpacketizer", "sanjosestreamingpacketizer", "smoothstreamingpacketizer"],
         )
+
+    @override_settings(WOWZA_RECORD_ALL_INCOMING_STREAMS_ENABLED=False)
+    def test_live_application_payload_can_disable_record_all_incoming_streams(self):
+        payload = wowza_live_application_payload(name="eventoz10", storage_user_id=1)
+
+        self.assertEqual(payload["streamConfig"]["streamType"], "live")
 
     def test_advanced_settings_configures_encoder_auth_file_without_extra_auth_module(self):
         payload = wowza_advanced_settings_payload("schedule10")
@@ -489,6 +496,20 @@ class WowzaManagementTests(TestCase):
         self.assertEqual(settings_by_name["securitySecureTokenSharedSecret"]["value"], settings.WOWZA_LIVE_SECRET)
         self.assertEqual(settings_by_name["securitySecureTokenHashAlgorithm"]["value"], "SHA-256")
         self.assertEqual(settings_by_name["securitySecureTokenQueryParametersPrefix"]["value"], "wowzatoken")
+        self.assertEqual(settings_by_name["streamRecorderSegmentationType"]["section"], "/Root/Application/StreamRecorder")
+        self.assertEqual(settings_by_name["streamRecorderSegmentationType"]["value"], "duration")
+        self.assertEqual(settings_by_name["streamRecorderSegmentationType"]["type"], "String")
+        self.assertEqual(settings_by_name["streamRecorderSegmentDuration"]["section"], "/Root/Application/StreamRecorder")
+        self.assertEqual(settings_by_name["streamRecorderSegmentDuration"]["value"], 900000)
+        self.assertEqual(settings_by_name["streamRecorderSegmentDuration"]["type"], "Integer")
+        self.assertEqual(settings_by_name["streamRecorderFileFormat"]["value"], "mp4")
+        self.assertEqual(settings_by_name["streamRecorderVersioningOption"]["value"], "version")
+        self.assertEqual(
+            settings_by_name["streamRecorderFileVersionTemplate"]["value"],
+            "${SourceStreamName}_${RecordingStartTime}_${SegmentNumber}",
+        )
+        self.assertEqual(settings_by_name["streamRecorderStartOnKeyFrame"]["value"], True)
+        self.assertEqual(settings_by_name["streamRecorderRecordData"]["value"], True)
 
     @override_settings(WOWZA_SECURE_TOKEN_ENABLED=False)
     def test_advanced_settings_can_disable_playback_secure_token(self):
@@ -499,6 +520,21 @@ class WowzaManagementTests(TestCase):
         self.assertNotIn("securitySecureTokenSharedSecret", setting_names)
         self.assertNotIn("securitySecureTokenHashAlgorithm", setting_names)
         self.assertNotIn("securitySecureTokenQueryParametersPrefix", setting_names)
+
+    @override_settings(WOWZA_RECORD_SEGMENT_BY_DURATION_ENABLED=False)
+    def test_advanced_settings_can_disable_record_segmentation(self):
+        payload = wowza_advanced_settings_payload("schedule10")
+        setting_names = {setting["name"] for setting in payload["advancedSettings"]}
+
+        self.assertNotIn("streamRecorderSegmentationType", setting_names)
+        self.assertNotIn("streamRecorderSegmentDuration", setting_names)
+
+    @override_settings(WOWZA_RECORD_SEGMENT_DURATION_SECONDS=60)
+    def test_advanced_settings_uses_configured_record_segment_duration(self):
+        payload = wowza_advanced_settings_payload("schedule10")
+        settings_by_name = {setting["name"]: setting for setting in payload["advancedSettings"]}
+
+        self.assertEqual(settings_by_name["streamRecorderSegmentDuration"]["value"], 60000)
 
     @override_settings(
         WOWZA_PUSH_PUBLISH_ENTRY_NAME="live",

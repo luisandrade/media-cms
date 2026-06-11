@@ -299,6 +299,7 @@ def wowza_push_publish_map_entry_payload():
 
 
 def wowza_live_application_payload(*, name, storage_user_id):
+    stream_type = "live-record" if getattr(settings, "WOWZA_RECORD_ALL_INCOMING_STREAMS_ENABLED", True) else "live"
     security_config = {
         "publishRequirePassword": True,
         "publishAuthenticationMethod": settings.WOWZA_PUBLISH_AUTH_METHOD,
@@ -312,7 +313,7 @@ def wowza_live_application_payload(*, name, storage_user_id):
         "clientStreamWriteAccess": "*",
         "description": f"App {name} creada desde MediaCMS",
         "streamConfig": {
-            "streamType": "live",
+            "streamType": stream_type,
             "storageDir": f"{settings.WOWZA_APP_STORAGE_ROOT.rstrip('/')}/{storage_user_id}",
             "liveStreamPacketizer": [
                 "cupertinostreamingpacketizer",
@@ -381,6 +382,9 @@ def wowza_advanced_settings_payload(schedule_id):
 
     if getattr(settings, "WOWZA_SECURE_TOKEN_ENABLED", True):
         advanced_settings.extend(wowza_secure_token_advanced_settings())
+
+    if getattr(settings, "WOWZA_RECORD_SEGMENT_BY_DURATION_ENABLED", True):
+        advanced_settings.extend(wowza_stream_recorder_advanced_settings())
 
     return {
         "modules": [
@@ -458,5 +462,67 @@ def wowza_secure_token_advanced_settings():
             "value": settings.WOWZA_TOKEN_NAME,
             "type": "String",
             "section": "/Root/Application",
+        },
+    ]
+
+
+def wowza_stream_recorder_advanced_settings():
+    segment_duration_seconds = max(int(getattr(settings, "WOWZA_RECORD_SEGMENT_DURATION_SECONDS", 900)), 10)
+    return [
+        {
+            "enabled": True,
+            "canRemove": True,
+            "name": "streamRecorderSegmentationType",
+            "value": "duration",
+            "type": "String",
+            "section": "/Root/Application/StreamRecorder",
+        },
+        {
+            "enabled": True,
+            "canRemove": True,
+            "name": "streamRecorderSegmentDuration",
+            "value": segment_duration_seconds * 1000,
+            "type": "Integer",
+            "section": "/Root/Application/StreamRecorder",
+        },
+        {
+            "enabled": True,
+            "canRemove": True,
+            "name": "streamRecorderFileFormat",
+            "value": "mp4",
+            "type": "String",
+            "section": "/Root/Application/StreamRecorder",
+        },
+        {
+            "enabled": True,
+            "canRemove": True,
+            "name": "streamRecorderVersioningOption",
+            "value": "version",
+            "type": "String",
+            "section": "/Root/Application/StreamRecorder",
+        },
+        {
+            "enabled": True,
+            "canRemove": True,
+            "name": "streamRecorderFileVersionTemplate",
+            "value": "${SourceStreamName}_${RecordingStartTime}_${SegmentNumber}",
+            "type": "String",
+            "section": "/Root/Application/StreamRecorder",
+        },
+        {
+            "enabled": True,
+            "canRemove": True,
+            "name": "streamRecorderStartOnKeyFrame",
+            "value": True,
+            "type": "Boolean",
+            "section": "/Root/Application/StreamRecorder",
+        },
+        {
+            "enabled": True,
+            "canRemove": True,
+            "name": "streamRecorderRecordData",
+            "value": True,
+            "type": "Boolean",
+            "section": "/Root/Application/StreamRecorder",
         },
     ]
