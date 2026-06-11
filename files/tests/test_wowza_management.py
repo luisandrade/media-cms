@@ -124,6 +124,9 @@ class WowzaManagementTests(TestCase):
         self.assertEqual(response.json()["page_size"], 1)
         self.assertEqual(len(response.json()["results"]), 1)
         self.assertIn("publish_password", response.json()["results"][0])
+        self.assertIn("rtmp_url", response.json()["results"][0])
+        self.assertIn("stream_name", response.json()["results"][0])
+        self.assertIn("hls_url", response.json()["results"][0])
 
     @patch("files.wowza_views.WowzaClient")
     def test_delete_application_calls_wowza_and_removes_saved_app(self, wowza_client_cls):

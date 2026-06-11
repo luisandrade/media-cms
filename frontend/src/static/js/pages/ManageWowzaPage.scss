@@ -334,7 +334,7 @@
 
 .manage-wowza-app-row {
   display: grid;
-  grid-template-columns: minmax(140px, 1fr) minmax(170px, 1.05fr) minmax(110px, 0.72fr) minmax(160px, 0.95fr) minmax(80px, 0.45fr) minmax(106px, 0.5fr);
+  grid-template-columns: minmax(130px, 0.9fr) minmax(150px, 0.95fr) minmax(96px, 0.62fr) minmax(140px, 0.82fr) minmax(70px, 0.38fr) minmax(210px, 1.05fr);
   gap: 14px;
   align-items: center;
   min-height: 46px;
@@ -483,6 +483,13 @@
   }
 }
 
+.manage-wowza-row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.manage-wowza-connect,
 .manage-wowza-delete {
   min-height: 34px;
   display: inline-flex;
@@ -522,6 +529,24 @@
 
     &:hover:not(:disabled) {
       background: rgba(255, 18, 31, 0.22);
+    }
+  }
+}
+
+.manage-wowza-connect {
+  color: #1668a8;
+  background: #edf6ff;
+
+  &:hover:not(:disabled) {
+    background: #dff0ff;
+  }
+
+  .dark_theme & {
+    color: #8dccff;
+    background: rgba(62, 166, 255, 0.14);
+
+    &:hover:not(:disabled) {
+      background: rgba(62, 166, 255, 0.22);
     }
   }
 }
@@ -577,6 +602,264 @@
 
     .dark_theme & {
       color: rgba(203, 209, 234, 0.72);
+    }
+  }
+}
+
+.manage-wowza-connection {
+  margin: 22px 0;
+  padding: 20px;
+  border: 1px solid #dedede;
+  border-radius: 6px;
+  background: #ffffff;
+
+  .dark_theme & {
+    border-color: #31364a;
+    background: #1e2130;
+  }
+}
+
+.manage-wowza-connection-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+
+  h2 {
+    margin: 0;
+    font-size: 1rem;
+    line-height: 1.2;
+    font-weight: 800;
+  }
+
+  span {
+    display: block;
+    margin-top: 5px;
+    color: rgba(68, 68, 68, 0.72);
+    font-size: 0.88rem;
+    line-height: 1.4;
+
+    .dark_theme & {
+      color: rgba(203, 209, 234, 0.72);
+    }
+  }
+
+  button {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 0;
+    border-radius: 4px;
+    color: #1f1f1f;
+    background: #eeeeee;
+    cursor: pointer;
+
+    &:hover {
+      background: #e1e1e1;
+    }
+
+    .material-icons {
+      color: inherit;
+      font-size: 1.15rem;
+    }
+
+    .dark_theme & {
+      color: #ffffff;
+      background: #282d3d;
+
+      &:hover {
+        background: #31364a;
+      }
+    }
+  }
+}
+
+.manage-wowza-signal {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  margin-bottom: 18px;
+  overflow: hidden;
+  border-radius: 6px;
+  background: #05060a;
+
+  video {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    width: 100%;
+    height: 100%;
+    background: #05060a;
+  }
+}
+
+.manage-wowza-signal-placeholder {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px;
+  color: rgba(255, 255, 255, 0.68);
+  background: linear-gradient(180deg, rgba(5, 6, 10, 0.12), rgba(5, 6, 10, 0.56));
+  text-align: center;
+
+  strong {
+    color: #ffffff;
+    font-size: 1rem;
+    font-weight: 800;
+  }
+
+  span {
+    max-width: 460px;
+    font-size: 0.86rem;
+    line-height: 1.4;
+  }
+}
+
+.manage-wowza-live-icon {
+  width: 58px;
+  height: 58px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.12);
+
+  .material-icons {
+    font-size: 2.2rem;
+  }
+}
+
+.manage-wowza-connection-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.manage-wowza-connection-card {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid #e2e2e2;
+  border-radius: 6px;
+  background: #fafafa;
+
+  &:last-child {
+    grid-column: 1 / -1;
+  }
+
+  .dark_theme & {
+    border-color: #31364a;
+    background: #171a27;
+  }
+}
+
+.manage-wowza-connection-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+
+  strong {
+    margin: 0;
+    font-size: 0.88rem;
+    font-weight: 800;
+  }
+}
+
+.manage-wowza-connection-card-icon {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  color: #1668a8;
+  background: #edf6ff;
+
+  .material-icons {
+    color: inherit;
+    font-size: 1.2rem;
+  }
+
+  .dark_theme & {
+    color: #8dccff;
+    background: rgba(62, 166, 255, 0.14);
+  }
+}
+
+.manage-wowza-connection-value {
+  display: flex;
+  gap: 8px;
+
+  input {
+    min-width: 0;
+    width: 100%;
+    height: 40px;
+    padding: 0 11px;
+    border: 1px solid #cfcfcf;
+    border-radius: 4px;
+    color: #1f1f1f;
+    background: #ffffff;
+    font-family: monospace;
+    font-size: 0.86rem;
+    outline: none;
+
+    &:focus {
+      border-color: #1668a8;
+      box-shadow: 0 0 0 2px rgba(22, 104, 168, 0.12);
+    }
+
+    .dark_theme & {
+      border-color: #31364a;
+      color: #ffffff;
+      background: #10131d;
+    }
+  }
+
+  button {
+    min-width: 96px;
+    min-height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 11px;
+    border: 0;
+    border-radius: 4px;
+    color: #1f1f1f;
+    background: #eeeeee;
+    font-size: 0.82rem;
+    font-weight: 800;
+    cursor: pointer;
+
+    &:hover {
+      background: #e1e1e1;
+    }
+
+    .material-icons {
+      color: inherit;
+      font-size: 1.1rem;
+    }
+
+    .dark_theme & {
+      color: #ffffff;
+      background: #282d3d;
+
+      &:hover {
+        background: #31364a;
+      }
     }
   }
 }
@@ -674,6 +957,24 @@
   .manage-wowza-app-row {
     grid-template-columns: 1fr;
     gap: 5px;
+  }
+
+  .manage-wowza-row-actions,
+  .manage-wowza-connection-value {
+    align-items: stretch;
+    flex-direction: column;
+
+    button {
+      width: 100%;
+    }
+  }
+
+  .manage-wowza-connection-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .manage-wowza-connection-card:last-child {
+    grid-column: auto;
   }
 
   .manage-wowza-pagination {

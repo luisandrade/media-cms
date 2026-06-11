@@ -34,6 +34,32 @@ function getErrorMessage(error) {
   return 'No fue posible completar la operación.';
 }
 
+function connectionValue(app, field) {
+  const streamName = app.stream_name || 'live';
+
+  if ('rtmp_url' === field) {
+    return app.rtmp_url || `rtmp://scl.edge.grupoz.cl/${app.name}`;
+  }
+
+  if ('stream_name' === field) {
+    return streamName;
+  }
+
+  if ('publish_username' === field) {
+    return app.publish_username || app.name;
+  }
+
+  if ('publish_password' === field) {
+    return app.publish_password || '';
+  }
+
+  if ('hls_url' === field) {
+    return app.hls_url || `http://scl.edge.grupoz.cl:1935/${app.name}/${streamName}/playlist.m3u8`;
+  }
+
+  return '';
+}
+
 export class ManageWowzaPage extends Page {
   constructor(props) {
     super(props, 'manage-wowza');
@@ -52,6 +78,8 @@ export class ManageWowzaPage extends Page {
       result: null,
       activeAppName: '',
       deletingApplicationId: null,
+      connectionApplicationId: null,
+      copiedConnectionField: '',
       visiblePasswords: {},
       error: null,
       validationError: '',
@@ -62,7 +90,9 @@ export class ManageWowzaPage extends Page {
     this.onInputChange = this.onInputChange.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
     this.onDeleteApplication = this.onDeleteApplication.bind(this);
+    this.onShowConnection = this.onShowConnection.bind(this);
     this.onTogglePassword = this.onTogglePassword.bind(this);
+    this.onCopyConnectionValue = this.onCopyConnectionValue.bind(this);
   }
 
   componentDidMount() {
@@ -229,6 +259,7 @@ export class ManageWowzaPage extends Page {
       this.setState({
         deletingApplicationId: null,
         activeAppName: this.state.activeAppName === app.name ? '' : this.state.activeAppName,
+        connectionApplicationId: this.state.connectionApplicationId === app.id ? null : this.state.connectionApplicationId,
       });
       this.loadApplications(this.state.applicationsPage);
       this.loadStatus();
@@ -249,6 +280,114 @@ export class ManageWowzaPage extends Page {
     }));
   }
 
+  onShowConnection(app) {
+    this.setState({
+      connectionApplicationId: app.id,
+      copiedConnectionField: '',
+      visiblePasswords: {
+        ...this.state.visiblePasswords,
+        [app.id]: true,
+      },
+    });
+  }
+
+  onCopyConnectionValue(app, field) {
+    const value = connectionValue(app, field);
+
+    if (!value) {
+      return;
+    }
+
+    const markCopied = () => {
+      this.setState({ copiedConnectionField: `${app.id}-${field}` });
+      window.setTimeout(() => {
+        if (this.state.copiedConnectionField === `${app.id}-${field}`) {
+          this.setState({ copiedConnectionField: '' });
+        }
+      }, 1800);
+    };
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(value).then(markCopied).catch(markCopied);
+      return;
+    }
+
+    const textarea = document.createElement('textarea');
+    textarea.value = value;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.top = '-1000px';
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    markCopied();
+  }
+
+  renderConnectionField(app, field, label, icon) {
+    const value = connectionValue(app, field);
+    const copied = this.state.copiedConnectionField === `${app.id}-${field}`;
+
+    return (
+      <div className="manage-wowza-connection-card">
+        <div className="manage-wowza-connection-card-head">
+          <span className="manage-wowza-connection-card-icon">
+            <MaterialIcon type={icon} />
+          </span>
+          <strong>{label}</strong>
+        </div>
+        <div className="manage-wowza-connection-value">
+          <input value={value} readOnly />
+          <button type="button" onClick={() => this.onCopyConnectionValue(app, field)} title={`Copiar ${label}`}>
+            <MaterialIcon type={copied ? 'check' : 'content_copy'} />
+            <span>{copied ? 'Copiado' : 'Copiar'}</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  renderConnectionPanel(app) {
+    if (!app) {
+      return null;
+    }
+
+    const hlsUrl = connectionValue(app, 'hls_url');
+
+    return (
+      <section className="manage-wowza-connection">
+        <div className="manage-wowza-connection-head">
+          <div>
+            <h2>Conexión de {app.name}</h2>
+            <span>Señal de monitoreo y credenciales para configurar Wirecast u otro encoder RTMP.</span>
+          </div>
+          <button type="button" onClick={() => this.setState({ connectionApplicationId: null })} title="Cerrar conexión">
+            <MaterialIcon type="close" />
+          </button>
+        </div>
+
+        <div className="manage-wowza-signal">
+          <video controls playsInline src={hlsUrl} />
+          <div className="manage-wowza-signal-placeholder">
+            <span className="manage-wowza-live-icon">
+              <MaterialIcon type="radio_button_checked" />
+            </span>
+            <strong>Señal del stream</strong>
+            <span>Si el navegador no reproduce HLS nativo, copia la URL HLS en un reproductor compatible.</span>
+          </div>
+        </div>
+
+        <div className="manage-wowza-connection-grid">
+          {this.renderConnectionField(app, 'rtmp_url', 'RTMP', 'link')}
+          {this.renderConnectionField(app, 'stream_name', 'Stream', 'vpn_key')}
+          {this.renderConnectionField(app, 'publish_username', 'Usuario', 'person')}
+          {this.renderConnectionField(app, 'publish_password', 'Password', 'lock')}
+          {this.renderConnectionField(app, 'hls_url', 'Señal HLS', 'live_tv')}
+        </div>
+      </section>
+    );
+  }
+
   pageContent() {
     const {
       appName,
@@ -264,12 +403,14 @@ export class ManageWowzaPage extends Page {
       result,
       activeAppName,
       deletingApplicationId,
+      connectionApplicationId,
       visiblePasswords,
       error,
       validationError,
     } = this.state;
     const previewAppName = appName.trim() || 'nombre_app';
     const previewScheduleId = scheduleId.trim() || previewAppName;
+    const connectionApplication = applications.find((app) => app.id === connectionApplicationId);
 
     return (
       <MediaListWrapper className="items-list-hor manage-wowza-wrapper">
@@ -385,12 +526,12 @@ export class ManageWowzaPage extends Page {
                     <span>Usuario</span>
                     <span>Password</span>
                     <span>Estado</span>
-                    <span>Acción</span>
+                    <span>Acciones</span>
                   </div>
                   {applications.map((app) => (
-                    <div className={`manage-wowza-app-row ${activeAppName === app.name ? 'manage-wowza-app-row-active' : ''}`} key={app.id || app.name}>
+                    <div className={`manage-wowza-app-row ${connectionApplicationId === app.id || activeAppName === app.name ? 'manage-wowza-app-row-active' : ''}`} key={app.id || app.name}>
                       <span>
-                        <MaterialIcon type={activeAppName === app.name ? 'radio_button_checked' : 'radio_button_unchecked'} />
+                        <MaterialIcon type={connectionApplicationId === app.id || activeAppName === app.name ? 'radio_button_checked' : 'radio_button_unchecked'} />
                         <strong>{app.name}</strong>
                       </span>
                       <span>{`streamschedule-${app.schedule_id}.smil`}</span>
@@ -405,16 +546,22 @@ export class ManageWowzaPage extends Page {
                       </span>
                       <span>{app.is_active ? 'Activa' : 'Inactiva'}</span>
                       <span>
-                        <button
-                          className="manage-wowza-delete"
-                          type="button"
-                          onClick={() => this.onDeleteApplication(app)}
-                          disabled={deletingApplicationId === app.id}
-                          title="Eliminar aplicación"
-                        >
-                          {deletingApplicationId === app.id ? <SpinnerLoader size="small" /> : <MaterialIcon type="delete" />}
-                          <span>{deletingApplicationId === app.id ? 'Eliminando' : 'Eliminar'}</span>
-                        </button>
+                        <span className="manage-wowza-row-actions">
+                          <button className="manage-wowza-connect" type="button" onClick={() => this.onShowConnection(app)} title="Ver conexión">
+                            <MaterialIcon type="settings_input_hdmi" />
+                            <span>Conexión</span>
+                          </button>
+                          <button
+                            className="manage-wowza-delete"
+                            type="button"
+                            onClick={() => this.onDeleteApplication(app)}
+                            disabled={deletingApplicationId === app.id}
+                            title="Eliminar aplicación"
+                          >
+                            {deletingApplicationId === app.id ? <SpinnerLoader size="small" /> : <MaterialIcon type="delete" />}
+                            <span>{deletingApplicationId === app.id ? 'Eliminando' : 'Eliminar'}</span>
+                          </button>
+                        </span>
                       </span>
                     </div>
                   ))}
@@ -440,6 +587,8 @@ export class ManageWowzaPage extends Page {
               </div>
             )}
           </section>
+
+          {this.renderConnectionPanel(connectionApplication)}
 
           {result ? (
             <section className="manage-wowza-result">

@@ -151,6 +151,9 @@ class WowzaApplicationDetailView(APIView):
 
 
 def serialize_wowza_application(app):
+    stream_name = settings.WOWZA_PUSH_PUBLISH_STREAM_NAME
+    wowza_host = settings.WOWZA_HOST_DEFAULT
+
     return {
         "id": app.id,
         "name": app.name,
@@ -159,6 +162,9 @@ def serialize_wowza_application(app):
         "storage_dir": app.storage_dir,
         "publish_username": app.publish_username,
         "publish_password": app.publish_password,
+        "rtmp_url": f"rtmp://{wowza_host}/{app.name}",
+        "stream_name": stream_name,
+        "hls_url": f"http://{wowza_host}:1935/{app.name}/{stream_name}/playlist.m3u8",
         "is_active": app.is_active,
         "created_by": app.created_by.username if app.created_by else "",
         "add_date": app.add_date.isoformat() if app.add_date else "",
