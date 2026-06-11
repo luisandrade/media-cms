@@ -79,12 +79,11 @@ from .serializers import (
 )
 from .stop_words import STOP_WORDS
 from .tasks import save_user_action, video_trim_task
-import hashlib
-import base64
 import json
 
 from . import cdn_balancer as cdn_balancer_module
 from .cdn_balancer import get_balanced_hosts_for_request
+from .wowza import generate_wowza_token
 
 logger = logging.getLogger(__name__)
 
@@ -432,28 +431,6 @@ def edit_video(request):
             "allow_video_trimmer": settings.ALLOW_VIDEO_TRIMMER,
         },
     )
-
-    if client_ip:
-        to_hash = f"{stream}?{client_ip}&{secret}&{token_name}endtime={end}&{token_name}starttime={start}"
-    else:
-        to_hash = f"{stream}?{secret}&{token_name}endtime={end}&{token_name}starttime={start}"
-
-    hash_bytes = hashlib.sha384(to_hash.encode("utf-8")).digest()
-    base64_hash = base64.urlsafe_b64encode(hash_bytes).decode("utf-8").rstrip("=")
-
-    # Armado de parámetros
-    params = [
-        f"{token_name}starttime={start}",
-        f"{token_name}endtime={end}",
-        f"{token_name}hash={base64_hash}",
-    ]
-
-    if client_ip:
-        params.append(client_ip)
-
-    params.sort()
-    return "&".join(params)
-
 
 def _build_local_vod_playback_urls(media):
     hls_master_file = ""

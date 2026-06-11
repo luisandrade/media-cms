@@ -1,3 +1,5 @@
+import base64
+import hashlib
 import re
 import secrets
 import string
@@ -18,6 +20,28 @@ class WowzaAPIError(Exception):
         super().__init__(message)
         self.status_code = status_code
         self.data = data
+
+
+def generate_wowza_token(stream, secret, *, token_name="wowzatoken", client_ip=None, start=0, end=0):
+    if client_ip:
+        to_hash = f"{stream}?{client_ip}&{secret}&{token_name}endtime={end}&{token_name}starttime={start}"
+    else:
+        to_hash = f"{stream}?{secret}&{token_name}endtime={end}&{token_name}starttime={start}"
+
+    hash_bytes = hashlib.sha384(to_hash.encode("utf-8")).digest()
+    base64_hash = base64.urlsafe_b64encode(hash_bytes).decode("utf-8").rstrip("=")
+
+    params = [
+        f"{token_name}starttime={start}",
+        f"{token_name}endtime={end}",
+        f"{token_name}hash={base64_hash}",
+    ]
+
+    if client_ip:
+        params.append(client_ip)
+
+    params.sort()
+    return "&".join(params)
 
 
 @dataclass

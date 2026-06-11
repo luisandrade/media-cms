@@ -11,7 +11,14 @@ from rest_framework.views import APIView
 
 from .models import WowzaApplication
 from .permissions import IsMediacmsAdmin
-from .wowza import WowzaAPIError, WowzaClient, generate_wowza_publish_password, validate_wowza_app_name, wowza_has_incoming_streams
+from .wowza import (
+    WowzaAPIError,
+    WowzaClient,
+    generate_wowza_publish_password,
+    generate_wowza_token,
+    validate_wowza_app_name,
+    wowza_has_incoming_streams,
+)
 
 
 class WowzaStatusView(APIView):
@@ -212,10 +219,23 @@ def live_statuses_for_applications(applications):
     return statuses
 
 
-def hls_url_for_application(app_name):
+def hls_url_for_application(app_name, *, secure_token=None):
     stream_name = settings.WOWZA_PUSH_PUBLISH_STREAM_NAME
     wowza_host = settings.WOWZA_HOST_DEFAULT
-    return f"https://{wowza_host}/{app_name}/{stream_name}/playlist.m3u8"
+    url = f"https://{wowza_host}/{app_name}/{stream_name}/playlist.m3u8"
+    if secure_token is None:
+        secure_token = bool(getattr(settings, "WOWZA_SECURE_TOKEN_ENABLED", True))
+    if not secure_token:
+        return url
+
+    token = generate_wowza_token(
+        f"{app_name}/{stream_name}",
+        getattr(settings, "WOWZA_LIVE_SECRET", ""),
+        token_name=getattr(settings, "WOWZA_TOKEN_NAME", "wowzatoken"),
+        start=0,
+        end=0,
+    )
+    return f"{url}?{token}"
 
 
 def hls_playlist_is_live(url):
@@ -274,7 +294,6 @@ def paginated_url(request, page):
 
 
 def serialize_public_wowza_live_application(app, *, request, is_live=False):
-    hls_url = hls_url_for_application(app.name)
     return {
         "id": f"wowza-{app.id}",
         "title": app.name,
@@ -285,7 +304,7 @@ def serialize_public_wowza_live_application(app, *, request, is_live=False):
         "views": 0,
         "thumbnail_url": "",
         "preview_url": "",
-        "stream": hls_url,
+        "stream": "",
         "is_live": is_live,
         "author_name": app.created_by.username if app.created_by else "",
         "author_profile": request.build_absolute_uri("/") if app.created_by else "",

@@ -11,6 +11,7 @@ from files.wowza import (
     WowzaAPIError,
     WowzaClient,
     generate_wowza_publish_password,
+    generate_wowza_token,
     validate_wowza_app_name,
     wowza_advanced_settings_payload,
     wowza_has_incoming_streams,
@@ -137,7 +138,8 @@ class WowzaManagementTests(TestCase):
         self.assertIn("stream_name", result)
         self.assertTrue(result["hls_url"].startswith("https://"))
         self.assertNotIn(":1935", result["hls_url"])
-        self.assertTrue(result["hls_url"].endswith("/live/playlist.m3u8"))
+        self.assertIn("/live/playlist.m3u8?", result["hls_url"])
+        self.assertIn("wowzatokenhash=", result["hls_url"])
         self.assertEqual(result["is_live"], True)
         wowza_client.incoming_streams.assert_called_once()
 
@@ -183,7 +185,7 @@ class WowzaManagementTests(TestCase):
         self.assertEqual(result["title"], "eventozlive")
         self.assertEqual(result["media_type"], "video")
         self.assertTrue(result["url"].endswith("/live/eventozlive"))
-        self.assertEqual(result["stream"], "https://scl.edge.grupoz.cl/eventozlive/live/playlist.m3u8")
+        self.assertEqual(result["stream"], "")
         self.assertEqual(result["is_live"], True)
         self.assertNotIn("publish_password", result)
         self.assertNotIn("publish_username", result)
@@ -214,6 +216,47 @@ class WowzaManagementTests(TestCase):
         self.assertContains(response, "Esperando señal de streaming")
         self.assertNotContains(response, "https://scl.edge.grupoz.cl/eventozoffline/live/playlist.m3u8")
 
+    @patch("files.wowza_views.WowzaClient")
+    def test_wowza_live_page_uses_secure_token_when_enabled(self, wowza_client_cls):
+        WowzaApplication.objects.create(
+            name="eventozlive",
+            schedule_id="schedule-live",
+            created_by=self.admin,
+            storage_dir=f"/nas/{self.admin.id}",
+        )
+        wowza_client = Mock()
+        wowza_client.incoming_streams.return_value = {"incomingStreams": [{"name": "live"}]}
+        wowza_client_cls.return_value = wowza_client
+        self.client.force_login(self.admin)
+
+        response = self.client.get("/live/eventozlive")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "https://scl.edge.grupoz.cl/eventozlive/live/playlist.m3u8?")
+        self.assertContains(response, "wowzatokenhash=")
+        self.assertContains(response, "wowzatokenstarttime=0")
+        self.assertContains(response, "wowzatokenendtime=0")
+
+    @override_settings(WOWZA_SECURE_TOKEN_ENABLED=False)
+    @patch("files.wowza_views.WowzaClient")
+    def test_wowza_live_page_can_disable_secure_token(self, wowza_client_cls):
+        WowzaApplication.objects.create(
+            name="eventozlive",
+            schedule_id="schedule-live",
+            created_by=self.admin,
+            storage_dir=f"/nas/{self.admin.id}",
+        )
+        wowza_client = Mock()
+        wowza_client.incoming_streams.return_value = {"incomingStreams": [{"name": "live"}]}
+        wowza_client_cls.return_value = wowza_client
+        self.client.force_login(self.admin)
+
+        response = self.client.get("/live/eventozlive")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'src="https://scl.edge.grupoz.cl/eventozlive/live/playlist.m3u8"')
+        self.assertNotContains(response, "wowzatokenhash=")
+
     def test_wowza_live_page_requires_subscription_for_regular_user(self):
         WowzaApplication.objects.create(
             name="eventozlive",
@@ -227,6 +270,13 @@ class WowzaManagementTests(TestCase):
 
         self.assertEqual(response.status_code, 403)
         self.assertContains(response, "suscripciones", status_code=403)
+
+    def test_generate_wowza_token_uses_configured_hash_query_prefix(self):
+        token = generate_wowza_token("eventozlive/live", "a3e69479cda106ac", token_name="wowzatoken")
+
+        self.assertIn("wowzatokenhash=", token)
+        self.assertIn("wowzatokenstarttime=0", token)
+        self.assertIn("wowzatokenendtime=0", token)
 
     @patch("files.wowza_views.WowzaClient")
     def test_delete_application_calls_wowza_and_removes_saved_app(self, wowza_client_cls):
