@@ -336,6 +336,7 @@
 .wowza-live-chat-form {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
     gap: 8px;
     padding: 12px 14px 14px;
     border-top: 1px solid #e5e5e5;
@@ -346,16 +347,22 @@
 }
 
 .wowza-live-chat-form textarea {
+    box-sizing: border-box;
     width: 100%;
     min-width: 0;
+    height: 44px;
+    min-height: 44px;
+    max-height: 96px;
     resize: none;
     border: 1px solid #d8d8d8;
     border-radius: 6px;
-    padding: 9px 10px;
+    padding: 11px 10px;
     background: #ffffff;
     color: #222222;
     font: inherit;
     font-size: 0.9rem;
+    line-height: 1.35;
+    overflow-y: auto;
 }
 
 .dark_theme .wowza-live-chat-form textarea {
@@ -365,8 +372,15 @@
 }
 
 .wowza-live-chat-form button {
-    align-self: stretch;
+    box-sizing: border-box;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 82px;
+    height: 44px;
+    min-height: 44px;
     min-width: 72px;
+    padding: 0 12px;
     border: 0;
     border-radius: 6px;
     background: #ff121f;
