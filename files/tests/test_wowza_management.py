@@ -211,10 +211,15 @@ class WowzaManagementTests(TestCase):
     def test_wowza_app_name_validator_allows_names_without_forbidden_characters(self):
         self.assertEqual(validate_wowza_app_name("evento.live 01"), "evento.live 01")
 
-    def test_live_application_payload_avoids_security_config_for_encoder_auth(self):
+    def test_live_application_payload_requires_publish_password(self):
         payload = wowza_live_application_payload(name="eventoz10", storage_user_id=1)
 
-        self.assertNotIn("securityConfig", payload)
+        self.assertEqual(payload["securityConfig"]["publishRequirePassword"], True)
+        self.assertEqual(payload["securityConfig"]["publishAuthenticationMethod"], "digest")
+        self.assertEqual(
+            payload["securityConfig"]["publishPasswordFile"],
+            "${com.wowza.wms.context.VHostConfigHome}/conf/${com.wowza.wms.context.Application}/publish.password",
+        )
         self.assertEqual(
             payload["streamConfig"]["liveStreamPacketizer"],
             ["cupertinostreamingpacketizer", "sanjosestreamingpacketizer", "smoothstreamingpacketizer"],
@@ -322,7 +327,7 @@ class WowzaManagementTests(TestCase):
         self.assertEqual(request.call_count, 5)
         self.assertEqual(request.call_args_list[1][0][0], "PUT")
         self.assertEqual(request.call_args_list[1][0][1], "applications/eventoz11")
-        self.assertNotIn("securityConfig", request.call_args_list[1][0][2])
+        self.assertEqual(request.call_args_list[1][0][2]["securityConfig"]["publishRequirePassword"], True)
         self.assertEqual(request.call_args_list[3][0][0], "POST")
         self.assertEqual(request.call_args_list[3][0][1], "applications/eventoz11/pushpublish/mapentries")
 

@@ -237,6 +237,12 @@ def wowza_push_publish_map_entry_payload():
 
 
 def wowza_live_application_payload(*, name, storage_user_id):
+    security_config = {
+        "publishRequirePassword": True,
+        "publishAuthenticationMethod": settings.WOWZA_PUBLISH_AUTH_METHOD,
+        "publishPasswordFile": wowza_publish_password_file(),
+    }
+
     return {
         "name": name,
         "appType": "Live",
@@ -254,6 +260,7 @@ def wowza_live_application_payload(*, name, storage_user_id):
         },
         "httpCORSHeadersEnabled": True,
         "httpStreamers": ["cupertinostreaming"],
+        "securityConfig": security_config,
     }
 
 
