@@ -519,8 +519,13 @@ export class ManageWowzaPage extends Page {
               {error ? <div className="manage-wowza-message manage-wowza-message-error">{error}</div> : null}
               {result ? <div className="manage-wowza-message manage-wowza-message-success">Aplicación creada y configurada correctamente.</div> : null}
 
-              <button className="manage-wowza-submit" type="submit" disabled={isSubmitting}>
-                {isSubmitting ? <SpinnerLoader size="small" /> : <MaterialIcon type="add_circle" />}
+              <button
+                className="manage-wowza-submit"
+                type="submit"
+                disabled={isSubmitting || !status}
+                title={!status ? 'Wowza API no disponible' : ''}
+              >
+                {isSubmitting ? <SpinnerLoader size="tiny" /> : <MaterialIcon type="add_circle" />}
                 <span>{isSubmitting ? 'Creando aplicación' : 'Crear aplicación'}</span>
               </button>
             </form>

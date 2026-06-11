@@ -263,6 +263,7 @@
 
 .manage-wowza-submit {
   width: 100%;
+  height: 40px;
   justify-content: center;
   padding: 0 16px;
   color: #ffffff;
@@ -270,6 +271,17 @@
 
   &:hover:not(:disabled) {
     background: #d90d17;
+  }
+
+  .spinner-loader {
+    width: 16px;
+    height: 16px;
+    flex: 0 0 16px;
+    margin: 0;
+
+    circle {
+      stroke: #ffffff;
+    }
   }
 }
 
