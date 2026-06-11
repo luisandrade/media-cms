@@ -216,6 +216,9 @@ def live_statuses_for_applications(applications):
         if not statuses[app.name]:
             statuses[app.name] = hls_playlist_is_live(hls_url_for_application(app.name))
 
+        if not statuses[app.name]:
+            statuses[app.name] = hls_playlist_is_live(hls_url_for_application(app.name, secure_token=False))
+
     return statuses
 
 

@@ -214,7 +214,9 @@ class WowzaManagementTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Esperando señal de streaming")
-        self.assertNotContains(response, "https://scl.edge.grupoz.cl/eventozoffline/live/playlist.m3u8")
+        self.assertContains(response, "Diagnóstico Wowza")
+        self.assertContains(response, "/eventozoffline/live/playlist.m3u8")
+        self.assertNotContains(response, "<video")
 
     @patch("files.wowza_views.WowzaClient")
     def test_wowza_live_page_uses_secure_token_when_enabled(self, wowza_client_cls):
@@ -442,6 +444,8 @@ class WowzaManagementTests(TestCase):
 
     def test_wowza_has_incoming_streams_detects_live_payload(self):
         self.assertEqual(wowza_has_incoming_streams({"incomingStreams": [{"name": "live"}]}), True)
+        self.assertEqual(wowza_has_incoming_streams({"incomingStream": {"name": "live", "isConnected": True}}), True)
+        self.assertEqual(wowza_has_incoming_streams({"server": {"stream": {"name": "live"}}}), True)
         self.assertEqual(wowza_has_incoming_streams({"incomingStreams": []}), False)
 
     @patch("files.wowza_views.requests.get")

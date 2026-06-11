@@ -23,6 +23,30 @@
             <p>{% if is_live %}Transmisión en vivo disponible.{% else %}La señal todavía no está disponible. Vuelve a intentarlo en unos minutos.{% endif %}</p>
         </div>
     </section>
+
+    {% if show_wowza_debug %}
+    <section class="wowza-live-debug">
+        <h2>Diagnóstico Wowza</h2>
+        <dl>
+            <dt>URL generada</dt>
+            <dd><code>{{ debug_hls_url }}</code></dd>
+            <dt>Ruta del video</dt>
+            <dd><code>{{ debug_hls_path }}</code></dd>
+            <dt>Parámetros</dt>
+            <dd>
+                {% if debug_hls_params %}
+                <ul>
+                    {% for name, value in debug_hls_params %}
+                    <li><code>{{ name }}</code>: <code>{{ value }}</code></li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <code>Sin parámetros</code>
+                {% endif %}
+            </dd>
+        </dl>
+    </section>
+    {% endif %}
 </div>
 
 <style>
@@ -120,9 +144,66 @@
     color: rgba(203, 209, 234, 0.78);
 }
 
+.wowza-live-debug {
+    margin-top: 24px;
+    padding: 18px;
+    border: 1px solid #dedede;
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+.dark_theme .wowza-live-debug {
+    border-color: #31364a;
+    background: #1e2130;
+}
+
+.wowza-live-debug h2 {
+    margin: 0 0 14px;
+    font-size: 1rem;
+    line-height: 1.2;
+}
+
+.wowza-live-debug dl {
+    display: grid;
+    grid-template-columns: 140px minmax(0, 1fr);
+    gap: 12px 16px;
+    margin: 0;
+}
+
+.wowza-live-debug dt,
+.wowza-live-debug dd {
+    min-width: 0;
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.4;
+}
+
+.wowza-live-debug dt {
+    color: rgba(68, 68, 68, 0.68);
+    font-weight: 800;
+}
+
+.dark_theme .wowza-live-debug dt {
+    color: rgba(203, 209, 234, 0.72);
+}
+
+.wowza-live-debug code {
+    overflow-wrap: anywhere;
+}
+
+.wowza-live-debug ul {
+    margin: 0;
+    padding-left: 18px;
+}
+
 @media (max-width: 820px) {
     .wowza-live-hero {
         grid-template-columns: 1fr;
+    }
+
+    .wowza-live-debug dl {
+        grid-template-columns: 1fr;
+        gap: 5px;
     }
 }
 </style>

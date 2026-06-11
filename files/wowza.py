@@ -232,11 +232,25 @@ def wowza_has_incoming_streams(payload):
     if not isinstance(payload, dict):
         return False
 
-    for key in ("incomingStreams", "incomingStreamList", "streams", "items"):
+    if payload.get("name") or payload.get("sourceIp") or payload.get("isConnected"):
+        return True
+
+    for key in ("incomingStreams", "incomingStream", "incomingStreamList", "stream", "streams", "items"):
         value = payload.get(key)
         if isinstance(value, list):
             return bool(value)
         if isinstance(value, dict) and wowza_has_incoming_streams(value):
+            return True
+
+    for value in payload.values():
+        if isinstance(value, dict) and wowza_has_incoming_streams(value):
+            return True
+
+    for key, value in payload.items():
+        normalized_key = str(key).lower()
+        if "incoming" not in normalized_key and "stream" not in normalized_key:
+            continue
+        if isinstance(value, (dict, list)) and wowza_has_incoming_streams(value):
             return True
 
     return False

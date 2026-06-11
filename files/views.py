@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from functools import wraps
 import logging
+from urllib.parse import parse_qsl, urlparse
 
 from django.conf import settings
 from django.contrib import messages
@@ -876,10 +877,16 @@ def view_wowza_live(request, app_name):
     from .wowza_views import hls_url_for_application, live_statuses_for_applications
 
     is_live = live_statuses_for_applications([app]).get(app.name, False)
+    debug_hls_url = hls_url_for_application(app.name)
+    parsed_hls_url = urlparse(debug_hls_url)
     context = {
         "app": app,
         "is_live": is_live,
-        "hls_url": hls_url_for_application(app.name) if is_live else "",
+        "hls_url": debug_hls_url if is_live else "",
+        "show_wowza_debug": bool(getattr(request.user, "is_staff", False) or getattr(request.user, "is_superuser", False)),
+        "debug_hls_url": debug_hls_url,
+        "debug_hls_path": parsed_hls_url.path,
+        "debug_hls_params": parse_qsl(parsed_hls_url.query),
     }
     return render(request, "cms/wowza_live.html", context)
 
