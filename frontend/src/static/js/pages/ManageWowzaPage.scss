@@ -875,6 +875,26 @@
   }
 }
 
+.manage-wowza-connection-hint {
+  margin-top: 10px;
+  color: rgba(68, 68, 68, 0.62);
+  font-size: 0.78rem;
+  line-height: 1.45;
+
+  strong {
+    color: #1f1f1f;
+    font-weight: 800;
+  }
+
+  .dark_theme & {
+    color: rgba(203, 209, 234, 0.62);
+
+    strong {
+      color: #ffffff;
+    }
+  }
+}
+
 .manage-wowza-preview {
   dl {
     display: grid;

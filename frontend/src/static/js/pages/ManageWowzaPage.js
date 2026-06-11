@@ -351,7 +351,7 @@ export class ManageWowzaPage extends Page {
     }
   }
 
-  renderConnectionField(app, field, label, icon) {
+  renderConnectionField(app, field, label, icon, hint) {
     const value = connectionValue(app, field);
     const copied = this.state.copiedConnectionField === `${app.id}-${field}`;
 
@@ -370,6 +370,7 @@ export class ManageWowzaPage extends Page {
             <span>{copied ? 'Copiado' : 'Copiar'}</span>
           </button>
         </div>
+        {hint ? <div className="manage-wowza-connection-hint">{hint}</div> : null}
       </div>
     );
   }
@@ -418,8 +419,12 @@ export class ManageWowzaPage extends Page {
         </div>
 
         <div className="manage-wowza-connection-grid">
-          {this.renderConnectionField(app, 'rtmp_url', 'RTMP', 'link')}
-          {this.renderConnectionField(app, 'stream_name', 'Stream', 'vpn_key')}
+          {this.renderConnectionField(app, 'rtmp_url', 'RTMP', 'link', 'Usa esta URL en OBS Studio, Streamlabs o cualquier software compatible con RTMP.')}
+          {this.renderConnectionField(app, 'stream_name', 'Stream', 'vpn_key', (
+            <React.Fragment>
+              Esta clave es única para tu cuenta. <strong>No la compartas</strong> o cualquiera podrá transmitir en tu canal.
+            </React.Fragment>
+          ))}
           {this.renderConnectionField(app, 'publish_username', 'Usuario', 'person')}
           {this.renderConnectionField(app, 'publish_password', 'Password', 'lock')}
           {this.renderConnectionField(app, 'hls_url', 'Señal HLS', 'live_tv')}
