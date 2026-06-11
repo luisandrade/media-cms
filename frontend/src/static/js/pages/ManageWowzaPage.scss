@@ -400,21 +400,58 @@
 .manage-wowza-app-row-active {
   background: #f2fbf5;
 
-  > span:last-child {
-    color: #16713a;
-    font-weight: 800;
-  }
-
   .material-icons {
     color: #2f9d55;
   }
 
   .dark_theme & {
     background: rgba(47, 157, 85, 0.12);
+  }
+}
 
-    > span:last-child {
-      color: #88dfa8;
-    }
+.manage-wowza-live-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  font-weight: 800;
+
+  > span {
+    width: 7px;
+    height: 7px;
+    flex: 0 0 7px;
+    border-radius: 50%;
+  }
+}
+
+.manage-wowza-live-state-on {
+  color: #16713a;
+  background: #edf9f1;
+
+  > span {
+    background: #22c55e;
+  }
+
+  .dark_theme & {
+    color: #88dfa8;
+    background: rgba(47, 157, 85, 0.16);
+  }
+}
+
+.manage-wowza-live-state-off {
+  color: rgba(68, 68, 68, 0.7);
+  background: #eeeeee;
+
+  > span {
+    background: #9a9a9a;
+  }
+
+  .dark_theme & {
+    color: rgba(203, 209, 234, 0.72);
+    background: #282d3d;
   }
 }
 

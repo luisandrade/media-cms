@@ -12,6 +12,7 @@ from files.wowza import (
     generate_wowza_publish_password,
     validate_wowza_app_name,
     wowza_advanced_settings_payload,
+    wowza_has_incoming_streams,
     wowza_live_application_payload,
     wowza_push_publish_map_entry_payload,
 )
@@ -100,7 +101,8 @@ class WowzaManagementTests(TestCase):
             publish_password="SecurePass1234567890",
         )
 
-    def test_list_applications_returns_only_saved_platform_apps(self):
+    @patch("files.wowza_views.WowzaClient")
+    def test_list_applications_returns_only_saved_platform_apps(self, wowza_client_cls):
         WowzaApplication.objects.create(
             name="eventoz06",
             schedule_id="schedule06",
@@ -113,6 +115,9 @@ class WowzaManagementTests(TestCase):
             created_by=self.staff_admin,
             storage_dir=f"/nas/{self.staff_admin.id}",
         )
+        wowza_client = Mock()
+        wowza_client.incoming_streams.return_value = {"incomingStreams": [{"name": "live"}]}
+        wowza_client_cls.return_value = wowza_client
         self.client.force_login(self.admin)
 
         response = self.client.get("/api/v1/manage_wowza/applications?page=1&page_size=1")
@@ -130,6 +135,8 @@ class WowzaManagementTests(TestCase):
         self.assertTrue(result["hls_url"].startswith("https://"))
         self.assertNotIn(":1935", result["hls_url"])
         self.assertTrue(result["hls_url"].endswith("/live/playlist.m3u8"))
+        self.assertEqual(result["is_live"], True)
+        wowza_client.incoming_streams.assert_called_once()
 
     @patch("files.wowza_views.WowzaClient")
     def test_delete_application_calls_wowza_and_removes_saved_app(self, wowza_client_cls):
@@ -263,6 +270,10 @@ class WowzaManagementTests(TestCase):
         password = generate_wowza_publish_password()
 
         self.assertEqual(len(password), 10)
+
+    def test_wowza_has_incoming_streams_detects_live_payload(self):
+        self.assertEqual(wowza_has_incoming_streams({"incomingStreams": [{"name": "live"}]}), True)
+        self.assertEqual(wowza_has_incoming_streams({"incomingStreams": []}), False)
 
     def test_wowza_client_continues_when_application_already_exists(self):
         client = WowzaClient(base_url="http://wowza.test", username="u", password="p")

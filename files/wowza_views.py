@@ -8,7 +8,7 @@ from rest_framework.views import APIView
 
 from .models import WowzaApplication
 from .permissions import IsMediacmsAdmin
-from .wowza import WowzaAPIError, WowzaClient, generate_wowza_publish_password, validate_wowza_app_name
+from .wowza import WowzaAPIError, WowzaClient, generate_wowza_publish_password, validate_wowza_app_name, wowza_has_incoming_streams
 
 
 class WowzaStatusView(APIView):
@@ -46,6 +46,8 @@ class WowzaApplicationCreateView(APIView):
         except EmptyPage:
             page_obj = paginator.page(paginator.num_pages or 1)
 
+        live_statuses = live_statuses_for_applications(page_obj.object_list)
+
         return Response(
             {
                 "success": True,
@@ -53,7 +55,7 @@ class WowzaApplicationCreateView(APIView):
                 "page": page_obj.number,
                 "page_size": page_size,
                 "total_pages": paginator.num_pages,
-                "results": [serialize_wowza_application(app) for app in page_obj.object_list],
+                "results": [serialize_wowza_application(app, is_live=live_statuses.get(app.name, False)) for app in page_obj.object_list],
             }
         )
 
@@ -150,7 +152,20 @@ class WowzaApplicationDetailView(APIView):
         )
 
 
-def serialize_wowza_application(app):
+def live_statuses_for_applications(applications):
+    client = WowzaClient()
+    statuses = {}
+
+    for app in applications:
+        try:
+            statuses[app.name] = wowza_has_incoming_streams(client.incoming_streams(app_name=app.name))
+        except WowzaAPIError:
+            statuses[app.name] = False
+
+    return statuses
+
+
+def serialize_wowza_application(app, *, is_live=False):
     stream_name = settings.WOWZA_PUSH_PUBLISH_STREAM_NAME
     wowza_host = settings.WOWZA_HOST_DEFAULT
 
@@ -165,6 +180,7 @@ def serialize_wowza_application(app):
         "rtmp_url": f"rtmp://{wowza_host}/{app.name}",
         "stream_name": stream_name,
         "hls_url": f"https://{wowza_host}/{app.name}/{stream_name}/playlist.m3u8",
+        "is_live": is_live,
         "is_active": app.is_active,
         "created_by": app.created_by.username if app.created_by else "",
         "add_date": app.add_date.isoformat() if app.add_date else "",

@@ -131,6 +131,15 @@ class WowzaClient:
             f"applications/{quote_wowza_path_segment(app_name)}/publishers/{quote_wowza_path_segment(publisher_name)}",
         )
 
+    def incoming_streams(self, *, app_name, instance_name="_definst_"):
+        return self.request(
+            "GET",
+            (
+                f"applications/{quote_wowza_path_segment(app_name)}/instances/"
+                f"{quote_wowza_path_segment(instance_name)}/incomingstreams"
+            ),
+        )
+
     def create_push_publish_map_entry(self, *, app_name):
         entry_name = settings.WOWZA_PUSH_PUBLISH_ENTRY_NAME
         payload = wowza_push_publish_map_entry_payload()
@@ -190,6 +199,23 @@ def wowza_publisher_payload(*, publisher_name, password):
         "password": password,
         "description": f"Publisher {publisher_name} creado desde MediaCMS",
     }
+
+
+def wowza_has_incoming_streams(payload):
+    if isinstance(payload, list):
+        return bool(payload)
+
+    if not isinstance(payload, dict):
+        return False
+
+    for key in ("incomingStreams", "incomingStreamList", "streams", "items"):
+        value = payload.get(key)
+        if isinstance(value, list):
+            return bool(value)
+        if isinstance(value, dict) and wowza_has_incoming_streams(value):
+            return True
+
+    return False
 
 
 def wowza_publish_password_file():

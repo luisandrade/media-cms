@@ -589,7 +589,12 @@ export class ManageWowzaPage extends Page {
                           </button>
                         </span>
                       </span>
-                      <span>{app.is_active ? 'Activa' : 'Inactiva'}</span>
+                      <span>
+                        <span className={`manage-wowza-live-state ${app.is_live ? 'manage-wowza-live-state-on' : 'manage-wowza-live-state-off'}`}>
+                          <span />
+                          {app.is_live ? 'En vivo' : 'Offline'}
+                        </span>
+                      </span>
                       <span>
                         <span className="manage-wowza-row-actions">
                           <button className="manage-wowza-connect" type="button" onClick={() => this.onShowConnection(app)} title="Ver conexión">
