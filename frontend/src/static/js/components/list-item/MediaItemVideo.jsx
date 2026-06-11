@@ -16,11 +16,15 @@ export function MediaItemVideo(props) {
 
   const _MediaDurationInfo = new MediaDurationInfo();
 
-  _MediaDurationInfo.update(props.duration);
+  const durationSeconds = 'number' === typeof props.duration && isFinite(props.duration) ? props.duration : null;
 
-  const duration = _MediaDurationInfo.ariaLabel();
-  const durationStr = _MediaDurationInfo.toString();
-  const durationISO8601 = _MediaDurationInfo.ISO8601();
+  if (null !== durationSeconds) {
+    _MediaDurationInfo.update(durationSeconds);
+  }
+
+  const duration = null === durationSeconds ? '' : _MediaDurationInfo.ariaLabel();
+  const durationStr = null === durationSeconds ? '' : _MediaDurationInfo.toString();
+  const durationISO8601 = null === durationSeconds ? '' : _MediaDurationInfo.ISO8601();
 
   function videoViewerComponent() {
     return <MediaItemVideoPlayer mediaPageLink={props.link} />;
@@ -33,12 +37,25 @@ export function MediaItemVideo(props) {
       title: props.title,
       tabIndex: '-1',
       'aria-hidden': true,
-      className: 'item-thumb' + (!thumbnailUrl ? ' no-thumb' : ''),
+      className: 'item-thumb' + (!thumbnailUrl && !props.isLiveStream ? ' no-thumb' : ''),
       style: !thumbnailUrl ? null : { backgroundImage: "url('" + thumbnailUrl + "')" },
     };
 
     return (
       <a {...attr}>
+        {props.isLiveStream && !thumbnailUrl ? (
+          <span className="item-live-preview" style={{ '--live-accent': props.livePreview.accent }}>
+            <span className="item-live-preview-band item-live-preview-band-one"></span>
+            <span className="item-live-preview-band item-live-preview-band-two"></span>
+            <span className="item-live-preview-status">
+              <span></span>
+              {props.isLiveOnline ? 'EN VIVO' : 'OFFLINE'}
+            </span>
+            <strong>{props.livePreview.initials}</strong>
+            <em>{props.livePreview.title}</em>
+            <small>{props.isLiveOnline ? 'Streaming' : 'Sin señal'}</small>
+          </span>
+        ) : null}
         {props.isLiveStream ? (
           <span className={`item-live-badge ${props.isLiveOnline ? 'item-live-badge-on' : 'item-live-badge-off'}`}>
             <span>{props.isLiveOnline ? 'EN VIVO' : 'OFFLINE'}</span>
@@ -111,6 +128,11 @@ MediaItemVideo.propTypes = {
   hasMediaViewerDescr: PropTypes.bool,
   isLiveStream: PropTypes.bool,
   isLiveOnline: PropTypes.bool,
+  livePreview: PropTypes.shape({
+    title: PropTypes.string,
+    initials: PropTypes.string,
+    accent: PropTypes.string,
+  }),
   playlist_id: PropTypes.string,
 };
 
@@ -123,4 +145,9 @@ MediaItemVideo.defaultProps = {
   hasMediaViewerDescr: false,
   isLiveStream: false,
   isLiveOnline: false,
+  livePreview: {
+    title: 'Señal en vivo',
+    initials: 'LV',
+    accent: '#ff121f',
+  },
 };

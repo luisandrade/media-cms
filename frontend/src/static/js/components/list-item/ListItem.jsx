@@ -88,45 +88,8 @@ function livePreviewColor(title) {
   return colors[hash];
 }
 
-function escapeSvgText(value) {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
 function truncateLivePreviewTitle(title) {
   return 34 < title.length ? `${title.slice(0, 31)}...` : title;
-}
-
-function livePreviewDataUrl(title, isLiveOnline) {
-  const safeTitle = escapeSvgText(truncateLivePreviewTitle(livePreviewTitle(title)));
-  const initials = escapeSvgText(livePreviewInitials(title));
-  const accent = isLiveOnline ? livePreviewColor(title) : '#6b7280';
-  const statusText = isLiveOnline ? 'EN VIVO' : 'OFFLINE';
-  const footerText = isLiveOnline ? 'Streaming' : 'Sin señal';
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
-<defs>
-<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-<stop offset="0" stop-color="#10131d"/>
-<stop offset="0.58" stop-color="#242936"/>
-<stop offset="1" stop-color="#111111"/>
-</linearGradient>
-</defs>
-<rect width="640" height="360" fill="url(#bg)"/>
-<circle cx="514" cy="88" r="96" fill="${accent}" opacity="0.18"/>
-<circle cx="114" cy="292" r="110" fill="#ffffff" opacity="0.06"/>
-<rect x="34" y="30" width="132" height="38" rx="5" fill="${accent}"/>
-<circle cx="58" cy="49" r="7" fill="#ffffff"/>
-<text x="76" y="55" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#ffffff">${statusText}</text>
-<text x="320" y="186" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="86" font-weight="800" fill="#ffffff">${initials}</text>
-<text x="320" y="245" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700" fill="#ffffff">${safeTitle}</text>
-<text x="320" y="282" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="700" fill="${accent}">${footerText}</text>
-</svg>`;
-
-  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
 
 export function listItemProps(props, item, index) {
@@ -159,9 +122,9 @@ export function listItemProps(props, item, index) {
 
   const isLiveStream = 'boolean' === typeof item.is_live || !!(item.stream && item.stream !== '');
   const isLiveOnline = true === item.is_live;
-  const generatedLivePreview = isLiveStream ? livePreviewDataUrl(title || item.name || item.stream, isLiveOnline) : '';
-  const thumbnail = isLiveStream ? item.thumbnail_url || generatedLivePreview : item.thumbnail_url || '';
-  const previewThumbnail = isLiveStream ? item.preview_url || generatedLivePreview : item.preview_url || '';
+  const livePreviewName = livePreviewTitle(title || item.name || item.stream);
+  const thumbnail = isLiveStream ? item.thumbnail_url || '' : item.thumbnail_url || '';
+  const previewThumbnail = isLiveStream ? item.preview_url || '' : item.preview_url || '';
 
   date =
     void 0 !== item.date_added && 'string' === typeof item.date_added
@@ -243,6 +206,11 @@ export function listItemProps(props, item, index) {
     hasMediaViewerDescr: false,
     isLiveStream,
     isLiveOnline,
+    livePreview: {
+      title: truncateLivePreviewTitle(livePreviewName),
+      initials: livePreviewInitials(livePreviewName),
+      accent: isLiveOnline ? livePreviewColor(livePreviewName) : '#6b7280',
+    },
   };
 
   args.hasMediaViewerDescr = args.hasMediaViewer && !!props.firstItemDescr;
