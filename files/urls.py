@@ -3,7 +3,7 @@ from django.conf.urls import include
 from django.conf.urls.static import static
 from django.urls import path, re_path
 
-from . import management_views, views, wowza_views
+from . import management_views, views, wowza_chat_views, wowza_views
 from .feeds import IndexRSSFeed, SearchRSSFeed
 
 urlpatterns = [
@@ -75,6 +75,12 @@ urlpatterns = [
     re_path(r"^api/v1/comments$", views.CommentList.as_view()),
     re_path(r"^api/v1/live$", views.LiveList.as_view()),
     re_path(r"^api/v1/wowza_live$", wowza_views.WowzaLiveApplicationListView.as_view()),
+    re_path(r"^api/v1/wowza_live/(?P<app_name>[^/]+)/chat$", wowza_chat_views.WowzaLiveChatMessagesView.as_view(), name="wowza_live_chat_messages"),
+    re_path(
+        r"^api/v1/wowza_live/(?P<app_name>[^/]+)/chat/(?P<message_id>\d+)$",
+        wowza_chat_views.WowzaLiveChatMessageDetailView.as_view(),
+        name="wowza_live_chat_message_detail",
+    ),
     re_path(
         r"^api/v1/media/(?P<friendly_token>[\w]*)/comments$",
         views.CommentDetail.as_view(),

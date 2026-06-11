@@ -875,12 +875,15 @@ def view_wowza_live(request, app_name):
     app = get_object_or_404(WowzaApplication, name=app_name, is_active=True)
 
     from .wowza_views import hls_url_for_application, live_statuses_for_applications
+    from .live_chat import user_can_moderate_live_chat, user_can_write_live_chat
 
     is_live = live_statuses_for_applications([app]).get(app.name, False)
     debug_hls_url = hls_url_for_application(app.name)
     parsed_hls_url = urlparse(debug_hls_url)
     show_wowza_debug = bool(getattr(request.user, "is_staff", False) or getattr(request.user, "is_superuser", False))
     force_debug_player = show_wowza_debug and str(request.GET.get("debug_player", "1")).lower() not in {"0", "false", "no"}
+    chat_ws_scheme = "wss" if request.is_secure() else "ws"
+    chat_enabled = bool(getattr(settings, "WOWZA_LIVE_CHAT_ENABLED", True))
     context = {
         "app": app,
         "is_live": is_live,
@@ -891,6 +894,11 @@ def view_wowza_live(request, app_name):
         "debug_hls_path": parsed_hls_url.path,
         "debug_hls_params": parse_qsl(parsed_hls_url.query),
         "debug_hls_hash_algorithm": getattr(settings, "WOWZA_SECURE_TOKEN_HASH_ALGORITHM", "SHA-256"),
+        "chat_enabled": chat_enabled,
+        "chat_api_url": reverse("wowza_live_chat_messages", args=[app.name]) if chat_enabled else "",
+        "chat_ws_url": f"{chat_ws_scheme}://{request.get_host()}/ws/live-chat/{app.id}/" if chat_enabled else "",
+        "chat_can_write": chat_enabled and user_can_write_live_chat(request.user),
+        "chat_can_moderate": chat_enabled and user_can_moderate_live_chat(request.user),
     }
     return render(request, "cms/wowza_live.html", context)
 

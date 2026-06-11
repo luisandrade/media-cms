@@ -1,3 +1,4 @@
+import importlib.util
 import os
 from datetime import timedelta
 
@@ -5,6 +6,8 @@ from celery.schedules import crontab
 from django.utils.translation import gettext_lazy as _
 
 DEBUG = True
+HAS_CHANNELS = importlib.util.find_spec("channels") is not None
+HAS_DAPHNE = importlib.util.find_spec("daphne") is not None
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = None
 FILE_UPLOAD_MAX_MEMORY_SIZE = 0
@@ -225,6 +228,9 @@ WOWZA_SECURE_TOKEN_HASH_ALGORITHM = os.getenv("WOWZA_SECURE_TOKEN_HASH_ALGORITHM
 WOWZA_SECURE_TOKEN_TTL_SECONDS = int(os.getenv("WOWZA_SECURE_TOKEN_TTL_SECONDS", "86400"))
 WOWZA_LIVE_SECRET = os.getenv("WOWZA_LIVE_SECRET", "a3e69479cda106ac")
 WOWZA_VOD_SECRET = os.getenv("WOWZA_VOD_SECRET", "45c2a1f252003a0a")
+WOWZA_LIVE_CHAT_ENABLED = os.getenv("WOWZA_LIVE_CHAT_ENABLED", "true").lower() in ("1", "true", "yes", "on")
+WOWZA_LIVE_CHAT_MAX_LENGTH = int(os.getenv("WOWZA_LIVE_CHAT_MAX_LENGTH", "500"))
+WOWZA_LIVE_CHAT_HISTORY_LIMIT = int(os.getenv("WOWZA_LIVE_CHAT_HISTORY_LIMIT", "50"))
 WOWZA_ADMIN_API_BASE = os.getenv(
     "WOWZA_ADMIN_API_BASE",
     f"http://{WOWZA_HOST_DEFAULT}:8087/v2/servers/_defaultServer_/vhosts/_defaultVHost_",
@@ -344,8 +350,10 @@ INSTALLED_APPS = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
+    *(["daphne"] if HAS_DAPHNE else []),
     "django.contrib.staticfiles",
     "django.contrib.sites",
+    *(["channels"] if HAS_CHANNELS else []),
     "rest_framework",
     "rest_framework.authtoken",
     "imagekit",
@@ -437,6 +445,8 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "cms.wsgi.application"
+if HAS_CHANNELS:
+    ASGI_APPLICATION = "cms.asgi.application"
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -514,6 +524,15 @@ CACHES = {
         },
     }
 }
+if HAS_CHANNELS:
+    CHANNEL_LAYERS = {
+        "default": {
+            "BACKEND": "channels_redis.core.RedisChannelLayer",
+            "CONFIG": {
+                "hosts": [REDIS_LOCATION],
+            },
+        },
+    }
 
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "default"

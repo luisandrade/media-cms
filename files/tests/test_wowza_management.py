@@ -5,7 +5,7 @@ from django.conf import settings
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
-from files.models import WowzaApplication
+from files.models import StreamChatMessage, WowzaApplication
 from files.tests.user_utils import create_account
 from files.wowza_views import hls_playlist_is_live
 from files.wowza import (
@@ -217,7 +217,8 @@ class WowzaManagementTests(TestCase):
         self.assertContains(response, "Diagnóstico Wowza")
         self.assertContains(response, "/eventozoffline/live/playlist.m3u8")
         self.assertContains(response, "<video")
-        self.assertContains(response, "Reproductor habilitado para prueba")
+        self.assertContains(response, "Chat en vivo")
+        self.assertNotContains(response, "Reproductor habilitado para prueba")
 
     @patch("files.wowza_views.WowzaClient")
     def test_wowza_live_page_uses_secure_token_when_enabled(self, wowza_client_cls):
@@ -274,6 +275,77 @@ class WowzaManagementTests(TestCase):
 
         self.assertEqual(response.status_code, 403)
         self.assertContains(response, "suscripciones", status_code=403)
+
+    def test_wowza_live_chat_allows_authorized_user_to_post_and_list_messages(self):
+        WowzaApplication.objects.create(
+            name="eventozlive",
+            schedule_id="schedule-live",
+            created_by=self.admin,
+            storage_dir=f"/nas/{self.admin.id}",
+        )
+        self.client.force_login(self.admin)
+
+        create_response = self.client.post(
+            "/api/v1/wowza_live/eventozlive/chat",
+            data=json.dumps({"message": "Hola desde el chat"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(create_response.status_code, 201)
+        self.assertEqual(create_response.json()["message"], "Hola desde el chat")
+        list_response = self.client.get("/api/v1/wowza_live/eventozlive/chat")
+        self.assertEqual(list_response.status_code, 200)
+        self.assertEqual(list_response.json()["results"][0]["message"], "Hola desde el chat")
+        self.assertEqual(list_response.json()["can_write"], True)
+
+    def test_wowza_live_chat_requires_subscription_for_regular_user(self):
+        WowzaApplication.objects.create(
+            name="eventozlive",
+            schedule_id="schedule-live",
+            created_by=self.admin,
+            storage_dir=f"/nas/{self.admin.id}",
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.get("/api/v1/wowza_live/eventozlive/chat")
+
+        self.assertEqual(response.status_code, 403)
+
+    @override_settings(WOWZA_LIVE_CHAT_ENABLED=False)
+    @patch("files.wowza_views.WowzaClient")
+    def test_wowza_live_page_can_disable_chat(self, wowza_client_cls):
+        WowzaApplication.objects.create(
+            name="eventozlive",
+            schedule_id="schedule-live",
+            created_by=self.admin,
+            storage_dir=f"/nas/{self.admin.id}",
+        )
+        wowza_client = Mock()
+        wowza_client.incoming_streams.return_value = {"incomingStreams": [{"name": "live"}]}
+        wowza_client_cls.return_value = wowza_client
+        self.client.force_login(self.admin)
+
+        response = self.client.get("/live/eventozlive")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "Chat en vivo")
+
+    def test_wowza_live_chat_allows_staff_to_delete_messages(self):
+        app = WowzaApplication.objects.create(
+            name="eventozlive",
+            schedule_id="schedule-live",
+            created_by=self.admin,
+            storage_dir=f"/nas/{self.admin.id}",
+        )
+        message = StreamChatMessage.objects.create(stream=app, user=self.admin, message="Mensaje moderado")
+        self.client.force_login(self.staff_admin)
+
+        response = self.client.delete(f"/api/v1/wowza_live/eventozlive/chat/{message.id}")
+
+        self.assertEqual(response.status_code, 204)
+        message.refresh_from_db()
+        self.assertEqual(message.is_deleted, True)
+        self.assertEqual(message.deleted_by, self.staff_admin)
 
     def test_generate_wowza_token_uses_configured_hash_query_prefix(self):
         token = generate_wowza_token("eventozlive/live", "a3e69479cda106ac", token_name="wowzatoken")

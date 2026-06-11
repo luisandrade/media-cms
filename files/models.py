@@ -1062,6 +1062,29 @@ class WowzaApplication(models.Model):
         return self.name
 
 
+class StreamChatMessage(models.Model):
+    """Message posted in a Wowza live stream chat."""
+
+    stream = models.ForeignKey(WowzaApplication, on_delete=models.CASCADE, related_name="chat_messages")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="stream_chat_messages")
+    message = models.TextField(max_length=500)
+    is_deleted = models.BooleanField(default=False, db_index=True)
+    is_pinned = models.BooleanField(default=False, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    deleted_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, related_name="deleted_stream_chat_messages", null=True, blank=True)
+
+    class Meta:
+        ordering = ["created_at", "id"]
+        indexes = [
+            models.Index(fields=["stream", "-created_at"]),
+            models.Index(fields=["stream", "is_deleted", "-created_at"]),
+        ]
+
+    def __str__(self):
+        return f"{self.user} en {self.stream}: {self.message[:40]}"
+
+
 class License(models.Model):
     """A Base license model to be used in Media"""
 

@@ -15,14 +15,41 @@
             </div>
             {% endif %}
         </div>
-        <div class="wowza-live-info">
-            <span class="{% if is_live %}wowza-live-state-on{% else %}wowza-live-state-off{% endif %}">
-                {% if is_live %}EN VIVO{% else %}OFFLINE{% endif %}
+    </section>
+
+    {% if chat_enabled %}
+    <section
+        class="wowza-live-chat"
+        data-live-chat
+        data-api-url="{{ chat_api_url }}"
+        data-ws-url="{{ chat_ws_url }}"
+        data-can-write="{% if chat_can_write %}true{% else %}false{% endif %}"
+        data-can-moderate="{% if chat_can_moderate %}true{% else %}false{% endif %}"
+    >
+        <button class="wowza-live-chat-head" type="button" data-chat-toggle aria-expanded="true">
+            <span>
+                <strong>Chat en vivo</strong>
+                <small data-chat-status>Conectando...</small>
             </span>
-            <h1>{{ app.name }}</h1>
-            <p>{% if is_live %}Transmisión en vivo disponible.{% elif force_debug_player %}Reproductor habilitado para prueba con URL firmada.{% else %}La señal todavía no está disponible. Vuelve a intentarlo en unos minutos.{% endif %}</p>
+            <span class="wowza-live-chat-toggle-icon" aria-hidden="true">expand_less</span>
+        </button>
+        <div class="wowza-live-chat-body" data-chat-body>
+                <div class="wowza-live-chat-messages" data-chat-messages>
+                    <p class="wowza-live-chat-empty" data-chat-empty>Cargando chat...</p>
+                </div>
+                {% if chat_can_write %}
+                <form class="wowza-live-chat-form" data-chat-form>
+                    {% csrf_token %}
+                    <textarea data-chat-input maxlength="500" rows="2" placeholder="Escribe un mensaje"></textarea>
+                    <button type="submit">Enviar</button>
+                </form>
+                <p class="wowza-live-chat-feedback" data-chat-feedback></p>
+                {% else %}
+                <p class="wowza-live-chat-locked">Necesitas una suscripción activa para escribir en el chat.</p>
+                {% endif %}
         </div>
     </section>
+    {% endif %}
 
     {% if show_wowza_debug %}
     <section class="wowza-live-debug">
@@ -59,10 +86,7 @@
 }
 
 .wowza-live-hero {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 320px;
-    gap: 24px;
-    align-items: start;
+    display: block;
 }
 
 .wowza-live-player {
@@ -125,25 +149,249 @@
     text-align: center;
 }
 
-.wowza-live-info {
-    padding-top: 4px;
+.wowza-live-chat {
+    display: flex;
+    margin-top: 18px;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid #dedede;
+    border-radius: 8px;
+    background: #ffffff;
 }
 
-.wowza-live-info h1 {
-    margin: 16px 0 10px;
-    font-size: 1.8rem;
-    line-height: 1.15;
+.dark_theme .wowza-live-chat {
+    border-color: #31364a;
+    background: #1e2130;
 }
 
-.wowza-live-info p {
+.wowza-live-chat-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+    padding: 14px;
+    border: 0;
+    border-bottom: 1px solid #e5e5e5;
+    color: #1f1f1f;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+}
+
+.dark_theme .wowza-live-chat-head {
+    border-color: #31364a;
+    color: #ffffff;
+}
+
+.wowza-live-chat-head span:first-child {
+    min-width: 0;
+}
+
+.wowza-live-chat-head strong,
+.wowza-live-chat-head small {
+    display: block;
+}
+
+.wowza-live-chat-head strong {
     margin: 0;
-    color: rgba(68, 68, 68, 0.78);
     font-size: 1rem;
-    line-height: 1.45;
+    line-height: 1.2;
+    font-weight: 900;
 }
 
-.dark_theme .wowza-live-info p {
-    color: rgba(203, 209, 234, 0.78);
+.wowza-live-chat-head small {
+    margin-top: 4px;
+    color: rgba(68, 68, 68, 0.68);
+    font-size: 0.78rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.dark_theme .wowza-live-chat-head small {
+    color: rgba(203, 209, 234, 0.72);
+}
+
+.wowza-live-chat-toggle-icon {
+    flex: 0 0 auto;
+    font-family: 'Material Icons';
+    font-size: 1.55rem;
+    line-height: 1;
+}
+
+.wowza-live-chat-collapsed .wowza-live-chat-toggle-icon {
+    transform: rotate(180deg);
+}
+
+.wowza-live-chat-collapsed .wowza-live-chat-body {
+    display: none;
+}
+
+.wowza-live-chat-body {
+    min-height: 430px;
+    max-height: 560px;
+    display: flex;
+    flex-direction: column;
+}
+
+.wowza-live-chat-messages {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 12px 14px;
+}
+
+.wowza-live-chat-empty,
+.wowza-live-chat-locked,
+.wowza-live-chat-feedback {
+    margin: 0;
+    color: rgba(68, 68, 68, 0.68);
+    font-size: 0.86rem;
+    line-height: 1.4;
+}
+
+.dark_theme .wowza-live-chat-empty,
+.dark_theme .wowza-live-chat-locked,
+.dark_theme .wowza-live-chat-feedback {
+    color: rgba(203, 209, 234, 0.72);
+}
+
+.wowza-live-chat-message {
+    position: relative;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.dark_theme .wowza-live-chat-message {
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.wowza-live-chat-message:last-child {
+    border-bottom: 0;
+}
+
+.wowza-live-chat-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 3px;
+    padding-right: 34px;
+}
+
+.wowza-live-chat-user {
+    color: #222222;
+    font-size: 0.82rem;
+    font-weight: 900;
+}
+
+.dark_theme .wowza-live-chat-user {
+    color: #ffffff;
+}
+
+.wowza-live-chat-time {
+    color: rgba(68, 68, 68, 0.56);
+    font-size: 0.74rem;
+}
+
+.dark_theme .wowza-live-chat-time {
+    color: rgba(203, 209, 234, 0.58);
+}
+
+.wowza-live-chat-text {
+    margin: 0;
+    color: #2f2f2f;
+    font-size: 0.9rem;
+    line-height: 1.36;
+    overflow-wrap: anywhere;
+}
+
+.dark_theme .wowza-live-chat-text {
+    color: rgba(245, 247, 255, 0.9);
+}
+
+.wowza-live-chat-delete {
+    position: absolute;
+    top: 7px;
+    right: 0;
+    width: 26px;
+    height: 26px;
+    border: 0;
+    border-radius: 4px;
+    background: transparent;
+    color: rgba(68, 68, 68, 0.68);
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.dark_theme .wowza-live-chat-delete {
+    color: rgba(203, 209, 234, 0.72);
+}
+
+.wowza-live-chat-delete:hover {
+    background: rgba(255, 18, 31, 0.12);
+    color: #ff121f;
+}
+
+.wowza-live-chat-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    padding: 12px 14px 14px;
+    border-top: 1px solid #e5e5e5;
+}
+
+.dark_theme .wowza-live-chat-form {
+    border-color: #31364a;
+}
+
+.wowza-live-chat-form textarea {
+    width: 100%;
+    min-width: 0;
+    resize: none;
+    border: 1px solid #d8d8d8;
+    border-radius: 6px;
+    padding: 9px 10px;
+    background: #ffffff;
+    color: #222222;
+    font: inherit;
+    font-size: 0.9rem;
+}
+
+.dark_theme .wowza-live-chat-form textarea {
+    border-color: #3b4054;
+    background: #171a27;
+    color: #ffffff;
+}
+
+.wowza-live-chat-form button {
+    align-self: stretch;
+    min-width: 72px;
+    border: 0;
+    border-radius: 6px;
+    background: #ff121f;
+    color: #ffffff;
+    cursor: pointer;
+    font-weight: 900;
+}
+
+.wowza-live-chat-form button:disabled {
+    cursor: not-allowed;
+    opacity: 0.58;
+}
+
+.wowza-live-chat-feedback {
+    min-height: 18px;
+    padding: 0 14px 12px;
+}
+
+.wowza-live-chat-locked {
+    padding: 12px 14px 14px;
+    border-top: 1px solid #e5e5e5;
+}
+
+.dark_theme .wowza-live-chat-locked {
+    border-color: #31364a;
 }
 
 .wowza-live-debug {
@@ -199,14 +447,279 @@
 }
 
 @media (max-width: 820px) {
-    .wowza-live-hero {
-        grid-template-columns: 1fr;
-    }
-
     .wowza-live-debug dl {
         grid-template-columns: 1fr;
         gap: 5px;
     }
+
+    .wowza-live-chat-body {
+        min-height: 360px;
+    }
 }
 </style>
+
+<script>
+(function () {
+    const root = document.querySelector('[data-live-chat]');
+    if (!root) {
+        return;
+    }
+
+    const apiUrl = root.dataset.apiUrl;
+    const wsUrl = root.dataset.wsUrl;
+    const canWrite = root.dataset.canWrite === 'true';
+    const canModerate = root.dataset.canModerate === 'true';
+    const messagesEl = root.querySelector('[data-chat-messages]');
+    const emptyEl = root.querySelector('[data-chat-empty]');
+    const statusEl = root.querySelector('[data-chat-status]');
+    const form = root.querySelector('[data-chat-form]');
+    const input = root.querySelector('[data-chat-input]');
+    const feedback = root.querySelector('[data-chat-feedback]');
+    const toggle = root.querySelector('[data-chat-toggle]');
+    const csrfInput = root.querySelector('input[name="csrfmiddlewaretoken"]');
+    const seen = new Set();
+    let socket = null;
+    let pollingTimer = null;
+
+    function setStatus(text) {
+        if (statusEl) {
+            statusEl.textContent = text;
+        }
+    }
+
+    function setFeedback(text) {
+        if (feedback) {
+            feedback.textContent = text || '';
+        }
+    }
+
+    function formatTime(value) {
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) {
+            return '';
+        }
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function renderMessage(message) {
+        if (!message || seen.has(message.id) || message.is_deleted) {
+            return;
+        }
+        seen.add(message.id);
+        if (emptyEl) {
+            emptyEl.remove();
+        }
+
+        const item = document.createElement('article');
+        item.className = 'wowza-live-chat-message';
+        item.dataset.messageId = message.id;
+
+        const meta = document.createElement('div');
+        meta.className = 'wowza-live-chat-meta';
+
+        const user = document.createElement('span');
+        user.className = 'wowza-live-chat-user';
+        user.textContent = (message.user && message.user.username) || 'Usuario';
+
+        const time = document.createElement('span');
+        time.className = 'wowza-live-chat-time';
+        time.textContent = formatTime(message.created_at);
+
+        const text = document.createElement('p');
+        text.className = 'wowza-live-chat-text';
+        text.textContent = message.message;
+
+        meta.appendChild(user);
+        meta.appendChild(time);
+        item.appendChild(meta);
+        item.appendChild(text);
+
+        if (canModerate) {
+            const remove = document.createElement('button');
+            remove.type = 'button';
+            remove.className = 'wowza-live-chat-delete';
+            remove.setAttribute('aria-label', 'Borrar mensaje');
+            remove.textContent = 'x';
+            remove.addEventListener('click', function () {
+                deleteMessage(message.id);
+            });
+            item.appendChild(remove);
+        }
+
+        messagesEl.appendChild(item);
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    function removeMessage(id) {
+        seen.delete(Number(id));
+        const item = messagesEl.querySelector('[data-message-id="' + String(id) + '"]');
+        if (item) {
+            item.remove();
+        }
+        if (!messagesEl.querySelector('.wowza-live-chat-message')) {
+            const empty = document.createElement('p');
+            empty.className = 'wowza-live-chat-empty';
+            empty.dataset.chatEmpty = '';
+            empty.textContent = 'Aún no hay mensajes.';
+            messagesEl.appendChild(empty);
+        }
+    }
+
+    function loadMessages() {
+        fetch(apiUrl, { credentials: 'same-origin' })
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error('No fue posible cargar el chat.');
+                }
+                return response.json();
+            })
+            .then(function (data) {
+                (data.results || []).forEach(renderMessage);
+                if (!messagesEl.querySelector('.wowza-live-chat-message')) {
+                    const empty = messagesEl.querySelector('[data-chat-empty]');
+                    if (empty) {
+                        empty.textContent = 'Aún no hay mensajes.';
+                    }
+                }
+            })
+            .catch(function () {
+                setStatus('Sin conexión');
+            });
+    }
+
+    function startPolling() {
+        if (pollingTimer) {
+            return;
+        }
+        pollingTimer = window.setInterval(loadMessages, 8000);
+    }
+
+    function connectSocket() {
+        if (!window.WebSocket || !wsUrl) {
+            startPolling();
+            return;
+        }
+
+        try {
+            socket = new WebSocket(wsUrl);
+        } catch (error) {
+            startPolling();
+            return;
+        }
+
+        socket.addEventListener('open', function () {
+            setStatus('En línea');
+        });
+
+        socket.addEventListener('message', function (event) {
+            let payload = {};
+            try {
+                payload = JSON.parse(event.data);
+            } catch (error) {
+                return;
+            }
+
+            if (payload.type === 'chat.ready') {
+                setStatus('En línea');
+            } else if (payload.type === 'message.created') {
+                renderMessage(payload.message);
+            } else if (payload.type === 'message.deleted') {
+                removeMessage(payload.id);
+            } else if (payload.type === 'chat.error') {
+                setFeedback(payload.detail);
+            }
+        });
+
+        socket.addEventListener('close', function () {
+            setStatus('Actualizando');
+            startPolling();
+        });
+
+        socket.addEventListener('error', function () {
+            setStatus('Actualizando');
+        });
+    }
+
+    function postMessage(message) {
+        return fetch(apiUrl, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfInput ? csrfInput.value : '',
+            },
+            body: JSON.stringify({ message: message }),
+        }).then(function (response) {
+            return response.json().then(function (data) {
+                if (!response.ok) {
+                    throw new Error(data.detail || 'No fue posible enviar el mensaje.');
+                }
+                return data;
+            });
+        });
+    }
+
+    function deleteMessage(id) {
+        fetch(apiUrl + '/' + id, {
+            method: 'DELETE',
+            credentials: 'same-origin',
+            headers: {
+                'X-CSRFToken': csrfInput ? csrfInput.value : '',
+            },
+        }).then(function (response) {
+            if (response.ok) {
+                removeMessage(id);
+            }
+        });
+    }
+
+    if (form && input && canWrite) {
+        form.addEventListener('submit', function (event) {
+            event.preventDefault();
+            const message = input.value.trim();
+            if (!message) {
+                return;
+            }
+            setFeedback('');
+            const button = form.querySelector('button');
+            if (button) {
+                button.disabled = true;
+            }
+
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify({ type: 'chat.message', message: message }));
+                input.value = '';
+                if (button) {
+                    button.disabled = false;
+                }
+                return;
+            }
+
+            postMessage(message)
+                .then(function (created) {
+                    input.value = '';
+                    renderMessage(created);
+                })
+                .catch(function (error) {
+                    setFeedback(error.message);
+                })
+                .finally(function () {
+                    if (button) {
+                        button.disabled = false;
+                    }
+                });
+        });
+    }
+
+    if (toggle) {
+        toggle.addEventListener('click', function () {
+            const isCollapsed = root.classList.toggle('wowza-live-chat-collapsed');
+            toggle.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
+        });
+    }
+
+    loadMessages();
+    connectSocket();
+})();
+</script>
 {% endblock %}

@@ -4,6 +4,9 @@ django-allauth==65.4.1
 psycopg==3.2.4
 uwsgi==2.0.28
 django-redis==5.4.0
+channels==4.2.0
+channels-redis==4.2.1
+daphne==4.1.2
 celery==5.4.0
 drf-yasg==1.21.8
 Pillow==11.1.0
