@@ -141,8 +141,9 @@ class WowzaManagementTests(TestCase):
         self.assertEqual(result["is_live"], True)
         wowza_client.incoming_streams.assert_called_once()
 
+    @patch("files.wowza_views.requests.get")
     @patch("files.wowza_views.WowzaClient")
-    def test_public_live_applications_list_returns_safe_media_items(self, wowza_client_cls):
+    def test_public_live_applications_list_returns_safe_media_items(self, wowza_client_cls, requests_get):
         app = WowzaApplication.objects.create(
             name="eventozlive",
             schedule_id="schedule-live",
@@ -151,16 +152,33 @@ class WowzaManagementTests(TestCase):
             created_by=self.admin,
             storage_dir=f"/nas/{self.admin.id}",
         )
+        WowzaApplication.objects.create(
+            name="eventozoffline",
+            schedule_id="schedule-offline",
+            publish_username="eventozoffline",
+            publish_password="Secret456",
+            created_by=self.admin,
+            storage_dir=f"/nas/{self.admin.id}",
+        )
+        response_404 = Mock()
+        response_404.status_code = 404
+        response_404.headers = {}
+        response_404.text = ""
+        requests_get.return_value = response_404
         wowza_client = Mock()
-        wowza_client.incoming_streams.return_value = {"incomingStreams": [{"name": "live"}]}
+        wowza_client.incoming_streams.side_effect = [
+            {"incomingStreams": []},
+            {"incomingStreams": [{"name": "live"}]},
+        ]
         wowza_client_cls.return_value = wowza_client
         self.client.force_login(self.user)
 
         response = self.client.get("/api/v1/wowza_live")
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["count"], 1)
-        result = response.json()["results"][0]
+        self.assertEqual(response.json()["count"], 2)
+        results_by_title = {result["title"]: result for result in response.json()["results"]}
+        result = results_by_title["eventozlive"]
         self.assertEqual(result["id"], f"wowza-{app.id}")
         self.assertEqual(result["title"], "eventozlive")
         self.assertEqual(result["media_type"], "video")
@@ -168,6 +186,7 @@ class WowzaManagementTests(TestCase):
         self.assertEqual(result["is_live"], True)
         self.assertNotIn("publish_password", result)
         self.assertNotIn("publish_username", result)
+        self.assertEqual(results_by_title["eventozoffline"]["is_live"], False)
 
     @patch("files.wowza_views.WowzaClient")
     def test_delete_application_calls_wowza_and_removes_saved_app(self, wowza_client_cls):

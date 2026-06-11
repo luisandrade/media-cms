@@ -175,8 +175,7 @@ class WowzaLiveApplicationListView(APIView):
         page_size = min(parse_positive_int(request.GET.get("page_size"), default=12), 50)
         applications = list(WowzaApplication.objects.filter(is_active=True).select_related("created_by").order_by("-add_date", "name"))
         live_statuses = live_statuses_for_applications(applications)
-        live_applications = [app for app in applications if live_statuses.get(app.name, False)]
-        paginator = Paginator(live_applications, page_size)
+        paginator = Paginator(applications, page_size)
 
         try:
             page_obj = paginator.page(page)

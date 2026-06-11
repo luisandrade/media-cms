@@ -101,10 +101,12 @@ function truncateLivePreviewTitle(title) {
   return 34 < title.length ? `${title.slice(0, 31)}...` : title;
 }
 
-function livePreviewDataUrl(title) {
+function livePreviewDataUrl(title, isLiveOnline) {
   const safeTitle = escapeSvgText(truncateLivePreviewTitle(livePreviewTitle(title)));
   const initials = escapeSvgText(livePreviewInitials(title));
-  const accent = livePreviewColor(title);
+  const accent = isLiveOnline ? livePreviewColor(title) : '#6b7280';
+  const statusText = isLiveOnline ? 'EN VIVO' : 'OFFLINE';
+  const footerText = isLiveOnline ? 'Streaming' : 'Sin señal';
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
 <defs>
 <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
@@ -118,10 +120,10 @@ function livePreviewDataUrl(title) {
 <circle cx="114" cy="292" r="110" fill="#ffffff" opacity="0.06"/>
 <rect x="34" y="30" width="132" height="38" rx="5" fill="${accent}"/>
 <circle cx="58" cy="49" r="7" fill="#ffffff"/>
-<text x="76" y="55" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#ffffff">EN VIVO</text>
+<text x="76" y="55" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" fill="#ffffff">${statusText}</text>
 <text x="320" y="186" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="86" font-weight="800" fill="#ffffff">${initials}</text>
 <text x="320" y="245" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="700" fill="#ffffff">${safeTitle}</text>
-<text x="320" y="282" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="700" fill="${accent}">Streaming</text>
+<text x="320" y="282" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="17" font-weight="700" fill="${accent}">${footerText}</text>
 </svg>`;
 
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
@@ -156,7 +158,8 @@ export function listItemProps(props, item, index) {
       : null;
 
   const isLiveStream = !!(item.stream && item.stream !== '');
-  const generatedLivePreview = isLiveStream ? livePreviewDataUrl(title || item.name || item.stream) : '';
+  const isLiveOnline = true === item.is_live;
+  const generatedLivePreview = isLiveStream ? livePreviewDataUrl(title || item.name || item.stream, isLiveOnline) : '';
   const thumbnail = isLiveStream ? item.thumbnail_url || generatedLivePreview : item.thumbnail_url || '';
   const previewThumbnail = isLiveStream ? item.preview_url || generatedLivePreview : item.preview_url || '';
 
@@ -239,6 +242,7 @@ export function listItemProps(props, item, index) {
     hasMediaViewer: 0 === index && 'video' === item.media_type && !!props.firstItemViewer,
     hasMediaViewerDescr: false,
     isLiveStream,
+    isLiveOnline,
   };
 
   args.hasMediaViewerDescr = args.hasMediaViewer && !!props.firstItemDescr;
@@ -279,6 +283,7 @@ export function listItemProps(props, item, index) {
   if ('video' === type) {
     args.previewThumbnail = previewThumbnail;
     args.isLiveStream = isLiveStream;
+    args.isLiveOnline = isLiveOnline;
   }
 
   if ('video' === type || 'audio' === type) {

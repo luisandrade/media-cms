@@ -40,13 +40,13 @@ export function MediaItemVideo(props) {
     return (
       <a {...attr}>
         {props.isLiveStream ? (
-          <span className="item-live-badge">
-            <span>EN VIVO</span>
+          <span className={`item-live-badge ${props.isLiveOnline ? 'item-live-badge-on' : 'item-live-badge-off'}`}>
+            <span>{props.isLiveOnline ? 'EN VIVO' : 'OFFLINE'}</span>
           </span>
         ) : props.inPlaylistView ? null : (
           <MediaItemDuration ariaLabel={duration} time={durationISO8601} text={durationStr} />
         )}
-        {props.inPlaylistView || props.inPlaylistPage ? null : (
+        {props.isLiveStream || props.inPlaylistView || props.inPlaylistPage ? null : (
           <MediaItemVideoPreviewer url={props.preview_thumbnail} />
         )}
       </a>
@@ -64,9 +64,13 @@ export function MediaItemVideo(props) {
   }
 
   function playlistOptionsComponent() {
+    if (props.hidePlaylistOptions) {
+      return null;
+    }
+
     let mediaId = props.link.split('=')[1];
     mediaId = mediaId.split('&')[0];
-    return props.hidePlaylistOptions ? null : (
+    return (
       <MediaPlaylistOptions key="options" media_id={mediaId} playlist_id={props.playlist_id} />
     );
   }
@@ -106,6 +110,7 @@ MediaItemVideo.propTypes = {
   hasMediaViewer: PropTypes.bool,
   hasMediaViewerDescr: PropTypes.bool,
   isLiveStream: PropTypes.bool,
+  isLiveOnline: PropTypes.bool,
   playlist_id: PropTypes.string,
 };
 
@@ -117,4 +122,5 @@ MediaItemVideo.defaultProps = {
   hasMediaViewer: false,
   hasMediaViewerDescr: false,
   isLiveStream: false,
+  isLiveOnline: false,
 };
