@@ -25,6 +25,7 @@ urlpatterns = [
     re_path(r"^purchases$", views.purchases, name="purchases"),
     re_path(r"^liked$", views.liked_media, name="liked_media"),
     re_path(r"^latest$", views.latest_media),
+    re_path(r"^live/(?P<app_name>[^/]+)$", views.view_wowza_live, name="wowza_live_view"),
     re_path(r"^members", views.members, name="members"),
     re_path(r"^ads", views.create_add_ads_tag, name="ads"),
     re_path(

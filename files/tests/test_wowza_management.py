@@ -182,11 +182,51 @@ class WowzaManagementTests(TestCase):
         self.assertEqual(result["id"], f"wowza-{app.id}")
         self.assertEqual(result["title"], "eventozlive")
         self.assertEqual(result["media_type"], "video")
+        self.assertTrue(result["url"].endswith("/live/eventozlive"))
         self.assertEqual(result["stream"], "https://scl.edge.grupoz.cl/eventozlive/live/playlist.m3u8")
         self.assertEqual(result["is_live"], True)
         self.assertNotIn("publish_password", result)
         self.assertNotIn("publish_username", result)
         self.assertEqual(results_by_title["eventozoffline"]["is_live"], False)
+
+    @patch("files.wowza_views.requests.get")
+    @patch("files.wowza_views.WowzaClient")
+    def test_wowza_live_page_shows_offline_without_hls_url(self, wowza_client_cls, requests_get):
+        WowzaApplication.objects.create(
+            name="eventozoffline",
+            schedule_id="schedule-offline",
+            created_by=self.admin,
+            storage_dir=f"/nas/{self.admin.id}",
+        )
+        response_404 = Mock()
+        response_404.status_code = 404
+        response_404.headers = {}
+        response_404.text = ""
+        requests_get.return_value = response_404
+        wowza_client = Mock()
+        wowza_client.incoming_streams.return_value = {"incomingStreams": []}
+        wowza_client_cls.return_value = wowza_client
+        self.client.force_login(self.admin)
+
+        response = self.client.get("/live/eventozoffline")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Esperando señal de streaming")
+        self.assertNotContains(response, "https://scl.edge.grupoz.cl/eventozoffline/live/playlist.m3u8")
+
+    def test_wowza_live_page_requires_subscription_for_regular_user(self):
+        WowzaApplication.objects.create(
+            name="eventozlive",
+            schedule_id="schedule-live",
+            created_by=self.admin,
+            storage_dir=f"/nas/{self.admin.id}",
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.get("/live/eventozlive")
+
+        self.assertEqual(response.status_code, 403)
+        self.assertContains(response, "suscripciones", status_code=403)
 
     @patch("files.wowza_views.WowzaClient")
     def test_delete_application_calls_wowza_and_removes_saved_app(self, wowza_client_cls):

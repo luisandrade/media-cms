@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.core.paginator import EmptyPage, Paginator
 from django.shortcuts import get_object_or_404
+from django.urls import reverse
 import requests
 from rest_framework import permissions
 from rest_framework import status
@@ -278,7 +279,7 @@ def serialize_public_wowza_live_application(app, *, request, is_live=False):
         "id": f"wowza-{app.id}",
         "title": app.name,
         "description": "Señal en vivo",
-        "url": hls_url,
+        "url": request.build_absolute_uri(reverse("wowza_live_view", args=[app.name])),
         "media_type": "video",
         "duration": None,
         "views": 0,

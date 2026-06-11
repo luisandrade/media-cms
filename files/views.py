@@ -62,6 +62,7 @@ from .models import (
     Subtitle,
     Tag,
     VideoTrimRequest,
+    WowzaApplication,
     Ads
 )
 from .serializers import (
@@ -884,6 +885,26 @@ def view_playlist(request, friendly_token):
     context = {}
     context["playlist"] = playlist
     return render(request, "cms/playlist.html", context)
+
+
+@login_required
+def view_wowza_live(request, app_name):
+    """View Wowza live application with subscription gating."""
+
+    if _user_requires_active_subscription_for_media_access(request.user) and not _user_has_media_access(request.user):
+        return render(request, "cms/subscription_required.html", _subscription_required_context(), status=403)
+
+    app = get_object_or_404(WowzaApplication, name=app_name, is_active=True)
+
+    from .wowza_views import hls_url_for_application, live_statuses_for_applications
+
+    is_live = live_statuses_for_applications([app]).get(app.name, False)
+    context = {
+        "app": app,
+        "is_live": is_live,
+        "hls_url": hls_url_for_application(app.name) if is_live else "",
+    }
+    return render(request, "cms/wowza_live.html", context)
 
 
 
