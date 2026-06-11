@@ -277,24 +277,30 @@ def wowza_advanced_settings_payload(schedule_id):
             },
             {
                 "order": 1,
+                "name": "ModuleCoreSecurity",
+                "description": "Core Security",
+                "class": "com.wowza.wms.security.ModuleCoreSecurity",
+            },
+            {
+                "order": 2,
                 "name": "logging",
                 "description": "Client Logging",
                 "class": "com.wowza.wms.module.ModuleClientLogging",
             },
             {
-                "order": 2,
+                "order": 3,
                 "name": "flvplayback",
                 "description": "FLVPlayback",
                 "class": "com.wowza.wms.module.ModuleFLVPlayback",
             },
             {
-                "order": 3,
+                "order": 4,
                 "name": "streamPublisher",
                 "description": "Schedules streams and playlists.",
                 "class": "com.wowza.wms.plugin.streampublisher.ModuleStreamPublisher",
             },
             {
-                "order": 4,
+                "order": 5,
                 "name": "modulePushPublish",
                 "description": "ModulePushPublish enable StreamTarget.",
                 "class": "com.wowza.wms.pushpublish.module.ModulePushPublish",
