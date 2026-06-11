@@ -413,8 +413,8 @@ export class ManageWowzaPage extends Page {
             <span className="manage-wowza-live-icon">
               <MaterialIcon type="radio_button_checked" />
             </span>
-            <strong>Señal del stream</strong>
-            <span>Si el navegador no reproduce HLS nativo, copia la URL HLS en un reproductor compatible.</span>
+            <strong>Esperando señal de streaming...</strong>
+            <span>Configura tu software de streaming con los datos de conexión de abajo</span>
           </div>
         </div>
 
@@ -427,7 +427,6 @@ export class ManageWowzaPage extends Page {
           ))}
           {this.renderConnectionField(app, 'publish_username', 'Usuario', 'person')}
           {this.renderConnectionField(app, 'publish_password', 'Password', 'lock')}
-          {this.renderConnectionField(app, 'hls_url', 'Señal HLS', 'live_tv')}
         </div>
       </section>
     );

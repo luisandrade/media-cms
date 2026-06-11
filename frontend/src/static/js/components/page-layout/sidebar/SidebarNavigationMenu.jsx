@@ -194,6 +194,15 @@ export function SidebarNavigationMenu() {
           className: 'nav-item-my-playlists',
         });
       }
+
+      if (userCan.manageWowza) {
+        items.push({
+          link: links.manage.wowza,
+          icon: 'settings_input_antenna',
+          text: 'Señales en vivo',
+          className: 'nav-item-manage-wowza',
+        });
+      }
     }
 
     return items.length ? (
@@ -305,15 +314,6 @@ export function SidebarNavigationMenu() {
         icon: 'miscellaneous_services',
         text: translateString("Manage comments"),
         className: 'nav-item-manage-comments',
-      });
-    }
-
-    if (userCan.manageWowza) {
-      items.push({
-        link: links.manage.wowza,
-        icon: 'settings_input_antenna',
-        text: 'Wowza control',
-        className: 'nav-item-manage-wowza',
       });
     }
 

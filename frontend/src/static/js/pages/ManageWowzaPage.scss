@@ -802,10 +802,6 @@
   border-radius: 6px;
   background: #fafafa;
 
-  &:last-child {
-    grid-column: 1 / -1;
-  }
-
   .dark_theme & {
     border-color: #31364a;
     background: #171a27;
@@ -1039,10 +1035,6 @@
 
   .manage-wowza-connection-grid {
     grid-template-columns: 1fr;
-  }
-
-  .manage-wowza-connection-card:last-child {
-    grid-column: auto;
   }
 
   .manage-wowza-pagination {
