@@ -36,7 +36,6 @@ export function MediaItemVideo(props) {
       href: props.link,
       title: props.title,
       tabIndex: '-1',
-      'aria-hidden': true,
       className: 'item-thumb' + (!thumbnailUrl && !props.isLiveStream ? ' no-thumb' : ''),
       style: !thumbnailUrl ? null : { backgroundImage: "url('" + thumbnailUrl + "')" },
     };

@@ -296,6 +296,9 @@ export function ListItem(props) {
       isMediaItem = true;
       args.duration = props.duration;
       args.preview_thumbnail = props.previewThumbnail;
+      args.isLiveStream = props.isLiveStream;
+      args.isLiveOnline = props.isLiveOnline;
+      args.livePreview = props.livePreview;
       break;
     case 'audio':
       isMediaItem = true;
