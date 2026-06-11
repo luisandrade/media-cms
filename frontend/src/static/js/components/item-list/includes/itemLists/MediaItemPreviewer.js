@@ -24,7 +24,13 @@ export default class MediaItemPreviewer {
       return null;
     }
 
-    this.extensions = {};
+    this.extensions = {
+      anim: [],
+      fallback: {
+        elem: null,
+        type: null,
+      },
+    };
 
     function onImageLoad(ins, evt) {
       requestAnimationFrameID = requestAnimationFrame(function () {
@@ -44,7 +50,6 @@ export default class MediaItemPreviewer {
     if (-1 < extensions.indexOf('webp')) {
       x = document.createElement('source');
       x.type = 'image/webp';
-      this.extensions.anim = this.extensions.anim || [];
       this.extensions.anim.push({ elem: x, type: 'webp' });
       if (1 === extensions.length) {
         this.extensions.fallback = { elem: document.createElement('img'), type: 'webp' };
@@ -54,7 +59,6 @@ export default class MediaItemPreviewer {
     if (-1 < extensions.indexOf('gif')) {
       x = document.createElement('source');
       x.type = 'image/gif';
-      this.extensions.anim = this.extensions.anim || [];
       this.extensions.anim.push({ elem: x, type: 'gif' });
       this.extensions.fallback = { elem: document.createElement('img'), type: 'gif' };
     }
@@ -62,7 +66,6 @@ export default class MediaItemPreviewer {
     if (-1 < extensions.indexOf('jpg')) {
       x = document.createElement('source');
       x.type = 'image/jpg';
-      this.extensions.anim = this.extensions.anim || [];
       this.extensions.anim.push({ elem: x, type: 'jpg' });
       this.extensions.fallback = { elem: document.createElement('img'), type: 'jpg' };
     }
@@ -70,14 +73,13 @@ export default class MediaItemPreviewer {
     if (-1 < extensions.indexOf('jpeg')) {
       x = document.createElement('source');
       x.type = 'image/jpeg';
-      this.extensions.anim = this.extensions.anim || [];
       this.extensions.anim.push({ elem: x, type: 'jpeg' });
       this.extensions.fallback = { elem: document.createElement('img'), type: 'jpeg' };
     }
 
     if (!this.extensions.fallback.elem) {
       i = 0;
-      while (i < fallback_extensions.length) {
+      while (i < fallback_ext.length) {
         if (-1 < extensions.indexOf(fallback_ext[i])) {
           this.extensions.fallback = { elem: document.createElement('img'), type: fallback_ext[i] };
           break;
@@ -102,11 +104,17 @@ export default class MediaItemPreviewer {
       }
 
       this.image = this.element.querySelector('img');
-      this.image.addEventListener('load', onImageLoad.bind(null, this));
+      if (this.image) {
+        this.image.addEventListener('load', onImageLoad.bind(null, this));
+      }
     }
   }
 
   elementEvents(el) {
+    if (!this.element || !el) {
+      return;
+    }
+
     el.addEventListener('mouseenter', this.onMediaItemMouseEnter.bind(null, this));
     el.addEventListener('mouseleave', this.onMediaItemMouseLeave.bind(null, this));
   }
@@ -150,7 +158,12 @@ export default class MediaItemPreviewer {
      * Append previewer.
      */
 
-    item.querySelector(CSS_selectors.mediaItemPreviewer).appendChild(this.element);
+    const previewer = item.querySelector(CSS_selectors.mediaItemPreviewer);
+    if (!previewer || !this.element) {
+      return;
+    }
+
+    previewer.appendChild(this.element);
 
     /*
      * Set previewer's container element.
@@ -164,6 +177,9 @@ export default class MediaItemPreviewer {
 
     if (ins.image) {
       elem = evt.target.querySelector(CSS_selectors.mediaItemPreviewer);
+      if (!elem || !elem.getAttribute(DataAttributes.mediaPreviewSrc)) {
+        return;
+      }
       src =
         PageStore.get('config-site').url + '/' + elem.getAttribute(DataAttributes.mediaPreviewSrc).replace(/^\//g, '');
 
