@@ -213,10 +213,10 @@ class WowzaManagementTests(TestCase):
         response = self.client.get("/live/eventozoffline")
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Esperando señal de streaming")
         self.assertContains(response, "Diagnóstico Wowza")
         self.assertContains(response, "/eventozoffline/live/playlist.m3u8")
-        self.assertNotContains(response, "<video")
+        self.assertContains(response, "<video")
+        self.assertContains(response, "Reproductor habilitado para prueba")
 
     @patch("files.wowza_views.WowzaClient")
     def test_wowza_live_page_uses_secure_token_when_enabled(self, wowza_client_cls):
@@ -237,7 +237,8 @@ class WowzaManagementTests(TestCase):
         self.assertContains(response, "https://scl.edge.grupoz.cl/eventozlive/live/playlist.m3u8?")
         self.assertContains(response, "wowzatokenhash=")
         self.assertContains(response, "wowzatokenstarttime=0")
-        self.assertContains(response, "wowzatokenendtime=0")
+        self.assertContains(response, "wowzatokenendtime=")
+        self.assertNotContains(response, "wowzatokenendtime=0&amp;")
 
     @override_settings(WOWZA_SECURE_TOKEN_ENABLED=False)
     @patch("files.wowza_views.WowzaClient")

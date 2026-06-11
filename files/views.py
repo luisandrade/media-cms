@@ -879,11 +879,14 @@ def view_wowza_live(request, app_name):
     is_live = live_statuses_for_applications([app]).get(app.name, False)
     debug_hls_url = hls_url_for_application(app.name)
     parsed_hls_url = urlparse(debug_hls_url)
+    show_wowza_debug = bool(getattr(request.user, "is_staff", False) or getattr(request.user, "is_superuser", False))
+    force_debug_player = show_wowza_debug and str(request.GET.get("debug_player", "1")).lower() not in {"0", "false", "no"}
     context = {
         "app": app,
         "is_live": is_live,
-        "hls_url": debug_hls_url if is_live else "",
-        "show_wowza_debug": bool(getattr(request.user, "is_staff", False) or getattr(request.user, "is_superuser", False)),
+        "hls_url": debug_hls_url if is_live or force_debug_player else "",
+        "show_wowza_debug": show_wowza_debug,
+        "force_debug_player": force_debug_player,
         "debug_hls_url": debug_hls_url,
         "debug_hls_path": parsed_hls_url.path,
         "debug_hls_params": parse_qsl(parsed_hls_url.query),

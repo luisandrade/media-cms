@@ -6,7 +6,7 @@
 <div class="wowza-live-page">
     <section class="wowza-live-hero">
         <div class="wowza-live-player">
-            {% if is_live and hls_url %}
+            {% if hls_url %}
             <video controls playsinline autoplay src="{{ hls_url }}"></video>
             {% else %}
             <div class="wowza-live-placeholder">
@@ -20,7 +20,7 @@
                 {% if is_live %}EN VIVO{% else %}OFFLINE{% endif %}
             </span>
             <h1>{{ app.name }}</h1>
-            <p>{% if is_live %}Transmisión en vivo disponible.{% else %}La señal todavía no está disponible. Vuelve a intentarlo en unos minutos.{% endif %}</p>
+            <p>{% if is_live %}Transmisión en vivo disponible.{% elif force_debug_player %}Reproductor habilitado para prueba con URL firmada.{% else %}La señal todavía no está disponible. Vuelve a intentarlo en unos minutos.{% endif %}</p>
         </div>
     </section>
 

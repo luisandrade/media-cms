@@ -3,6 +3,7 @@ from django.core.paginator import EmptyPage, Paginator
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 import requests
+import time
 from rest_framework import permissions
 from rest_framework import status
 from rest_framework.parsers import JSONParser
@@ -231,12 +232,14 @@ def hls_url_for_application(app_name, *, secure_token=None):
     if not secure_token:
         return url
 
+    ttl_seconds = int(getattr(settings, "WOWZA_SECURE_TOKEN_TTL_SECONDS", 86400) or 0)
+    endtime = int(time.time()) + ttl_seconds if ttl_seconds > 0 else 0
     token = generate_wowza_token(
         f"{app_name}/{stream_name}",
         getattr(settings, "WOWZA_LIVE_SECRET", ""),
         token_name=getattr(settings, "WOWZA_TOKEN_NAME", "wowzatoken"),
         start=0,
-        end=0,
+        end=endtime,
     )
     return f"{url}?{token}"
 

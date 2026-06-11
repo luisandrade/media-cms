@@ -221,6 +221,7 @@ if not os.path.exists(CDN_BALANCER_ASN_DB_PATH):
 WOWZA_HOST_DEFAULT = os.getenv("WOWZA_HOST_DEFAULT", "scl.edge.grupoz.cl")
 WOWZA_TOKEN_NAME = os.getenv("WOWZA_TOKEN_NAME", "wowzatoken")
 WOWZA_SECURE_TOKEN_ENABLED = os.getenv("WOWZA_SECURE_TOKEN_ENABLED", "true").lower() in ("1", "true", "yes", "on")
+WOWZA_SECURE_TOKEN_TTL_SECONDS = int(os.getenv("WOWZA_SECURE_TOKEN_TTL_SECONDS", "86400"))
 WOWZA_LIVE_SECRET = os.getenv("WOWZA_LIVE_SECRET", "a3e69479cda106ac")
 WOWZA_VOD_SECRET = os.getenv("WOWZA_VOD_SECRET", "45c2a1f252003a0a")
 WOWZA_ADMIN_API_BASE = os.getenv(
