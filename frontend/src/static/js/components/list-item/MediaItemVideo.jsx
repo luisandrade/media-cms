@@ -43,7 +43,7 @@ export function MediaItemVideo(props) {
           <span className={`item-live-badge ${props.isLiveOnline ? 'item-live-badge-on' : 'item-live-badge-off'}`}>
             <span>{props.isLiveOnline ? 'EN VIVO' : 'OFFLINE'}</span>
           </span>
-        ) : props.inPlaylistView ? null : (
+        ) : props.inPlaylistView || !durationStr ? null : (
           <MediaItemDuration ariaLabel={duration} time={durationISO8601} text={durationStr} />
         )}
         {props.isLiveStream || props.inPlaylistView || props.inPlaylistPage ? null : (

@@ -157,7 +157,7 @@ export function listItemProps(props, item, index) {
       ? item.title
       : null;
 
-  const isLiveStream = !!(item.stream && item.stream !== '');
+  const isLiveStream = 'boolean' === typeof item.is_live || !!(item.stream && item.stream !== '');
   const isLiveOnline = true === item.is_live;
   const generatedLivePreview = isLiveStream ? livePreviewDataUrl(title || item.name || item.stream, isLiveOnline) : '';
   const thumbnail = isLiveStream ? item.thumbnail_url || generatedLivePreview : item.thumbnail_url || '';
