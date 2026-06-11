@@ -99,7 +99,6 @@ export function MediaItemVideo(props) {
     return (
       <span className={`item-live-label ${props.isLiveOnline ? 'item-live-label-on' : 'item-live-label-off'}`}>
         <strong>{props.isLiveOnline ? 'LIVE' : 'OFFLINE'}</strong>
-        <span>{props.isLiveOnline ? 'Transmisión en vivo' : 'Sin señal'}</span>
       </span>
     );
   }

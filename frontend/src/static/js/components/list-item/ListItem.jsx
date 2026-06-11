@@ -77,7 +77,7 @@ function livePreviewInitials(title) {
 }
 
 function livePreviewColor(title) {
-  const colors = ['#ff121f', '#2f9d55', '#0f7fd8', '#7c4dff', '#f59f00'];
+  const colors = ['#ff121f', '#d90d17', '#2f9d55', '#1f1f1f', '#4b5563'];
   const normalized = livePreviewTitle(title);
   let hash = 0;
 
