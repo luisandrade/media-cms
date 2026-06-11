@@ -91,18 +91,6 @@ export function MediaItemVideo(props) {
     );
   }
 
-  function liveStateComponent() {
-    if (!props.isLiveStream) {
-      return null;
-    }
-
-    return (
-      <span className={`item-live-label ${props.isLiveOnline ? 'item-live-label-on' : 'item-live-label-off'}`}>
-        <strong>{props.isLiveOnline ? 'LIVE' : 'OFFLINE'}</strong>
-      </span>
-    );
-  }
-
   const containerClassname = itemClassname(
     'item ' + type + '-item',
     props.class_name.trim(),
@@ -120,7 +108,6 @@ export function MediaItemVideo(props) {
 
         <UnderThumbWrapper title={props.title} link={props.link}>
           {titleComponent()}
-          {liveStateComponent()}
           {metaComponents()}
           {descriptionComponent()}
         </UnderThumbWrapper>

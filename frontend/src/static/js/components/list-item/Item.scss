@@ -198,48 +198,6 @@ a.item-thumb {
   background-color: #6b7280;
 }
 
-.item-live-label {
-  display: inline-flex;
-  align-items: center;
-  max-width: 100%;
-  margin-top: 7px;
-  color: #6b7280;
-  font-size: 0.78rem;
-  line-height: 1.2;
-  font-weight: 700;
-
-  strong {
-    flex: 0 0 auto;
-    padding: 4px 6px;
-    border-radius: 3px;
-    color: #ffffff;
-    background: #6b7280;
-    font-size: 0.68rem;
-    line-height: 1;
-    font-weight: 900;
-    letter-spacing: 0.4px;
-  }
-
-  span {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-}
-
-.item-live-label-on {
-  color: #ff121f;
-
-  strong {
-    background: #ff121f;
-  }
-}
-
-.item-live-label-off {
-  color: #6b7280;
-}
-
 .item-live-preview {
   --live-accent: #ff121f;
   position: absolute;
