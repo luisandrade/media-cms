@@ -123,10 +123,13 @@ class WowzaManagementTests(TestCase):
         self.assertEqual(response.json()["page"], 1)
         self.assertEqual(response.json()["page_size"], 1)
         self.assertEqual(len(response.json()["results"]), 1)
-        self.assertIn("publish_password", response.json()["results"][0])
-        self.assertIn("rtmp_url", response.json()["results"][0])
-        self.assertIn("stream_name", response.json()["results"][0])
-        self.assertIn("hls_url", response.json()["results"][0])
+        result = response.json()["results"][0]
+        self.assertIn("publish_password", result)
+        self.assertIn("rtmp_url", result)
+        self.assertIn("stream_name", result)
+        self.assertTrue(result["hls_url"].startswith("https://"))
+        self.assertNotIn(":1935", result["hls_url"])
+        self.assertTrue(result["hls_url"].endswith("/live/playlist.m3u8"))
 
     @patch("files.wowza_views.WowzaClient")
     def test_delete_application_calls_wowza_and_removes_saved_app(self, wowza_client_cls):

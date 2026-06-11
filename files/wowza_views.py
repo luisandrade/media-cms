@@ -164,7 +164,7 @@ def serialize_wowza_application(app):
         "publish_password": app.publish_password,
         "rtmp_url": f"rtmp://{wowza_host}/{app.name}",
         "stream_name": stream_name,
-        "hls_url": f"http://{wowza_host}:1935/{app.name}/{stream_name}/playlist.m3u8",
+        "hls_url": f"https://{wowza_host}/{app.name}/{stream_name}/playlist.m3u8",
         "is_active": app.is_active,
         "created_by": app.created_by.username if app.created_by else "",
         "add_date": app.add_date.isoformat() if app.add_date else "",

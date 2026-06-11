@@ -54,10 +54,18 @@ function connectionValue(app, field) {
   }
 
   if ('hls_url' === field) {
-    return app.hls_url || `http://scl.edge.grupoz.cl:1935/${app.name}/${streamName}/playlist.m3u8`;
+    return app.hls_url || `https://scl.edge.grupoz.cl/${app.name}/${streamName}/playlist.m3u8`;
   }
 
   return '';
+}
+
+function withCacheBuster(url, cacheKey) {
+  if (!cacheKey) {
+    return url;
+  }
+
+  return `${url}${-1 === url.indexOf('?') ? '?' : '&'}refresh=${cacheKey}`;
 }
 
 export class ManageWowzaPage extends Page {
@@ -79,6 +87,8 @@ export class ManageWowzaPage extends Page {
       activeAppName: '',
       deletingApplicationId: null,
       connectionApplicationId: null,
+      connectionSignalReady: false,
+      connectionSignalRefreshKey: 0,
       copiedConnectionField: '',
       visiblePasswords: {},
       error: null,
@@ -93,6 +103,8 @@ export class ManageWowzaPage extends Page {
     this.onShowConnection = this.onShowConnection.bind(this);
     this.onTogglePassword = this.onTogglePassword.bind(this);
     this.onCopyConnectionValue = this.onCopyConnectionValue.bind(this);
+    this.onRefreshConnectionSignal = this.onRefreshConnectionSignal.bind(this);
+    this.onConnectionSignalReady = this.onConnectionSignalReady.bind(this);
   }
 
   componentDidMount() {
@@ -283,6 +295,8 @@ export class ManageWowzaPage extends Page {
   onShowConnection(app) {
     this.setState({
       connectionApplicationId: app.id,
+      connectionSignalReady: false,
+      connectionSignalRefreshKey: Date.now(),
       copiedConnectionField: '',
       visiblePasswords: {
         ...this.state.visiblePasswords,
@@ -324,6 +338,19 @@ export class ManageWowzaPage extends Page {
     markCopied();
   }
 
+  onRefreshConnectionSignal() {
+    this.setState({
+      connectionSignalReady: false,
+      connectionSignalRefreshKey: Date.now(),
+    });
+  }
+
+  onConnectionSignalReady() {
+    if (!this.state.connectionSignalReady) {
+      this.setState({ connectionSignalReady: true });
+    }
+  }
+
   renderConnectionField(app, field, label, icon) {
     const value = connectionValue(app, field);
     const copied = this.state.copiedConnectionField === `${app.id}-${field}`;
@@ -352,7 +379,7 @@ export class ManageWowzaPage extends Page {
       return null;
     }
 
-    const hlsUrl = connectionValue(app, 'hls_url');
+    const hlsUrl = withCacheBuster(connectionValue(app, 'hls_url'), this.state.connectionSignalRefreshKey);
 
     return (
       <section className="manage-wowza-connection">
@@ -361,14 +388,27 @@ export class ManageWowzaPage extends Page {
             <h2>Conexión de {app.name}</h2>
             <span>Señal de monitoreo y credenciales para configurar Wirecast u otro encoder RTMP.</span>
           </div>
-          <button type="button" onClick={() => this.setState({ connectionApplicationId: null })} title="Cerrar conexión">
-            <MaterialIcon type="close" />
-          </button>
+          <div className="manage-wowza-connection-head-actions">
+            <button type="button" onClick={this.onRefreshConnectionSignal} title="Refrescar señal">
+              <MaterialIcon type="refresh" />
+            </button>
+            <button type="button" onClick={() => this.setState({ connectionApplicationId: null })} title="Cerrar conexión">
+              <MaterialIcon type="close" />
+            </button>
+          </div>
         </div>
 
         <div className="manage-wowza-signal">
-          <video controls playsInline src={hlsUrl} />
-          <div className="manage-wowza-signal-placeholder">
+          <video
+            key={`${app.id}-${this.state.connectionSignalRefreshKey}`}
+            controls
+            playsInline
+            src={hlsUrl}
+            onLoadedData={this.onConnectionSignalReady}
+            onCanPlay={this.onConnectionSignalReady}
+            onPlaying={this.onConnectionSignalReady}
+          />
+          <div className={`manage-wowza-signal-placeholder ${this.state.connectionSignalReady ? 'manage-wowza-signal-placeholder-hidden' : ''}`}>
             <span className="manage-wowza-live-icon">
               <MaterialIcon type="radio_button_checked" />
             </span>

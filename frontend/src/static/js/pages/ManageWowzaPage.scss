@@ -644,11 +644,16 @@
       color: rgba(203, 209, 234, 0.72);
     }
   }
+}
+
+.manage-wowza-connection-head-actions {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 8px;
 
   button {
     width: 34px;
     height: 34px;
-    flex: 0 0 34px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -712,6 +717,7 @@
   color: rgba(255, 255, 255, 0.68);
   background: linear-gradient(180deg, rgba(5, 6, 10, 0.12), rgba(5, 6, 10, 0.56));
   text-align: center;
+  transition: opacity 0.18s ease, visibility 0.18s ease;
 
   strong {
     color: #ffffff;
@@ -724,6 +730,11 @@
     font-size: 0.86rem;
     line-height: 1.4;
   }
+}
+
+.manage-wowza-signal-placeholder-hidden {
+  visibility: hidden;
+  opacity: 0;
 }
 
 .manage-wowza-live-icon {
