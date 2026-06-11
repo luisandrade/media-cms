@@ -420,13 +420,13 @@ export class ManageWowzaPage extends Page {
 
         <div className="manage-wowza-connection-grid">
           {this.renderConnectionField(app, 'rtmp_url', 'RTMP', 'link', 'Usa esta URL en OBS Studio, Streamlabs o cualquier software compatible con RTMP.')}
-          {this.renderConnectionField(app, 'stream_name', 'Stream', 'vpn_key', (
+          {this.renderConnectionField(app, 'stream_name', 'Stream', 'vpn_key')}
+          {this.renderConnectionField(app, 'publish_username', 'Usuario', 'person')}
+          {this.renderConnectionField(app, 'publish_password', 'Password', 'lock', (
             <React.Fragment>
               Esta clave es única para tu cuenta. <strong>No la compartas</strong> o cualquiera podrá transmitir en tu canal.
             </React.Fragment>
           ))}
-          {this.renderConnectionField(app, 'publish_username', 'Usuario', 'person')}
-          {this.renderConnectionField(app, 'publish_password', 'Password', 'lock')}
         </div>
       </section>
     );
@@ -461,7 +461,7 @@ export class ManageWowzaPage extends Page {
         <div className="manage-wowza-page">
           <div className="manage-wowza-head">
             <div>
-              <h1>Wowza control</h1>
+              <h1>Control de señales</h1>
               <p>Crear aplicaciones live y aplicar módulos operativos de Stream Publisher y Push Publish.</p>
             </div>
             <button className="manage-wowza-refresh" onClick={this.loadStatus} disabled={isLoadingStatus}>
