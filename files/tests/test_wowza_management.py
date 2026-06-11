@@ -1,6 +1,7 @@
 import json
 from unittest.mock import Mock, patch
 
+from django.conf import settings
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
@@ -392,13 +393,10 @@ class WowzaManagementTests(TestCase):
     def test_advanced_settings_configures_encoder_auth_file_without_extra_auth_module(self):
         payload = wowza_advanced_settings_payload("schedule10")
         module_names = [module["name"] for module in payload["modules"]]
+        settings_by_name = {setting["name"]: setting for setting in payload["advancedSettings"]}
         security_module = next(module for module in payload["modules"] if module["name"] == "ModuleCoreSecurity")
-        security_password_file_setting = next(
-            setting for setting in payload["advancedSettings"] if setting["name"] == "securityPublishPasswordFile"
-        )
-        auth_setting = next(
-            setting for setting in payload["advancedSettings"] if setting["name"] == "rtmpEncoderAuthenticateFile"
-        )
+        security_password_file_setting = settings_by_name["securityPublishPasswordFile"]
+        auth_setting = settings_by_name["rtmpEncoderAuthenticateFile"]
 
         self.assertNotIn("rtmpAuthenticate", module_names)
         self.assertEqual(security_module["class"], "com.wowza.wms.security.ModuleCoreSecurity")
@@ -414,6 +412,21 @@ class WowzaManagementTests(TestCase):
             auth_setting["value"],
             "${com.wowza.wms.context.VHostConfigHome}/conf/${com.wowza.wms.context.Application}/publish.password",
         )
+        self.assertEqual(settings_by_name["securitySecureTokenVersion"]["value"], 2)
+        self.assertEqual(settings_by_name["securitySecureTokenVersion"]["type"], "Integer")
+        self.assertEqual(settings_by_name["securitySecureTokenSharedSecret"]["value"], settings.WOWZA_LIVE_SECRET)
+        self.assertEqual(settings_by_name["securitySecureTokenHashAlgorithm"]["value"], "SHA-256")
+        self.assertEqual(settings_by_name["securitySecureTokenQueryParametersPrefix"]["value"], "wowzatoken")
+
+    @override_settings(WOWZA_SECURE_TOKEN_ENABLED=False)
+    def test_advanced_settings_can_disable_playback_secure_token(self):
+        payload = wowza_advanced_settings_payload("schedule10")
+        setting_names = {setting["name"] for setting in payload["advancedSettings"]}
+
+        self.assertNotIn("securitySecureTokenVersion", setting_names)
+        self.assertNotIn("securitySecureTokenSharedSecret", setting_names)
+        self.assertNotIn("securitySecureTokenHashAlgorithm", setting_names)
+        self.assertNotIn("securitySecureTokenQueryParametersPrefix", setting_names)
 
     @override_settings(
         WOWZA_PUSH_PUBLISH_ENTRY_NAME="live",

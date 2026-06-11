@@ -328,6 +328,59 @@ def wowza_live_application_payload(*, name, storage_user_id):
 
 def wowza_advanced_settings_payload(schedule_id):
     publish_password_file = wowza_publish_password_file()
+    advanced_settings = [
+        {
+            "enabled": True,
+            "canRemove": True,
+            "name": "streamPublisherSmilFile",
+            "value": f"streamschedule-{schedule_id}.smil",
+            "type": "String",
+            "section": "/Root/Application",
+        },
+        {
+            "enabled": True,
+            "canRemove": True,
+            "name": "securityPublishPasswordFile",
+            "value": publish_password_file,
+            "type": "String",
+            "section": "/Root/Application",
+        },
+        {
+            "enabled": True,
+            "canRemove": True,
+            "name": "rtmpEncoderAuthenticateFile",
+            "value": publish_password_file,
+            "type": "String",
+            "section": "/Root/Application",
+        },
+        {
+            "enabled": True,
+            "canRemove": True,
+            "name": "pushPublishDebug",
+            "value": True,
+            "type": "Boolean",
+            "section": "/Root/Application",
+        },
+        {
+            "enabled": True,
+            "canRemove": True,
+            "name": "bufferSeekIO",
+            "value": True,
+            "type": "Boolean",
+            "section": "/Root/Application/MediaReader",
+        },
+        {
+            "enabled": True,
+            "canRemove": True,
+            "name": "pushPublishMapPath",
+            "value": "${com.wowza.wms.context.VHostConfigHome}/conf/${com.wowza.wms.context.Application}/PushPublishMap.txt",
+            "type": "String",
+            "section": "/Root/Application",
+        },
+    ]
+
+    if getattr(settings, "WOWZA_SECURE_TOKEN_ENABLED", True):
+        advanced_settings.extend(wowza_secure_token_advanced_settings())
 
     return {
         "modules": [
@@ -368,54 +421,42 @@ def wowza_advanced_settings_payload(schedule_id):
                 "class": "com.wowza.wms.pushpublish.module.ModulePushPublish",
             },
         ],
-        "advancedSettings": [
-            {
-                "enabled": True,
-                "canRemove": True,
-                "name": "streamPublisherSmilFile",
-                "value": f"streamschedule-{schedule_id}.smil",
-                "type": "String",
-                "section": "/Root/Application",
-            },
-            {
-                "enabled": True,
-                "canRemove": True,
-                "name": "securityPublishPasswordFile",
-                "value": publish_password_file,
-                "type": "String",
-                "section": "/Root/Application",
-            },
-            {
-                "enabled": True,
-                "canRemove": True,
-                "name": "rtmpEncoderAuthenticateFile",
-                "value": publish_password_file,
-                "type": "String",
-                "section": "/Root/Application",
-            },
-            {
-                "enabled": True,
-                "canRemove": True,
-                "name": "pushPublishDebug",
-                "value": True,
-                "type": "Boolean",
-                "section": "/Root/Application",
-            },
-            {
-                "enabled": True,
-                "canRemove": True,
-                "name": "bufferSeekIO",
-                "value": True,
-                "type": "Boolean",
-                "section": "/Root/Application/MediaReader",
-            },
-            {
-                "enabled": True,
-                "canRemove": True,
-                "name": "pushPublishMapPath",
-                "value": "${com.wowza.wms.context.VHostConfigHome}/conf/${com.wowza.wms.context.Application}/PushPublishMap.txt",
-                "type": "String",
-                "section": "/Root/Application",
-            },
-        ],
+        "advancedSettings": advanced_settings,
     }
+
+
+def wowza_secure_token_advanced_settings():
+    return [
+        {
+            "enabled": True,
+            "canRemove": True,
+            "name": "securitySecureTokenVersion",
+            "value": 2,
+            "type": "Integer",
+            "section": "/Root/Application",
+        },
+        {
+            "enabled": True,
+            "canRemove": True,
+            "name": "securitySecureTokenSharedSecret",
+            "value": settings.WOWZA_LIVE_SECRET,
+            "type": "String",
+            "section": "/Root/Application",
+        },
+        {
+            "enabled": True,
+            "canRemove": True,
+            "name": "securitySecureTokenHashAlgorithm",
+            "value": settings.WOWZA_SECURE_TOKEN_HASH_ALGORITHM,
+            "type": "String",
+            "section": "/Root/Application",
+        },
+        {
+            "enabled": True,
+            "canRemove": True,
+            "name": "securitySecureTokenQueryParametersPrefix",
+            "value": settings.WOWZA_TOKEN_NAME,
+            "type": "String",
+            "section": "/Root/Application",
+        },
+    ]
