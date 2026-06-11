@@ -39,7 +39,11 @@ export function MediaItemVideo(props) {
 
     return (
       <a {...attr}>
-        {props.inPlaylistView ? null : (
+        {props.isLiveStream ? (
+          <span className="item-live-badge">
+            <span>EN VIVO</span>
+          </span>
+        ) : props.inPlaylistView ? null : (
           <MediaItemDuration ariaLabel={duration} time={durationISO8601} text={durationStr} />
         )}
         {props.inPlaylistView || props.inPlaylistPage ? null : (
@@ -101,6 +105,7 @@ MediaItemVideo.propTypes = {
   hidePlaylistOptions: PropTypes.bool,
   hasMediaViewer: PropTypes.bool,
   hasMediaViewerDescr: PropTypes.bool,
+  isLiveStream: PropTypes.bool,
   playlist_id: PropTypes.string,
 };
 
@@ -111,4 +116,5 @@ MediaItemVideo.defaultProps = {
   hidePlaylistOptions: true,
   hasMediaViewer: false,
   hasMediaViewerDescr: false,
+  isLiveStream: false,
 };

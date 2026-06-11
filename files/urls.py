@@ -73,6 +73,7 @@ urlpatterns = [
     re_path(r'^api/assign-ad-to-media-by-category/$', views.AssignAdToMediaByCategory.as_view()),
     re_path(r"^api/v1/comments$", views.CommentList.as_view()),
     re_path(r"^api/v1/live$", views.LiveList.as_view()),
+    re_path(r"^api/v1/wowza_live$", wowza_views.WowzaLiveApplicationListView.as_view()),
     re_path(
         r"^api/v1/media/(?P<friendly_token>[\w]*)/comments$",
         views.CommentDetail.as_view(),

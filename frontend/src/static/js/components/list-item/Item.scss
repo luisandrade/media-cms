@@ -170,6 +170,26 @@ a.item-thumb {
   letter-spacing: 0.5px;
 }
 
+.item-live-badge {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  pointer-events: none;
+
+  > span {
+    display: inline-block;
+    margin: 4px;
+    padding: 3px 6px;
+    color: #ffffff;
+    background-color: #ff121f;
+    border-radius: 2px;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 13px;
+    letter-spacing: 0.5px;
+  }
+}
+
 .item-type-icon {
   > * {
     float: left;

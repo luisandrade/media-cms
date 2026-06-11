@@ -29,6 +29,7 @@ export function init(base_url, endpoints) {
 
   ENDPOINTS = formatEndpoints({
     media: endpoints.media,
+    wowzaLive: endpoints.wowza_live,
     featured: endpoints.media + '?show=featured',
     recommended: endpoints.media + '?show=recommended',
     playlists: endpoints.playlists,

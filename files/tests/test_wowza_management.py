@@ -142,6 +142,34 @@ class WowzaManagementTests(TestCase):
         wowza_client.incoming_streams.assert_called_once()
 
     @patch("files.wowza_views.WowzaClient")
+    def test_public_live_applications_list_returns_safe_media_items(self, wowza_client_cls):
+        app = WowzaApplication.objects.create(
+            name="eventozlive",
+            schedule_id="schedule-live",
+            publish_username="eventozlive",
+            publish_password="Secret123",
+            created_by=self.admin,
+            storage_dir=f"/nas/{self.admin.id}",
+        )
+        wowza_client = Mock()
+        wowza_client.incoming_streams.return_value = {"incomingStreams": [{"name": "live"}]}
+        wowza_client_cls.return_value = wowza_client
+        self.client.force_login(self.user)
+
+        response = self.client.get("/api/v1/wowza_live")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["count"], 1)
+        result = response.json()["results"][0]
+        self.assertEqual(result["id"], f"wowza-{app.id}")
+        self.assertEqual(result["title"], "eventozlive")
+        self.assertEqual(result["media_type"], "video")
+        self.assertEqual(result["stream"], "https://scl.edge.grupoz.cl/eventozlive/live/playlist.m3u8")
+        self.assertEqual(result["is_live"], True)
+        self.assertNotIn("publish_password", result)
+        self.assertNotIn("publish_username", result)
+
+    @patch("files.wowza_views.WowzaClient")
     def test_delete_application_calls_wowza_and_removes_saved_app(self, wowza_client_cls):
         app = WowzaApplication.objects.create(
             name="eventoz08",

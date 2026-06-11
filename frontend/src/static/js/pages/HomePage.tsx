@@ -50,6 +50,7 @@ export const HomePage: React.FC<HomePageProps> = ({
   const [visibleLatest, setVisibleLatest] = useState(false);
   const [visibleFeatured, setVisibleFeatured] = useState(false);
   const [visibleRecommended, setVisibleRecommended] = useState(false);
+  const [visibleLive, setVisibleLive] = useState(false);
 
   const onLoadLatest = (length: number) => {
     setVisibleLatest(0 < length);
@@ -62,6 +63,10 @@ export const HomePage: React.FC<HomePageProps> = ({
 
   const onLoadRecommended = (length: number) => {
     setVisibleRecommended(0 < length);
+  };
+
+  const onLoadLive = (length: number) => {
+    setVisibleLive(0 < length);
   };
 
   return (
@@ -87,6 +92,19 @@ export const HomePage: React.FC<HomePageProps> = ({
                       />
                     </MediaListRow>
                   )}
+
+                <MediaListRow
+                  title="Señales en vivo"
+                  style={!visibleLive ? { display: 'none' } : undefined}
+                >
+                  <InlineSliderItemListAsync
+                    requestUrl={apiUrl.wowzaLive}
+                    itemsCountCallback={onLoadLive}
+                    hideViews={true}
+                    hideAuthor={!PageStore.get('config-media-item').displayAuthor}
+                    hideDate={!PageStore.get('config-media-item').displayPublishDate}
+                  />
+                </MediaListRow>
 
                 {PageStore.get('config-enabled').pages.recommended &&
                   PageStore.get('config-enabled').pages.recommended.enabled && (

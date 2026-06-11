@@ -2,6 +2,7 @@ from django.conf import settings
 from django.core.paginator import EmptyPage, Paginator
 from django.shortcuts import get_object_or_404
 import requests
+from rest_framework import permissions
 from rest_framework import status
 from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
@@ -165,6 +166,36 @@ class WowzaApplicationDetailView(APIView):
         )
 
 
+class WowzaLiveApplicationListView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+    parser_classes = (JSONParser,)
+
+    def get(self, request, format=None):
+        page = parse_positive_int(request.GET.get("page"), default=1)
+        page_size = min(parse_positive_int(request.GET.get("page_size"), default=12), 50)
+        applications = list(WowzaApplication.objects.filter(is_active=True).select_related("created_by").order_by("-add_date", "name"))
+        live_statuses = live_statuses_for_applications(applications)
+        live_applications = [app for app in applications if live_statuses.get(app.name, False)]
+        paginator = Paginator(live_applications, page_size)
+
+        try:
+            page_obj = paginator.page(page)
+        except EmptyPage:
+            page_obj = paginator.page(paginator.num_pages or 1)
+
+        return Response(
+            {
+                "count": paginator.count,
+                "next": next_page_url(request, page_obj) if page_obj.has_next() else None,
+                "previous": previous_page_url(request, page_obj) if page_obj.has_previous() else None,
+                "results": [
+                    serialize_public_wowza_live_application(app, request=request, is_live=live_statuses.get(app.name, False))
+                    for app in page_obj.object_list
+                ],
+            }
+        )
+
+
 def live_statuses_for_applications(applications):
     client = WowzaClient()
     statuses = {}
@@ -226,6 +257,40 @@ def get_wowza_max_applications():
         return int(getattr(settings, "WOWZA_MAX_APPLICATIONS", 10))
     except (TypeError, ValueError):
         return 10
+
+
+def next_page_url(request, page_obj):
+    return paginated_url(request, page_obj.next_page_number())
+
+
+def previous_page_url(request, page_obj):
+    return paginated_url(request, page_obj.previous_page_number())
+
+
+def paginated_url(request, page):
+    query_params = request.GET.copy()
+    query_params["page"] = page
+    return request.build_absolute_uri(f"{request.path}?{query_params.urlencode()}")
+
+
+def serialize_public_wowza_live_application(app, *, request, is_live=False):
+    hls_url = hls_url_for_application(app.name)
+    return {
+        "id": f"wowza-{app.id}",
+        "title": app.name,
+        "description": "Señal en vivo",
+        "url": hls_url,
+        "media_type": "video",
+        "duration": None,
+        "views": 0,
+        "thumbnail_url": "",
+        "preview_url": "",
+        "stream": hls_url,
+        "is_live": is_live,
+        "author_name": app.created_by.username if app.created_by else "",
+        "author_profile": request.build_absolute_uri("/") if app.created_by else "",
+        "add_date": app.add_date.isoformat() if app.add_date else "",
+    }
 
 
 def serialize_wowza_application(app, *, is_live=False):
