@@ -644,6 +644,32 @@
   }
 }
 
+.manage-wowza-record-waiting {
+  color: #8a5a00;
+  background: #fff7e6;
+
+  &:hover:not(:disabled) {
+    background: #ffedc2;
+  }
+
+  .material-icons {
+    color: #d28a00;
+  }
+
+  .dark_theme & {
+    color: #ffd28a;
+    background: rgba(216, 148, 22, 0.16);
+
+    &:hover:not(:disabled) {
+      background: rgba(216, 148, 22, 0.24);
+    }
+
+    .material-icons {
+      color: #ffd28a;
+    }
+  }
+}
+
 .manage-wowza-connect {
   color: #1668a8;
   background: #edf6ff;

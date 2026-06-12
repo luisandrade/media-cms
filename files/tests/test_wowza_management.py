@@ -7,7 +7,7 @@ from django.urls import reverse
 
 from files.models import StreamChatMessage, WowzaApplication
 from files.tests.user_utils import create_account
-from files.wowza_views import hls_playlist_is_live
+from files.wowza_views import hls_playlist_is_live, serialize_recording_status
 from files.wowza import (
     WowzaAPIError,
     WowzaClient,
@@ -148,10 +148,25 @@ class WowzaManagementTests(TestCase):
         self.assertIn("wowzatokenhash=", result["hls_url"])
         self.assertEqual(result["is_live"], True)
         self.assertEqual(result["is_recording"], True)
+        self.assertEqual(result["is_recording_waiting"], False)
+        self.assertEqual(result["is_recording_active"], True)
         self.assertEqual(result["recording_state"], "Recording in Progress")
         self.assertIn("eventoz06_live_", result["recording_file"])
         wowza_client.incoming_streams.assert_called_once()
         wowza_client.get_stream_recorder.assert_called_once_with(app_name=result["name"])
+
+    def test_recording_status_marks_waiting_for_stream(self):
+        result = serialize_recording_status(
+            {
+                "recorderState": "Waiting for stream",
+                "baseFile": "eventoz06_live_20260612T010000Z_1",
+            }
+        )
+
+        self.assertEqual(result["is_recording"], False)
+        self.assertEqual(result["is_recording_waiting"], True)
+        self.assertEqual(result["is_recording_active"], True)
+        self.assertEqual(result["recording_state"], "Waiting for stream")
 
     @patch("files.wowza_views.requests.get")
     @patch("files.wowza_views.WowzaClient")

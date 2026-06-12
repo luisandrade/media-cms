@@ -300,7 +300,7 @@ export class ManageWowzaPage extends Page {
   }
 
   async onStartRecording(app) {
-    const isRecording = !!app.is_recording;
+    const hasActiveRecorder = !!(app.is_recording || app.is_recording_waiting || app.is_recording_active);
     this.setState({
       recordingApplicationId: app.id,
       error: null,
@@ -316,13 +316,13 @@ export class ManageWowzaPage extends Page {
           'X-CSRFToken': csrfToken(),
         },
         body: JSON.stringify({
-          action: isRecording ? 'stop' : 'start',
+          action: hasActiveRecorder ? 'stop' : 'start',
         }),
       });
       const payload = await response.json();
 
       if (!response.ok || false === payload.success) {
-        throw new Error(payload.message || `No fue posible ${isRecording ? 'detener' : 'iniciar'} el recording.`);
+        throw new Error(payload.message || `No fue posible ${hasActiveRecorder ? 'detener' : 'iniciar'} el recording.`);
       }
 
       this.setState({
@@ -337,6 +337,34 @@ export class ManageWowzaPage extends Page {
         error: getErrorMessage(error),
       });
     }
+  }
+
+  recordingButtonLabel(app) {
+    if (this.state.recordingApplicationId === app.id) {
+      return app.is_recording || app.is_recording_waiting || app.is_recording_active ? 'Deteniendo' : 'Iniciando';
+    }
+
+    if (app.is_recording) {
+      return 'Grabando';
+    }
+
+    if (app.is_recording_waiting) {
+      return 'Esperando señal';
+    }
+
+    return 'Iniciar recording';
+  }
+
+  recordingButtonIcon(app) {
+    if (app.is_recording) {
+      return 'stop_circle';
+    }
+
+    if (app.is_recording_waiting) {
+      return 'schedule';
+    }
+
+    return 'fiber_manual_record';
   }
 
   onTogglePassword(appId) {
@@ -661,26 +689,24 @@ export class ManageWowzaPage extends Page {
                       </span>
                       <span>
                         <button
-                          className={`manage-wowza-record ${app.is_recording ? 'manage-wowza-record-active' : ''}`}
+                          className={`manage-wowza-record ${app.is_recording ? 'manage-wowza-record-active' : ''} ${
+                            app.is_recording_waiting ? 'manage-wowza-record-waiting' : ''
+                          }`}
                           type="button"
                           onClick={() => this.onStartRecording(app)}
                           disabled={recordingApplicationId === app.id}
-                          title={app.is_recording ? 'Detener recording' : 'Iniciar recording segmentado por duración'}
+                          title={
+                            app.is_recording || app.is_recording_waiting || app.is_recording_active
+                              ? 'Detener recording'
+                              : 'Iniciar recording segmentado por duración'
+                          }
                         >
                           {recordingApplicationId === app.id ? (
                             <SpinnerLoader size="small" />
                           ) : (
-                            <MaterialIcon type={app.is_recording ? 'stop_circle' : 'fiber_manual_record'} />
+                            <MaterialIcon type={this.recordingButtonIcon(app)} />
                           )}
-                          <span>
-                            {recordingApplicationId === app.id
-                              ? app.is_recording
-                                ? 'Deteniendo'
-                                : 'Iniciando'
-                              : app.is_recording
-                              ? 'Grabando'
-                              : 'Iniciar recording'}
-                          </span>
+                          <span>{this.recordingButtonLabel(app)}</span>
                         </button>
                       </span>
                       <span>{app.publish_username || app.name}</span>

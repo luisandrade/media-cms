@@ -322,22 +322,30 @@ def serialize_recording_status(payload):
     state = find_key_in_payload(payload, "recorderState") or ""
     current_file = find_key_in_payload(payload, "currentFile") or ""
     base_file = find_key_in_payload(payload, "baseFile") or ""
+    normalized_state = normalize_recording_state(state)
     is_recording = recording_state_is_active(state)
+    is_waiting = "waiting" in normalized_state and "stream" in normalized_state
     return {
         "is_recording": is_recording,
+        "is_recording_waiting": is_waiting,
+        "is_recording_active": is_recording or is_waiting,
         "recording_state": state,
         "recording_file": current_file or base_file,
     }
 
 
 def recording_state_is_active(state):
-    normalized = str(state or "").strip().lower().replace("_", " ").replace("-", " ")
+    normalized = normalize_recording_state(state)
     if not normalized:
         return False
     stopped_words = ("stop", "stopped", "waiting", "error", "idle", "not recording")
     if any(word in normalized for word in stopped_words):
         return False
     return "record" in normalized or "running" in normalized or "started" in normalized
+
+
+def normalize_recording_state(state):
+    return str(state or "").strip().lower().replace("_", " ").replace("-", " ")
 
 
 def find_key_in_payload(payload, key):
@@ -470,6 +478,8 @@ def serialize_wowza_application(app, *, is_live=False, recording_status=None):
         "hls_url": hls_url_for_application(app.name),
         "is_live": is_live,
         "is_recording": recording_status["is_recording"],
+        "is_recording_waiting": recording_status["is_recording_waiting"],
+        "is_recording_active": recording_status["is_recording_active"],
         "recording_state": recording_status["recording_state"],
         "recording_file": recording_status["recording_file"],
         "is_active": app.is_active,
