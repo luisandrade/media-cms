@@ -457,13 +457,19 @@ class WowzaManagementTests(TestCase):
             payload["securityConfig"]["publishPasswordFile"],
             "${com.wowza.wms.context.VHostConfigHome}/conf/${com.wowza.wms.context.Application}/publish.password",
         )
-        self.assertEqual(payload["streamConfig"]["streamType"], "live-record")
+        self.assertEqual(payload["streamConfig"]["streamType"], "live")
         self.assertEqual(
             payload["streamConfig"]["liveStreamPacketizer"],
             ["cupertinostreamingpacketizer", "sanjosestreamingpacketizer", "smoothstreamingpacketizer"],
         )
 
-    @override_settings(WOWZA_RECORD_ALL_INCOMING_STREAMS_ENABLED=False)
+    @override_settings(WOWZA_RECORD_AUTO_RECORD_MODULE_ENABLED=False)
+    def test_live_application_payload_can_use_wowza_live_record_stream_type(self):
+        payload = wowza_live_application_payload(name="eventoz10", storage_user_id=1)
+
+        self.assertEqual(payload["streamConfig"]["streamType"], "live-record")
+
+    @override_settings(WOWZA_RECORD_ALL_INCOMING_STREAMS_ENABLED=False, WOWZA_RECORD_AUTO_RECORD_MODULE_ENABLED=False)
     def test_live_application_payload_can_disable_record_all_incoming_streams(self):
         payload = wowza_live_application_payload(name="eventoz10", storage_user_id=1)
 
@@ -474,11 +480,19 @@ class WowzaManagementTests(TestCase):
         module_names = [module["name"] for module in payload["modules"]]
         settings_by_name = {setting["name"]: setting for setting in payload["advancedSettings"]}
         security_module = next(module for module in payload["modules"] if module["name"] == "ModuleCoreSecurity")
+        auto_record_module = next(module for module in payload["modules"] if module["name"] == "ModuleAutoRecord")
         security_password_file_setting = settings_by_name["securityPublishPasswordFile"]
         auth_setting = settings_by_name["rtmpEncoderAuthenticateFile"]
 
         self.assertNotIn("rtmpAuthenticate", module_names)
         self.assertEqual(security_module["class"], "com.wowza.wms.security.ModuleCoreSecurity")
+        self.assertEqual(auto_record_module["class"], "com.wowza.wms.plugin.ModuleAutoRecord")
+        self.assertEqual(settings_by_name["streamRecorderRecordAllStreams"]["section"], "/Root/Application/StreamRecorder")
+        self.assertEqual(settings_by_name["streamRecorderRecordAllStreams"]["value"], True)
+        self.assertEqual(settings_by_name["streamRecorderRecordAllStreams"]["type"], "Boolean")
+        self.assertEqual(settings_by_name["streamRecorderRecordType"]["section"], "/Root/Application/StreamRecorder")
+        self.assertEqual(settings_by_name["streamRecorderRecordType"]["value"], "all")
+        self.assertEqual(settings_by_name["streamRecorderRecordType"]["type"], "String")
         self.assertEqual(security_password_file_setting["section"], "/Root/Application")
         self.assertEqual(security_password_file_setting["type"], "String")
         self.assertEqual(
@@ -501,7 +515,7 @@ class WowzaManagementTests(TestCase):
         self.assertEqual(settings_by_name["streamRecorderSegmentationType"]["type"], "String")
         self.assertEqual(settings_by_name["streamRecorderSegmentDuration"]["section"], "/Root/Application/StreamRecorder")
         self.assertEqual(settings_by_name["streamRecorderSegmentDuration"]["value"], 900000)
-        self.assertEqual(settings_by_name["streamRecorderSegmentDuration"]["type"], "Integer")
+        self.assertEqual(settings_by_name["streamRecorderSegmentDuration"]["type"], "Long")
         self.assertEqual(settings_by_name["streamRecorderFileFormat"]["value"], "mp4")
         self.assertEqual(settings_by_name["streamRecorderVersioningOption"]["value"], "version")
         self.assertEqual(
@@ -528,6 +542,17 @@ class WowzaManagementTests(TestCase):
 
         self.assertNotIn("streamRecorderSegmentationType", setting_names)
         self.assertNotIn("streamRecorderSegmentDuration", setting_names)
+
+    @override_settings(WOWZA_RECORD_AUTO_RECORD_MODULE_ENABLED=False)
+    def test_advanced_settings_can_disable_auto_record_module(self):
+        payload = wowza_advanced_settings_payload("schedule10")
+        module_names = {module["name"] for module in payload["modules"]}
+        setting_names = {setting["name"] for setting in payload["advancedSettings"]}
+
+        self.assertNotIn("ModuleAutoRecord", module_names)
+        self.assertNotIn("streamRecorderRecordAllStreams", setting_names)
+        self.assertNotIn("streamRecorderRecordType", setting_names)
+        self.assertIn("streamRecorderSegmentationType", setting_names)
 
     @override_settings(WOWZA_RECORD_SEGMENT_DURATION_SECONDS=60)
     def test_advanced_settings_uses_configured_record_segment_duration(self):

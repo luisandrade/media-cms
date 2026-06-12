@@ -243,6 +243,9 @@ WOWZA_MAX_APPLICATIONS = int(os.getenv("WOWZA_MAX_APPLICATIONS", "10"))
 WOWZA_RECORD_ALL_INCOMING_STREAMS_ENABLED = os.getenv(
     "WOWZA_RECORD_ALL_INCOMING_STREAMS_ENABLED", "true"
 ).lower() in ("1", "true", "yes", "on")
+WOWZA_RECORD_AUTO_RECORD_MODULE_ENABLED = os.getenv(
+    "WOWZA_RECORD_AUTO_RECORD_MODULE_ENABLED", "true"
+).lower() in ("1", "true", "yes", "on")
 WOWZA_RECORD_SEGMENT_BY_DURATION_ENABLED = os.getenv(
     "WOWZA_RECORD_SEGMENT_BY_DURATION_ENABLED", "true"
 ).lower() in ("1", "true", "yes", "on")

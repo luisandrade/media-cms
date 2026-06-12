@@ -299,7 +299,12 @@ def wowza_push_publish_map_entry_payload():
 
 
 def wowza_live_application_payload(*, name, storage_user_id):
-    stream_type = "live-record" if getattr(settings, "WOWZA_RECORD_ALL_INCOMING_STREAMS_ENABLED", True) else "live"
+    stream_type = "live"
+    if (
+        getattr(settings, "WOWZA_RECORD_ALL_INCOMING_STREAMS_ENABLED", True)
+        and not getattr(settings, "WOWZA_RECORD_AUTO_RECORD_MODULE_ENABLED", True)
+    ):
+        stream_type = "live-record"
     security_config = {
         "publishRequirePassword": True,
         "publishAuthenticationMethod": settings.WOWZA_PUBLISH_AUTH_METHOD,
@@ -386,45 +391,57 @@ def wowza_advanced_settings_payload(schedule_id):
     if getattr(settings, "WOWZA_RECORD_SEGMENT_BY_DURATION_ENABLED", True):
         advanced_settings.extend(wowza_stream_recorder_advanced_settings())
 
+    modules = [
+        {
+            "order": 0,
+            "name": "base",
+            "description": "Base",
+            "class": "com.wowza.wms.module.ModuleCore",
+        },
+        {
+            "order": 1,
+            "name": "ModuleCoreSecurity",
+            "description": "Core Security",
+            "class": "com.wowza.wms.security.ModuleCoreSecurity",
+        },
+        {
+            "order": 2,
+            "name": "logging",
+            "description": "Client Logging",
+            "class": "com.wowza.wms.module.ModuleClientLogging",
+        },
+        {
+            "order": 3,
+            "name": "flvplayback",
+            "description": "FLVPlayback",
+            "class": "com.wowza.wms.module.ModuleFLVPlayback",
+        },
+        {
+            "order": 4,
+            "name": "streamPublisher",
+            "description": "Schedules streams and playlists.",
+            "class": "com.wowza.wms.plugin.streampublisher.ModuleStreamPublisher",
+        },
+        {
+            "order": 5,
+            "name": "modulePushPublish",
+            "description": "ModulePushPublish enable StreamTarget.",
+            "class": "com.wowza.wms.pushpublish.module.ModulePushPublish",
+        },
+    ]
+
+    if getattr(settings, "WOWZA_RECORD_AUTO_RECORD_MODULE_ENABLED", True):
+        modules.append(
+            {
+                "order": 6,
+                "name": "ModuleAutoRecord",
+                "description": "Auto-record incoming streams with StreamRecorder defaults.",
+                "class": "com.wowza.wms.plugin.ModuleAutoRecord",
+            }
+        )
+
     return {
-        "modules": [
-            {
-                "order": 0,
-                "name": "base",
-                "description": "Base",
-                "class": "com.wowza.wms.module.ModuleCore",
-            },
-            {
-                "order": 1,
-                "name": "ModuleCoreSecurity",
-                "description": "Core Security",
-                "class": "com.wowza.wms.security.ModuleCoreSecurity",
-            },
-            {
-                "order": 2,
-                "name": "logging",
-                "description": "Client Logging",
-                "class": "com.wowza.wms.module.ModuleClientLogging",
-            },
-            {
-                "order": 3,
-                "name": "flvplayback",
-                "description": "FLVPlayback",
-                "class": "com.wowza.wms.module.ModuleFLVPlayback",
-            },
-            {
-                "order": 4,
-                "name": "streamPublisher",
-                "description": "Schedules streams and playlists.",
-                "class": "com.wowza.wms.plugin.streampublisher.ModuleStreamPublisher",
-            },
-            {
-                "order": 5,
-                "name": "modulePushPublish",
-                "description": "ModulePushPublish enable StreamTarget.",
-                "class": "com.wowza.wms.pushpublish.module.ModulePushPublish",
-            },
-        ],
+        "modules": modules,
         "advancedSettings": advanced_settings,
     }
 
@@ -468,7 +485,31 @@ def wowza_secure_token_advanced_settings():
 
 def wowza_stream_recorder_advanced_settings():
     segment_duration_seconds = max(int(getattr(settings, "WOWZA_RECORD_SEGMENT_DURATION_SECONDS", 900)), 10)
-    return [
+    settings_payload = []
+    if getattr(settings, "WOWZA_RECORD_AUTO_RECORD_MODULE_ENABLED", True):
+        settings_payload.extend(
+            [
+                {
+                    "enabled": True,
+                    "canRemove": True,
+                    "name": "streamRecorderRecordAllStreams",
+                    "value": True,
+                    "type": "Boolean",
+                    "section": "/Root/Application/StreamRecorder",
+                },
+                {
+                    "enabled": True,
+                    "canRemove": True,
+                    "name": "streamRecorderRecordType",
+                    "value": "all",
+                    "type": "String",
+                    "section": "/Root/Application/StreamRecorder",
+                },
+            ]
+        )
+
+    settings_payload.extend(
+        [
         {
             "enabled": True,
             "canRemove": True,
@@ -482,7 +523,7 @@ def wowza_stream_recorder_advanced_settings():
             "canRemove": True,
             "name": "streamRecorderSegmentDuration",
             "value": segment_duration_seconds * 1000,
-            "type": "Integer",
+            "type": "Long",
             "section": "/Root/Application/StreamRecorder",
         },
         {
@@ -525,4 +566,6 @@ def wowza_stream_recorder_advanced_settings():
             "type": "Boolean",
             "section": "/Root/Application/StreamRecorder",
         },
-    ]
+        ]
+    )
+    return settings_payload
