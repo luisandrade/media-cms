@@ -232,6 +232,12 @@ class WowzaClient:
             f"{quote_wowza_path_segment(instance_name)}/streamrecorders/{quote_wowza_path_segment(recorder_name)}"
         )
 
+    def stream_recorder_action_path(self, *, app_name, action, recorder_name=None, instance_name="_definst_"):
+        return (
+            f"{self.stream_recorder_path(app_name=app_name, recorder_name=recorder_name, instance_name=instance_name)}"
+            f"/actions/{quote_wowza_path_segment(action)}"
+        )
+
     def create_stream_recorder(self, *, app_name, recorder_name=None, instance_name="_definst_", replace_existing=False):
         recorder_name = recorder_name or getattr(settings, "WOWZA_RECORD_STREAM_NAME", settings.WOWZA_PUSH_PUBLISH_STREAM_NAME)
         path = self.stream_recorder_path(app_name=app_name, recorder_name=recorder_name, instance_name=instance_name)
@@ -264,30 +270,14 @@ class WowzaClient:
 
     def stop_stream_recording(self, *, app_name, recorder_name=None, instance_name="_definst_"):
         recorder_name = recorder_name or getattr(settings, "WOWZA_RECORD_STREAM_NAME", settings.WOWZA_PUSH_PUBLISH_STREAM_NAME)
-        path = self.stream_recorder_path(app_name=app_name, recorder_name=recorder_name, instance_name=instance_name)
-        try:
-            payload = self.get_stream_recorder(app_name=app_name, recorder_name=recorder_name, instance_name=instance_name)
-        except WowzaAPIError as exc:
-            if exc.status_code != 404:
-                raise
-            payload = wowza_stream_recorder_payload(app_name=app_name, recorder_name=recorder_name, instance_name=instance_name)
-
-        if not isinstance(payload, dict):
-            payload = wowza_stream_recorder_payload(app_name=app_name, recorder_name=recorder_name, instance_name=instance_name)
-
-        payload.update(
-            {
-                "applicationName": app_name,
-                "instanceName": instance_name,
-                "recorderName": recorder_name,
-                "recorderState": "Stopped",
-                "recordData": False,
-            }
-        )
         return self.request(
             "PUT",
-            path,
-            payload,
+            self.stream_recorder_action_path(
+                app_name=app_name,
+                recorder_name=recorder_name,
+                instance_name=instance_name,
+                action="stopRecording",
+            ),
         )
 
 

@@ -603,21 +603,15 @@ class WowzaManagementTests(TestCase):
 
     def test_wowza_client_stops_stream_recorder_with_put(self):
         client = WowzaClient(base_url="http://wowza.example", username="u", password="p")
-        client.request = Mock(
-            side_effect=[
-                {"recorderName": "live", "recorderState": "Recording in Progress", "recordData": True},
-                {"stopped": True},
-            ]
-        )
+        client.request = Mock(return_value={"success": True, "message": "Recording (live) stopped", "data": None})
 
         response = client.stop_stream_recording(app_name="eventoz10")
 
-        self.assertEqual(response, {"stopped": True})
-        self.assertEqual(client.request.call_args_list[0][0][0], "GET")
-        self.assertEqual(client.request.call_args_list[1][0][0], "PUT")
-        self.assertEqual(client.request.call_args_list[1][0][1], "applications/eventoz10/instances/_definst_/streamrecorders/live")
-        self.assertEqual(client.request.call_args_list[1][0][2]["recorderState"], "Stopped")
-        self.assertEqual(client.request.call_args_list[1][0][2]["recordData"], False)
+        self.assertEqual(response, {"success": True, "message": "Recording (live) stopped", "data": None})
+        client.request.assert_called_once_with(
+            "PUT",
+            "applications/eventoz10/instances/_definst_/streamrecorders/live/actions/stopRecording",
+        )
 
     @override_settings(WOWZA_RECORD_SEGMENT_BY_DURATION_ENABLED=False)
     def test_wowza_client_can_skip_segmented_stream_recorder(self):
