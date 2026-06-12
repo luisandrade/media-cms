@@ -9,11 +9,17 @@ export function UpNextLoaderView(nextItemData) {
   };
 
   var showView = function () {
+    if (!this.vjsPlayerElem) {
+      return;
+    }
     removeClassname(this.vjsPlayerElem, 'vjs-mediacms-up-next-hidden');
   }.bind(this);
 
   var hideView = function () {
     this.cancelTimer();
+    if (!this.vjsPlayerElem) {
+      return;
+    }
     addClassname(this.vjsPlayerElem, 'vjs-mediacms-up-next-hidden');
   }.bind(this);
 
@@ -71,6 +77,10 @@ export function UpNextLoaderView(nextItemData) {
   var pauseTimerOnScroll = false;
 
   function onScrollHandler() {
+    if (!this.vjsPlayerElem) {
+      return;
+    }
+
     var rect = this.vjsPlayerElem.getBoundingClientRect();
     var scrollTop = window.pageYOffset || document.documentElement.scrollTop;
     if (0 >= this.vjsPlayerElem.offsetHeight - 56 + rect.top) {
@@ -104,6 +114,10 @@ export function UpNextLoaderView(nextItemData) {
   };
 
   this.startTimer = function () {
+    if (!this.vjsPlayerElem) {
+      return;
+    }
+
     showView();
     timerTimeout = setTimeout(onTimerComplete, 10 * 1000);
     if (this.vjsPlayerElem) removeClassname(this.vjsPlayerElem, 'vjs-mediacms-canceled-next');
@@ -124,6 +138,7 @@ export function UpNextLoaderView(nextItemData) {
     if (!el) return;
     this.vjsPlayerElem = el;
     addClassname(this.vjsPlayerElem, 'vjs-mediacms-has-up-next-view');
+    addClassname(this.vjsPlayerElem, 'vjs-mediacms-up-next-hidden');
   };
 
   this.showTimerView = function (beginTimer) {

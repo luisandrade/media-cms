@@ -430,8 +430,25 @@ export default class VideoViewer extends React.PureComponent {
           };
 
     if (this.upNextLoaderView) {
-      this.upNextLoaderView.setVideoJsPlayerElem(this.playerInstance.player?.el_ || this.playerInstance.player?.el?.());
-      this.onUpdateMediaAutoPlay();
+      const setUpNextPlayerElement = () => {
+        const playerElem =
+          this.playerInstance.player?.el?.() ||
+          this.playerInstance.player?.el_ ||
+          this.playerElem?.parentNode ||
+          this.playerElem;
+
+        if (!playerElem) {
+          return false;
+        }
+
+        this.upNextLoaderView.setVideoJsPlayerElem(playerElem);
+        this.onUpdateMediaAutoPlay();
+        return true;
+      };
+
+      if (!setUpNextPlayerElement()) {
+        window.setTimeout(setUpNextPlayerElement, 0);
+      }
     }
 
     if (!this.props.inEmbed && this.playerElem?.parentNode) {

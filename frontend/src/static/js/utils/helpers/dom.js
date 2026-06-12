@@ -4,6 +4,10 @@ export function supportsSvgAsImg() {
 }
 
 export function removeClassname(el, cls) {
+  if (!el) {
+    return;
+  }
+
   if (el.classList) {
     el.classList.remove(cls);
   } else {
@@ -12,6 +16,10 @@ export function removeClassname(el, cls) {
 }
 
 export function addClassname(el, cls) {
+  if (!el) {
+    return;
+  }
+
   if (el.classList) {
     el.classList.add(cls);
   } else {
