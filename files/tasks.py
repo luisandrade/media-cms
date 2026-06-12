@@ -540,6 +540,12 @@ def post_trim_action(friendly_token):
     media.set_media_type()
     encodings = media.encodings.filter(status="success", profile__extension="mp4", chunk=False)
     if encodings:
+        from .models import generate_smil
+
+        media.encoding_status = "waiting_smil"
+        media.save(update_fields=["encoding_status"])
+        generate_smil(media)
+
         media.produce_thumbnails_from_video()
         produce_sprite_from_video.delay(friendly_token)
         create_hls.delay(friendly_token)
