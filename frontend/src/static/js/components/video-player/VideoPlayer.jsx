@@ -59,6 +59,7 @@ export function VideoPlayer(props) {
   const playerRef = useRef(null);
   const vodUiObserverRef = useRef(null);
   const vodUiTimeoutsRef = useRef([]);
+  const cornerLayerElsRef = useRef([]);
 
   useEffect(() => {
     const balancerDebug = props.playback_url_token?._balancer;
@@ -212,7 +213,54 @@ export function VideoPlayer(props) {
     });
 
     playerRef.current = player;
-    props.onPlayerInitCallback?.(player);
+
+    const playerRootEl = player.el?.();
+    if (playerRootEl && props.cornerLayers) {
+      const layerMap = [
+        ['topLeft', 'vjs-corner-layer vjs-corner-top-left'],
+        ['topRight', 'vjs-corner-layer vjs-corner-top-right'],
+        ['bottomLeft', 'vjs-corner-layer vjs-corner-bottom-left'],
+        ['bottomRight', 'vjs-corner-layer vjs-corner-bottom-right'],
+      ];
+
+      cornerLayerElsRef.current = layerMap
+        .map(([key, className]) => {
+          const content = props.cornerLayers[key];
+          if (!content) return null;
+
+          const layer = document.createElement('div');
+          layer.setAttribute('class', className);
+
+          if (content instanceof Node) {
+            layer.appendChild(content);
+          } else {
+            layer.innerHTML = content;
+          }
+
+          playerRootEl.appendChild(layer);
+          return layer;
+        })
+        .filter(Boolean);
+    }
+
+    props.onPlayerInitCallback?.(
+      {
+        player,
+        isEnded: () => player.ended(),
+        isFullscreen: () => player.isFullscreen(),
+      },
+      videoElemRef.current
+    );
+
+    player.on('ended', () => {
+      props.onStateUpdateCallback?.({
+        volume: player.volume(),
+        soundMuted: player.muted(),
+        quality: playerStates.videoQuality,
+        playbackSpeed: player.playbackRate(),
+        theaterMode: playerStates.inTheaterMode,
+      });
+    });
 
     const isVodUrl = (url) => {
       const safeUrl = (url ?? '').toString();
@@ -353,6 +401,16 @@ export function VideoPlayer(props) {
   
 
   const unsetPlayer = () => {
+    if (cornerLayerElsRef.current?.length) {
+      cornerLayerElsRef.current.forEach((el) => {
+        try {
+          el.remove();
+        } catch (e) {
+          // no-op
+        }
+      });
+      cornerLayerElsRef.current = [];
+    }
     if (vodUiTimeoutsRef.current?.length) {
       vodUiTimeoutsRef.current.forEach((t) => clearTimeout(t));
       vodUiTimeoutsRef.current = [];
