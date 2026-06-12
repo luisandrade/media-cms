@@ -584,6 +584,41 @@ class WowzaManagementTests(TestCase):
         self.assertEqual(result["stream_recorder"], {"success": True})
         client.create_stream_recorder.assert_called_once_with(app_name="eventoz10")
 
+    def test_wowza_client_reconfigures_existing_stream_recorder_when_starting(self):
+        client = WowzaClient(base_url="http://wowza.example", username="u", password="p")
+        client.request = Mock(
+            side_effect=[
+                WowzaAPIError("exists", status_code=409),
+                {"updated": True},
+            ]
+        )
+
+        response = client.start_stream_recording(app_name="eventoz10")
+
+        self.assertEqual(response, {"updated": True})
+        self.assertEqual(client.request.call_args_list[0][0][0], "POST")
+        self.assertEqual(client.request.call_args_list[1][0][0], "PUT")
+        self.assertEqual(client.request.call_args_list[1][0][1], "applications/eventoz10/instances/_definst_/streamrecorders/live")
+        self.assertRegex(client.request.call_args_list[1][0][2]["baseFile"], r"^eventoz10_live_\d{8}T\d{6}Z_[a-f0-9]{6}$")
+
+    def test_wowza_client_stops_stream_recorder_with_put(self):
+        client = WowzaClient(base_url="http://wowza.example", username="u", password="p")
+        client.request = Mock(
+            side_effect=[
+                {"recorderName": "live", "recorderState": "Recording in Progress", "recordData": True},
+                {"stopped": True},
+            ]
+        )
+
+        response = client.stop_stream_recording(app_name="eventoz10")
+
+        self.assertEqual(response, {"stopped": True})
+        self.assertEqual(client.request.call_args_list[0][0][0], "GET")
+        self.assertEqual(client.request.call_args_list[1][0][0], "PUT")
+        self.assertEqual(client.request.call_args_list[1][0][1], "applications/eventoz10/instances/_definst_/streamrecorders/live")
+        self.assertEqual(client.request.call_args_list[1][0][2]["recorderState"], "Stopped")
+        self.assertEqual(client.request.call_args_list[1][0][2]["recordData"], False)
+
     @override_settings(WOWZA_RECORD_SEGMENT_BY_DURATION_ENABLED=False)
     def test_wowza_client_can_skip_segmented_stream_recorder(self):
         client = WowzaClient(base_url="http://wowza.example", username="u", password="p")

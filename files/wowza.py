@@ -225,12 +225,16 @@ class WowzaClient:
     def update_advanced_settings(self, *, name, schedule_id):
         return self.request("POST", f"applications/{quote_wowza_path_segment(name)}/adv", wowza_advanced_settings_payload(schedule_id))
 
-    def create_stream_recorder(self, *, app_name, recorder_name=None, instance_name="_definst_", replace_existing=False):
+    def stream_recorder_path(self, *, app_name, recorder_name=None, instance_name="_definst_"):
         recorder_name = recorder_name or getattr(settings, "WOWZA_RECORD_STREAM_NAME", settings.WOWZA_PUSH_PUBLISH_STREAM_NAME)
-        path = (
+        return (
             f"applications/{quote_wowza_path_segment(app_name)}/instances/"
             f"{quote_wowza_path_segment(instance_name)}/streamrecorders/{quote_wowza_path_segment(recorder_name)}"
         )
+
+    def create_stream_recorder(self, *, app_name, recorder_name=None, instance_name="_definst_", replace_existing=False):
+        recorder_name = recorder_name or getattr(settings, "WOWZA_RECORD_STREAM_NAME", settings.WOWZA_PUSH_PUBLISH_STREAM_NAME)
+        path = self.stream_recorder_path(app_name=app_name, recorder_name=recorder_name, instance_name=instance_name)
         payload = wowza_stream_recorder_payload(
             app_name=app_name,
             recorder_name=recorder_name,
@@ -242,12 +246,7 @@ class WowzaClient:
             if exc.status_code != 409:
                 raise
             if replace_existing:
-                try:
-                    self.stop_stream_recording(app_name=app_name, recorder_name=recorder_name, instance_name=instance_name)
-                except WowzaAPIError as stop_exc:
-                    if stop_exc.status_code != 404:
-                        raise
-                return self.request("POST", path, wowza_stream_recorder_payload(app_name=app_name, recorder_name=recorder_name, instance_name=instance_name))
+                return self.request("PUT", path, wowza_stream_recorder_payload(app_name=app_name, recorder_name=recorder_name, instance_name=instance_name))
             return {
                 "success": True,
                 "message": "El stream recorder ya existía en Wowza.",
@@ -258,23 +257,37 @@ class WowzaClient:
         return self.create_stream_recorder(app_name=app_name, recorder_name=recorder_name, instance_name=instance_name, replace_existing=True)
 
     def get_stream_recorder(self, *, app_name, recorder_name=None, instance_name="_definst_"):
-        recorder_name = recorder_name or getattr(settings, "WOWZA_RECORD_STREAM_NAME", settings.WOWZA_PUSH_PUBLISH_STREAM_NAME)
         return self.request(
             "GET",
-            (
-                f"applications/{quote_wowza_path_segment(app_name)}/instances/"
-                f"{quote_wowza_path_segment(instance_name)}/streamrecorders/{quote_wowza_path_segment(recorder_name)}"
-            ),
+            self.stream_recorder_path(app_name=app_name, recorder_name=recorder_name, instance_name=instance_name),
         )
 
     def stop_stream_recording(self, *, app_name, recorder_name=None, instance_name="_definst_"):
         recorder_name = recorder_name or getattr(settings, "WOWZA_RECORD_STREAM_NAME", settings.WOWZA_PUSH_PUBLISH_STREAM_NAME)
+        path = self.stream_recorder_path(app_name=app_name, recorder_name=recorder_name, instance_name=instance_name)
+        try:
+            payload = self.get_stream_recorder(app_name=app_name, recorder_name=recorder_name, instance_name=instance_name)
+        except WowzaAPIError as exc:
+            if exc.status_code != 404:
+                raise
+            payload = wowza_stream_recorder_payload(app_name=app_name, recorder_name=recorder_name, instance_name=instance_name)
+
+        if not isinstance(payload, dict):
+            payload = wowza_stream_recorder_payload(app_name=app_name, recorder_name=recorder_name, instance_name=instance_name)
+
+        payload.update(
+            {
+                "applicationName": app_name,
+                "instanceName": instance_name,
+                "recorderName": recorder_name,
+                "recorderState": "Stopped",
+                "recordData": False,
+            }
+        )
         return self.request(
-            "DELETE",
-            (
-                f"applications/{quote_wowza_path_segment(app_name)}/instances/"
-                f"{quote_wowza_path_segment(instance_name)}/streamrecorders/{quote_wowza_path_segment(recorder_name)}"
-            ),
+            "PUT",
+            path,
+            payload,
         )
 
 

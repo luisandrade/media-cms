@@ -583,10 +583,6 @@ export class ManageWowzaPage extends Page {
                 />
               </label>
 
-              {validationError ? <div className="manage-wowza-message manage-wowza-message-error">{validationError}</div> : null}
-              {error ? <div className="manage-wowza-message manage-wowza-message-error">{error}</div> : null}
-              {result ? <div className="manage-wowza-message manage-wowza-message-success">{result.message || 'Operación completada correctamente.'}</div> : null}
-
               <button
                 className="manage-wowza-submit"
                 type="submit"
@@ -619,6 +615,14 @@ export class ManageWowzaPage extends Page {
               </dl>
             </section>
           </div>
+
+          {validationError || error || result ? (
+            <div className="manage-wowza-feedback">
+              {validationError ? <div className="manage-wowza-message manage-wowza-message-error">{validationError}</div> : null}
+              {error ? <div className="manage-wowza-message manage-wowza-message-error">{error}</div> : null}
+              {result ? <div className="manage-wowza-message manage-wowza-message-success">{result.message || 'Operación completada correctamente.'}</div> : null}
+            </div>
+          ) : null}
 
           <section className="manage-wowza-apps">
             <div className="manage-wowza-apps-head">
