@@ -309,11 +309,15 @@ export class ManageWowzaPage extends Page {
 
     try {
       const response = await fetch(`${ApiUrlContext._currentValue.manage.wowzaApplications}/${app.id}/recording`, {
-        method: isRecording ? 'DELETE' : 'POST',
+        method: 'POST',
         credentials: 'same-origin',
         headers: {
+          'Content-Type': 'application/json',
           'X-CSRFToken': csrfToken(),
         },
+        body: JSON.stringify({
+          action: isRecording ? 'stop' : 'start',
+        }),
       });
       const payload = await response.json();
 

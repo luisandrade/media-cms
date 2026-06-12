@@ -6,7 +6,7 @@ import requests
 import time
 from rest_framework import permissions
 from rest_framework import status
-from rest_framework.parsers import JSONParser
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -186,10 +186,23 @@ class WowzaApplicationDetailView(APIView):
 
 class WowzaApplicationRecordingView(APIView):
     permission_classes = (IsMediacmsAdmin,)
-    parser_classes = (JSONParser,)
+    parser_classes = (JSONParser, FormParser, MultiPartParser)
 
     def post(self, request, app_id, format=None):
         app = get_object_or_404(WowzaApplication, id=app_id)
+        action = (request.data.get("action") or "start").strip().lower()
+
+        if action == "stop":
+            return self.stop_recording(app)
+
+        if action != "start":
+            return Response(
+                {
+                    "success": False,
+                    "message": "Acción de recording no válida.",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         try:
             payload = WowzaClient().start_stream_recording(app_name=app.name)
@@ -215,7 +228,9 @@ class WowzaApplicationRecordingView(APIView):
 
     def delete(self, request, app_id, format=None):
         app = get_object_or_404(WowzaApplication, id=app_id)
+        return self.stop_recording(app)
 
+    def stop_recording(self, app):
         try:
             payload = WowzaClient().stop_stream_recording(app_name=app.name)
         except WowzaAPIError as exc:

@@ -680,6 +680,30 @@ class WowzaManagementTests(TestCase):
         self.assertEqual(response.json()["is_recording"], False)
         wowza_client.stop_stream_recording.assert_called_once_with(app_name="eventozrecord")
 
+    @patch("files.wowza_views.WowzaClient")
+    def test_stop_recording_endpoint_accepts_post_action(self, wowza_client_cls):
+        app = WowzaApplication.objects.create(
+            name="eventozrecord",
+            schedule_id="schedule-record",
+            created_by=self.admin,
+            storage_dir="/mediavms/rodeovms/live_record",
+        )
+        wowza_client = Mock()
+        wowza_client.stop_stream_recording.return_value = {"success": True}
+        wowza_client_cls.return_value = wowza_client
+        self.client.force_login(self.admin)
+
+        response = self.client.post(
+            f"/api/v1/manage_wowza/applications/{app.id}/recording",
+            {"action": "stop"},
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["success"], True)
+        self.assertEqual(response.json()["is_recording"], False)
+        wowza_client.stop_stream_recording.assert_called_once_with(app_name="eventozrecord")
+
     def test_start_recording_endpoint_rejects_non_admin(self):
         app = WowzaApplication.objects.create(
             name="eventozrecord",
