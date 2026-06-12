@@ -539,6 +539,7 @@
   gap: 8px;
 }
 
+.manage-wowza-record,
 .manage-wowza-connect,
 .manage-wowza-delete {
   min-height: 34px;
@@ -579,6 +580,32 @@
 
     &:hover:not(:disabled) {
       background: rgba(255, 18, 31, 0.22);
+    }
+  }
+}
+
+.manage-wowza-record {
+  color: #16713a;
+  background: #edf9f1;
+
+  &:hover:not(:disabled) {
+    background: #dcf4e5;
+  }
+
+  .material-icons {
+    color: #22c55e;
+  }
+
+  .dark_theme & {
+    color: #88dfa8;
+    background: rgba(47, 157, 85, 0.16);
+
+    &:hover:not(:disabled) {
+      background: rgba(47, 157, 85, 0.24);
+    }
+
+    .material-icons {
+      color: #88dfa8;
     }
   }
 }

@@ -19,6 +19,7 @@ from .wowza import (
     generate_wowza_token,
     validate_wowza_app_name,
     wowza_has_incoming_streams,
+    wowza_streaming_file_directory,
 )
 
 
@@ -119,7 +120,7 @@ class WowzaApplicationCreateView(APIView):
             defaults={
                 "schedule_id": schedule_id,
                 "app_type": "Live",
-                "storage_dir": f"{settings.WOWZA_APP_STORAGE_ROOT.rstrip('/')}/{request.user.id}",
+                "storage_dir": wowza_streaming_file_directory(),
                 "publish_username": publish_username,
                 "publish_password": publish_password,
                 "is_active": True,
@@ -171,6 +172,35 @@ class WowzaApplicationDetailView(APIView):
                 "success": True,
                 "message": f"Aplicación {app_name} eliminada correctamente.",
                 "data": payload,
+            }
+        )
+
+
+class WowzaApplicationRecordingView(APIView):
+    permission_classes = (IsMediacmsAdmin,)
+    parser_classes = (JSONParser,)
+
+    def post(self, request, app_id, format=None):
+        app = get_object_or_404(WowzaApplication, id=app_id)
+
+        try:
+            payload = WowzaClient().start_stream_recording(app_name=app.name)
+        except WowzaAPIError as exc:
+            return Response(
+                {
+                    "success": False,
+                    "message": str(exc),
+                    "data": exc.data,
+                },
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        return Response(
+            {
+                "success": True,
+                "message": f"Recording iniciado para {app.name}.",
+                "data": payload,
+                "wowza_application": serialize_wowza_application(app),
             }
         )
 

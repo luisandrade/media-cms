@@ -246,6 +246,9 @@ class WowzaClient:
                 "data": exc.data,
             }
 
+    def start_stream_recording(self, *, app_name, recorder_name=None, instance_name="_definst_"):
+        return self.create_stream_recorder(app_name=app_name, recorder_name=recorder_name, instance_name=instance_name)
+
 
 def validate_wowza_app_name(value):
     value = (value or "").strip()
@@ -324,6 +327,10 @@ def wowza_push_publish_map_entry_payload(*, app_name=None):
     }
 
 
+def wowza_streaming_file_directory():
+    return getattr(settings, "WOWZA_STREAMING_FILE_DIRECTORY", "/mediavms/rodeovms/live_record")
+
+
 def wowza_live_application_payload(*, name, storage_user_id):
     stream_type = "live-record" if getattr(settings, "WOWZA_RECORD_ALL_INCOMING_STREAMS_ENABLED", True) else "live"
     security_config = {
@@ -340,7 +347,7 @@ def wowza_live_application_payload(*, name, storage_user_id):
         "description": f"App {name} creada desde MediaCMS",
         "streamConfig": {
             "streamType": stream_type,
-            "storageDir": f"{settings.WOWZA_APP_STORAGE_ROOT.rstrip('/')}/{storage_user_id}",
+            "storageDir": wowza_streaming_file_directory(),
             "liveStreamPacketizer": [
                 "cupertinostreamingpacketizer",
                 "sanjosestreamingpacketizer",

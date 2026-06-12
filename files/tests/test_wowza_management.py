@@ -94,7 +94,7 @@ class WowzaManagementTests(TestCase):
         app = WowzaApplication.objects.get(name="eventoz06")
         self.assertEqual(app.schedule_id, "schedule06")
         self.assertEqual(app.created_by, self.admin)
-        self.assertEqual(app.storage_dir, f"/nas/{self.admin.id}")
+        self.assertEqual(app.storage_dir, "/mediavms/rodeovms/live_record")
         self.assertEqual(app.publish_username, "eventoz06")
         self.assertEqual(app.publish_password, "SecurePass1234567890")
         wowza_client.create_live_application.assert_called_once_with(
@@ -459,6 +459,7 @@ class WowzaManagementTests(TestCase):
             "${com.wowza.wms.context.VHostConfigHome}/conf/${com.wowza.wms.context.Application}/publish.password",
         )
         self.assertEqual(payload["streamConfig"]["streamType"], "live-record")
+        self.assertEqual(payload["streamConfig"]["storageDir"], "/mediavms/rodeovms/live_record")
         self.assertEqual(
             payload["streamConfig"]["liveStreamPacketizer"],
             ["cupertinostreamingpacketizer", "sanjosestreamingpacketizer", "smoothstreamingpacketizer"],
@@ -591,6 +592,39 @@ class WowzaManagementTests(TestCase):
 
         self.assertIsNone(result["stream_recorder"])
         client.create_stream_recorder.assert_not_called()
+
+    @patch("files.wowza_views.WowzaClient")
+    def test_start_recording_endpoint_starts_segmented_stream_recorder(self, wowza_client_cls):
+        app = WowzaApplication.objects.create(
+            name="eventozrecord",
+            schedule_id="schedule-record",
+            created_by=self.admin,
+            storage_dir="/mediavms/rodeovms/live_record",
+        )
+        wowza_client = Mock()
+        wowza_client.start_stream_recording.return_value = {"success": True, "recorderName": "live"}
+        wowza_client_cls.return_value = wowza_client
+        self.client.force_login(self.admin)
+
+        response = self.client.post(f"/api/v1/manage_wowza/applications/{app.id}/recording")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["success"], True)
+        self.assertEqual(response.json()["data"], {"success": True, "recorderName": "live"})
+        wowza_client.start_stream_recording.assert_called_once_with(app_name="eventozrecord")
+
+    def test_start_recording_endpoint_rejects_non_admin(self):
+        app = WowzaApplication.objects.create(
+            name="eventozrecord",
+            schedule_id="schedule-record",
+            created_by=self.admin,
+            storage_dir="/mediavms/rodeovms/live_record",
+        )
+        self.client.force_login(self.user)
+
+        response = self.client.post(f"/api/v1/manage_wowza/applications/{app.id}/recording")
+
+        self.assertEqual(response.status_code, 403)
 
     @override_settings(
         WOWZA_PUSH_PUBLISH_ENTRY_NAME="live",

@@ -88,6 +88,7 @@ export class ManageWowzaPage extends Page {
       result: null,
       activeAppName: '',
       deletingApplicationId: null,
+      recordingApplicationId: null,
       connectionApplicationId: null,
       connectionSignalReady: false,
       connectionSignalRefreshKey: 0,
@@ -102,6 +103,7 @@ export class ManageWowzaPage extends Page {
     this.onInputChange = this.onInputChange.bind(this);
     this.onSubmit = this.onSubmit.bind(this);
     this.onDeleteApplication = this.onDeleteApplication.bind(this);
+    this.onStartRecording = this.onStartRecording.bind(this);
     this.onShowConnection = this.onShowConnection.bind(this);
     this.onTogglePassword = this.onTogglePassword.bind(this);
     this.onCopyConnectionValue = this.onCopyConnectionValue.bind(this);
@@ -193,7 +195,7 @@ export class ManageWowzaPage extends Page {
     const appName = this.state.appName.trim();
     const scheduleId = this.state.scheduleId.trim() || appName;
     const appNameError = validateWowzaName(appName, 'El nombre de la aplicación');
-    const scheduleIdError = validateWowzaName(scheduleId, 'El ID schedule SMIL');
+    const scheduleIdError = validateWowzaName(scheduleId, 'El ID schedule');
     const isExistingApplication = this.state.applications.some((app) => app.name === appName);
 
     if (appNameError || scheduleIdError) {
@@ -292,6 +294,41 @@ export class ManageWowzaPage extends Page {
     } catch (error) {
       this.setState({
         deletingApplicationId: null,
+        error: getErrorMessage(error),
+      });
+    }
+  }
+
+  async onStartRecording(app) {
+    this.setState({
+      recordingApplicationId: app.id,
+      error: null,
+      result: null,
+    });
+
+    try {
+      const response = await fetch(`${ApiUrlContext._currentValue.manage.wowzaApplications}/${app.id}/recording`, {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'X-CSRFToken': csrfToken(),
+        },
+      });
+      const payload = await response.json();
+
+      if (!response.ok || false === payload.success) {
+        throw new Error(payload.message || 'No fue posible iniciar el recording.');
+      }
+
+      this.setState({
+        recordingApplicationId: null,
+        result: payload,
+        error: null,
+      });
+      this.loadApplications(this.state.applicationsPage);
+    } catch (error) {
+      this.setState({
+        recordingApplicationId: null,
         error: getErrorMessage(error),
       });
     }
@@ -463,6 +500,7 @@ export class ManageWowzaPage extends Page {
       result,
       activeAppName,
       deletingApplicationId,
+      recordingApplicationId,
       connectionApplicationId,
       visiblePasswords,
       error,
@@ -534,7 +572,7 @@ export class ManageWowzaPage extends Page {
               </label>
 
               <label>
-                ID schedule SMIL
+                ID schedule
                 <input
                   name="scheduleId"
                   value={scheduleId}
@@ -568,12 +606,12 @@ export class ManageWowzaPage extends Page {
                 <dt>Tipo</dt>
                 <dd>Live</dd>
                 <dt>Stream type</dt>
-                <dd>live</dd>
+                <dd>live-record</dd>
                 <dt>HLS packetizer</dt>
                 <dd>cupertinostreamingpacketizer</dd>
                 <dt>HTTP streamer</dt>
                 <dd>cupertinostreaming</dd>
-                <dt>SMIL schedule</dt>
+                <dt>Schedule</dt>
                 <dd>{`streamschedule-${previewScheduleId}.smil`}</dd>
                 <dt>Módulos</dt>
                 <dd>Core, Logging, FLVPlayback, StreamPublisher, PushPublish</dd>
@@ -600,7 +638,7 @@ export class ManageWowzaPage extends Page {
                 <div className="manage-wowza-apps-list">
                   <div className="manage-wowza-app-row manage-wowza-app-row-head">
                     <span>Aplicación</span>
-                    <span>SMIL</span>
+                    <span>Recording</span>
                     <span>Usuario</span>
                     <span>Password</span>
                     <span>Estado</span>
@@ -612,7 +650,18 @@ export class ManageWowzaPage extends Page {
                         <MaterialIcon type={connectionApplicationId === app.id || activeAppName === app.name ? 'radio_button_checked' : 'radio_button_unchecked'} />
                         <strong>{app.name}</strong>
                       </span>
-                      <span>{`streamschedule-${app.schedule_id}.smil`}</span>
+                      <span>
+                        <button
+                          className="manage-wowza-record"
+                          type="button"
+                          onClick={() => this.onStartRecording(app)}
+                          disabled={recordingApplicationId === app.id}
+                          title="Iniciar recording segmentado por duración"
+                        >
+                          {recordingApplicationId === app.id ? <SpinnerLoader size="small" /> : <MaterialIcon type="fiber_manual_record" />}
+                          <span>{recordingApplicationId === app.id ? 'Iniciando' : 'Iniciar recording'}</span>
+                        </button>
+                      </span>
                       <span>{app.publish_username || app.name}</span>
                       <span>
                         <span className="manage-wowza-secret">
