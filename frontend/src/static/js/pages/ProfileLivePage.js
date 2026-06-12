@@ -42,7 +42,7 @@ export class ProfileLivePage extends ProfileMediaPage {
               >
                 <LazyLoadItemListAsync
                   itemsCountCallback={this.getCountFunc}
-                  requestUrl={apiUrl.user.live + this.state.author.username}
+                  requestUrl={apiUrl.wowzaLive}
                   hideAuthor={!PageStore.get('config-media-item').displayAuthor}
                   hideViews={!PageStore.get('config-media-item').displayViews}
                   hideDate={!PageStore.get('config-media-item').displayPublishDate}
@@ -62,5 +62,5 @@ ProfileLivePage.propTypes = {
 };
 
 ProfileLivePage.defaultProps = {
-  title: 'live',
+  title: 'Señales en vivo',
 };
