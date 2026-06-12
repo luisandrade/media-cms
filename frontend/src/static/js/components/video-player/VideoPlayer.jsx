@@ -3,8 +3,10 @@ import PropTypes from 'prop-types';
 import urlParse from 'url-parse';
 
 import videojs from 'video.js';
+import 'videojs-contrib-ads';
 import 'videojs-contrib-quality-levels';
 import 'videojs-http-source-selector';
+import 'videojs-ima';
 
 import './VideoPlayer.scss';
 
@@ -337,6 +339,13 @@ export function VideoPlayer(props) {
           },
           false
         );
+      });
+    }
+
+    if (props.adsTag?.url) {
+      player.ima({
+        id: 'content_video_html5_api',
+        adTagUrl: props.adsTag.url,
       });
     }
 

@@ -213,13 +213,11 @@ export function VideoPlayerEmbed(props) {
     }
     console.log("props video embed",props.adsTag);
 
-    if(props.adsTag !== null){
+    if (props.adsTag?.url) {
       player.ima({
         id: 'content_video_html5_api',
-        adTagUrl:
-        props.adsTag.url,
+        adTagUrl: props.adsTag.url,
       });
-
     }
     player.ready(function () {
 
