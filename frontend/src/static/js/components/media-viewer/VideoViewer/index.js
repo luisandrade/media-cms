@@ -411,19 +411,34 @@ export default class VideoViewer extends React.PureComponent {
   }
 
   onPlayerInit(instance, elem) {
-    this.playerElem = elem;
-    this.playerInstance = instance;
+    const videoJsPlayer = instance && instance.player ? instance.player : instance;
+
+    this.playerElem = elem || videoJsPlayer?.el_ || videoJsPlayer?.el?.();
+    this.playerInstance =
+      instance && instance.player
+        ? {
+            ...instance,
+            isEnded:
+              typeof instance.isEnded === 'function'
+                ? instance.isEnded
+                : () => !!videoJsPlayer?.ended?.(),
+          }
+        : {
+            player: videoJsPlayer,
+            isEnded: () => !!videoJsPlayer?.ended?.(),
+            isFullscreen: () => !!videoJsPlayer?.isFullscreen?.(),
+          };
 
     if (this.upNextLoaderView) {
-      this.upNextLoaderView.setVideoJsPlayerElem(this.playerInstance.player.el_);
+      this.upNextLoaderView.setVideoJsPlayerElem(this.playerInstance.player?.el_ || this.playerInstance.player?.el?.());
       this.onUpdateMediaAutoPlay();
     }
 
-    if (!this.props.inEmbed) {
+    if (!this.props.inEmbed && this.playerElem?.parentNode) {
       this.playerElem.parentNode.focus();
     }
 
-    if (null !== this.recommendedMedia) {
+    if (null !== this.recommendedMedia && this.playerElem?.parentNode) {
       this.recommendedMedia.initWrappers(this.playerElem.parentNode);
 
       if (this.props.inEmbed) {
@@ -502,7 +517,12 @@ export default class VideoViewer extends React.PureComponent {
   onUpdateMediaAutoPlay() {
     if (this.upNextLoaderView) {
       if (PageStore.get('media-auto-play')) {
-        this.upNextLoaderView.showTimerView(this.playerInstance.isEnded());
+        const isEnded =
+          typeof this.playerInstance?.isEnded === 'function'
+            ? this.playerInstance.isEnded()
+            : !!this.playerInstance?.player?.ended?.();
+
+        this.upNextLoaderView.showTimerView(isEnded);
       } else {
         this.upNextLoaderView.hideTimerView();
       }
