@@ -194,7 +194,7 @@ class WowzaClient:
 
     def create_push_publish_map_entry(self, *, app_name):
         entry_name = settings.WOWZA_PUSH_PUBLISH_ENTRY_NAME
-        payload = wowza_push_publish_map_entry_payload()
+        payload = wowza_push_publish_map_entry_payload(app_name=app_name)
         try:
             return self.request(
                 "POST",
@@ -218,7 +218,7 @@ class WowzaClient:
                 f"applications/{quote_wowza_path_segment(app_name)}/pushpublish/mapentries/"
                 f"{quote_wowza_path_segment(entry_name)}"
             ),
-            wowza_push_publish_map_entry_payload(),
+            wowza_push_publish_map_entry_payload(app_name=app_name),
         )
 
     def update_advanced_settings(self, *, name, schedule_id):
@@ -313,11 +313,11 @@ def wowza_publish_password_file():
     )
 
 
-def wowza_push_publish_map_entry_payload():
+def wowza_push_publish_map_entry_payload(*, app_name=None):
     return {
         "entryName": settings.WOWZA_PUSH_PUBLISH_ENTRY_NAME,
         "profile": settings.WOWZA_PUSH_PUBLISH_PROFILE,
-        "application": settings.WOWZA_PUSH_PUBLISH_APPLICATION,
+        "application": app_name or settings.WOWZA_PUSH_PUBLISH_APPLICATION,
         "destinationName": settings.WOWZA_PUSH_PUBLISH_DESTINATION_NAME,
         "host": settings.WOWZA_PUSH_PUBLISH_HOST,
         "streamName": settings.WOWZA_PUSH_PUBLISH_STREAM_NAME,

@@ -600,20 +600,26 @@ class WowzaManagementTests(TestCase):
         WOWZA_PUSH_PUBLISH_HOST="scl.edge.grupoz.cl",
         WOWZA_PUSH_PUBLISH_STREAM_NAME="live",
     )
-    def test_push_publish_map_entry_payload_uses_configured_destination(self):
-        payload = wowza_push_publish_map_entry_payload()
+    def test_push_publish_map_entry_payload_uses_current_app_name(self):
+        payload = wowza_push_publish_map_entry_payload(app_name="eventoz10")
 
         self.assertEqual(
             payload,
             {
                 "entryName": "live",
                 "profile": "rtmp",
-                "application": "miradio2restream",
+                "application": "eventoz10",
                 "destinationName": "wowzastreamingengine",
                 "host": "scl.edge.grupoz.cl",
                 "streamName": "live",
             },
         )
+
+    @override_settings(WOWZA_PUSH_PUBLISH_APPLICATION="miradio2restream")
+    def test_push_publish_map_entry_payload_keeps_legacy_default_without_app_name(self):
+        payload = wowza_push_publish_map_entry_payload()
+
+        self.assertEqual(payload["application"], "miradio2restream")
 
     def test_generate_publish_password_uses_10_characters_by_default(self):
         password = generate_wowza_publish_password()
@@ -680,6 +686,7 @@ class WowzaManagementTests(TestCase):
         self.assertEqual(request.call_args_list[3][0][2]["segmentationType"], "duration")
         self.assertEqual(request.call_args_list[4][0][0], "POST")
         self.assertEqual(request.call_args_list[4][0][1], "applications/eventoz11/pushpublish/mapentries")
+        self.assertEqual(request.call_args_list[4][0][2]["application"], "eventoz11")
 
     def test_wowza_client_updates_publisher_when_it_already_exists(self):
         client = WowzaClient(base_url="http://wowza.test", username="u", password="p")
