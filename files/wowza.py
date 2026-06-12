@@ -4,6 +4,7 @@ import re
 import secrets
 import string
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from urllib.parse import quote
 
 import requests
@@ -224,7 +225,7 @@ class WowzaClient:
     def update_advanced_settings(self, *, name, schedule_id):
         return self.request("POST", f"applications/{quote_wowza_path_segment(name)}/adv", wowza_advanced_settings_payload(schedule_id))
 
-    def create_stream_recorder(self, *, app_name, recorder_name=None, instance_name="_definst_"):
+    def create_stream_recorder(self, *, app_name, recorder_name=None, instance_name="_definst_", replace_existing=False):
         recorder_name = recorder_name or getattr(settings, "WOWZA_RECORD_STREAM_NAME", settings.WOWZA_PUSH_PUBLISH_STREAM_NAME)
         path = (
             f"applications/{quote_wowza_path_segment(app_name)}/instances/"
@@ -240,6 +241,13 @@ class WowzaClient:
         except WowzaAPIError as exc:
             if exc.status_code != 409:
                 raise
+            if replace_existing:
+                try:
+                    self.stop_stream_recording(app_name=app_name, recorder_name=recorder_name, instance_name=instance_name)
+                except WowzaAPIError as stop_exc:
+                    if stop_exc.status_code != 404:
+                        raise
+                return self.request("POST", path, wowza_stream_recorder_payload(app_name=app_name, recorder_name=recorder_name, instance_name=instance_name))
             return {
                 "success": True,
                 "message": "El stream recorder ya existía en Wowza.",
@@ -247,7 +255,27 @@ class WowzaClient:
             }
 
     def start_stream_recording(self, *, app_name, recorder_name=None, instance_name="_definst_"):
-        return self.create_stream_recorder(app_name=app_name, recorder_name=recorder_name, instance_name=instance_name)
+        return self.create_stream_recorder(app_name=app_name, recorder_name=recorder_name, instance_name=instance_name, replace_existing=True)
+
+    def get_stream_recorder(self, *, app_name, recorder_name=None, instance_name="_definst_"):
+        recorder_name = recorder_name or getattr(settings, "WOWZA_RECORD_STREAM_NAME", settings.WOWZA_PUSH_PUBLISH_STREAM_NAME)
+        return self.request(
+            "GET",
+            (
+                f"applications/{quote_wowza_path_segment(app_name)}/instances/"
+                f"{quote_wowza_path_segment(instance_name)}/streamrecorders/{quote_wowza_path_segment(recorder_name)}"
+            ),
+        )
+
+    def stop_stream_recording(self, *, app_name, recorder_name=None, instance_name="_definst_"):
+        recorder_name = recorder_name or getattr(settings, "WOWZA_RECORD_STREAM_NAME", settings.WOWZA_PUSH_PUBLISH_STREAM_NAME)
+        return self.request(
+            "DELETE",
+            (
+                f"applications/{quote_wowza_path_segment(app_name)}/instances/"
+                f"{quote_wowza_path_segment(instance_name)}/streamrecorders/{quote_wowza_path_segment(recorder_name)}"
+            ),
+        )
 
 
 def validate_wowza_app_name(value):
@@ -329,6 +357,13 @@ def wowza_push_publish_map_entry_payload(*, app_name=None):
 
 def wowza_streaming_file_directory():
     return getattr(settings, "WOWZA_STREAMING_FILE_DIRECTORY", "/mediavms/rodeovms/live_record")
+
+
+def wowza_recording_base_file(app_name, recorder_name):
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    raw_name = f"{app_name}_{recorder_name}_{timestamp}_{secrets.token_hex(3)}"
+    normalized = re.sub(r"[^A-Za-z0-9_.-]+", "_", raw_name).strip("._")
+    return normalized or f"recording_{timestamp}"
 
 
 def wowza_live_application_payload(*, name, storage_user_id):
@@ -563,6 +598,7 @@ def wowza_stream_recorder_advanced_settings():
 
 def wowza_stream_recorder_payload(*, app_name, recorder_name, instance_name="_definst_"):
     segment_duration_seconds = max(int(getattr(settings, "WOWZA_RECORD_SEGMENT_DURATION_SECONDS", 900)), 10)
+    base_file = wowza_recording_base_file(app_name, recorder_name)
     return {
         "instanceName": instance_name,
         "fileVersionDelegateName": "com.wowza.wms.livestreamrecord.manager.StreamRecorderFileVersionDelegate",
@@ -571,7 +607,7 @@ def wowza_stream_recorder_payload(*, app_name, recorder_name, instance_name="_de
         "currentSize": 0,
         "segmentSchedule": "",
         "startOnKeyFrame": True,
-        "outputPath": "",
+        "outputPath": wowza_streaming_file_directory(),
         "currentFile": "",
         "recordData": True,
         "applicationName": app_name,
@@ -581,10 +617,10 @@ def wowza_stream_recorder_payload(*, app_name, recorder_name, instance_name="_de
         "defaultRecorder": False,
         "splitOnTcDiscontinuity": False,
         "version": "",
-        "baseFile": "",
+        "baseFile": base_file,
         "segmentDuration": segment_duration_seconds * 1000,
         "recordingStartTime": "",
-        "fileTemplate": "${SourceStreamName}_${RecordingStartTime}_${SegmentNumber}",
+        "fileTemplate": f"{base_file}_${{SegmentNumber}}",
         "backBufferTime": 0,
         "segmentationType": "duration",
         "currentDuration": 0,

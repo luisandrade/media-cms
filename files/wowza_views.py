@@ -59,6 +59,7 @@ class WowzaApplicationCreateView(APIView):
             page_obj = paginator.page(paginator.num_pages or 1)
 
         live_statuses = live_statuses_for_applications(page_obj.object_list)
+        recording_statuses = recording_statuses_for_applications(page_obj.object_list)
 
         return Response(
             {
@@ -69,7 +70,14 @@ class WowzaApplicationCreateView(APIView):
                 "page": page_obj.number,
                 "page_size": page_size,
                 "total_pages": paginator.num_pages,
-                "results": [serialize_wowza_application(app, is_live=live_statuses.get(app.name, False)) for app in page_obj.object_list],
+                "results": [
+                    serialize_wowza_application(
+                        app,
+                        is_live=live_statuses.get(app.name, False),
+                        recording_status=recording_statuses.get(app.name),
+                    )
+                    for app in page_obj.object_list
+                ],
             }
         )
 
@@ -200,6 +208,34 @@ class WowzaApplicationRecordingView(APIView):
                 "success": True,
                 "message": f"Recording iniciado para {app.name}.",
                 "data": payload,
+                "is_recording": True,
+                "wowza_application": serialize_wowza_application(app),
+            }
+        )
+
+    def delete(self, request, app_id, format=None):
+        app = get_object_or_404(WowzaApplication, id=app_id)
+
+        try:
+            payload = WowzaClient().stop_stream_recording(app_name=app.name)
+        except WowzaAPIError as exc:
+            if exc.status_code != 404:
+                return Response(
+                    {
+                        "success": False,
+                        "message": str(exc),
+                        "data": exc.data,
+                    },
+                    status=status.HTTP_502_BAD_GATEWAY,
+                )
+            payload = {"success": True, "message": "No había un recording activo en Wowza."}
+
+        return Response(
+            {
+                "success": True,
+                "message": f"Recording detenido para {app.name}.",
+                "data": payload,
+                "is_recording": False,
                 "wowza_application": serialize_wowza_application(app),
             }
         )
@@ -251,6 +287,58 @@ def live_statuses_for_applications(applications):
             statuses[app.name] = hls_playlist_is_live(hls_url_for_application(app.name, secure_token=False))
 
     return statuses
+
+
+def recording_statuses_for_applications(applications):
+    client = WowzaClient()
+    statuses = {}
+
+    for app in applications:
+        try:
+            payload = client.get_stream_recorder(app_name=app.name)
+            statuses[app.name] = serialize_recording_status(payload)
+        except WowzaAPIError:
+            statuses[app.name] = serialize_recording_status(None)
+
+    return statuses
+
+
+def serialize_recording_status(payload):
+    state = find_key_in_payload(payload, "recorderState") or ""
+    current_file = find_key_in_payload(payload, "currentFile") or ""
+    base_file = find_key_in_payload(payload, "baseFile") or ""
+    is_recording = recording_state_is_active(state)
+    return {
+        "is_recording": is_recording,
+        "recording_state": state,
+        "recording_file": current_file or base_file,
+    }
+
+
+def recording_state_is_active(state):
+    normalized = str(state or "").strip().lower().replace("_", " ").replace("-", " ")
+    if not normalized:
+        return False
+    stopped_words = ("stop", "stopped", "waiting", "error", "idle", "not recording")
+    if any(word in normalized for word in stopped_words):
+        return False
+    return "record" in normalized or "running" in normalized or "started" in normalized
+
+
+def find_key_in_payload(payload, key):
+    if isinstance(payload, dict):
+        if key in payload:
+            return payload.get(key)
+        for value in payload.values():
+            found = find_key_in_payload(value, key)
+            if found not in (None, ""):
+                return found
+    elif isinstance(payload, list):
+        for value in payload:
+            found = find_key_in_payload(value, key)
+            if found not in (None, ""):
+                return found
+    return None
 
 
 def hls_url_for_application(app_name, *, secure_token=None):
@@ -349,9 +437,10 @@ def serialize_public_wowza_live_application(app, *, request, is_live=False):
     }
 
 
-def serialize_wowza_application(app, *, is_live=False):
+def serialize_wowza_application(app, *, is_live=False, recording_status=None):
     stream_name = settings.WOWZA_PUSH_PUBLISH_STREAM_NAME
     wowza_host = settings.WOWZA_HOST_DEFAULT
+    recording_status = recording_status or serialize_recording_status(None)
 
     return {
         "id": app.id,
@@ -365,6 +454,9 @@ def serialize_wowza_application(app, *, is_live=False):
         "stream_name": stream_name,
         "hls_url": hls_url_for_application(app.name),
         "is_live": is_live,
+        "is_recording": recording_status["is_recording"],
+        "recording_state": recording_status["recording_state"],
+        "recording_file": recording_status["recording_file"],
         "is_active": app.is_active,
         "created_by": app.created_by.username if app.created_by else "",
         "add_date": app.add_date.isoformat() if app.add_date else "",

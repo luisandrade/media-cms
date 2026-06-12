@@ -121,6 +121,10 @@ class WowzaManagementTests(TestCase):
         )
         wowza_client = Mock()
         wowza_client.incoming_streams.return_value = {"incomingStreams": [{"name": "live"}]}
+        wowza_client.get_stream_recorder.return_value = {
+            "recorderState": "Recording in Progress",
+            "currentFile": "/mediavms/rodeovms/live_record/eventoz06_live_20260612T010000Z_1.mp4",
+        }
         wowza_client_cls.return_value = wowza_client
         self.client.force_login(self.admin)
 
@@ -143,7 +147,11 @@ class WowzaManagementTests(TestCase):
         self.assertIn("/live/playlist.m3u8?", result["hls_url"])
         self.assertIn("wowzatokenhash=", result["hls_url"])
         self.assertEqual(result["is_live"], True)
+        self.assertEqual(result["is_recording"], True)
+        self.assertEqual(result["recording_state"], "Recording in Progress")
+        self.assertIn("eventoz06_live_", result["recording_file"])
         wowza_client.incoming_streams.assert_called_once()
+        wowza_client.get_stream_recorder.assert_called_once_with(app_name=result["name"])
 
     @patch("files.wowza_views.requests.get")
     @patch("files.wowza_views.WowzaClient")
@@ -546,7 +554,10 @@ class WowzaManagementTests(TestCase):
         self.assertEqual(payload["applicationName"], "eventoz10")
         self.assertEqual(payload["segmentationType"], "duration")
         self.assertEqual(payload["segmentDuration"], 900000)
-        self.assertEqual(payload["fileTemplate"], "${SourceStreamName}_${RecordingStartTime}_${SegmentNumber}")
+        self.assertRegex(payload["baseFile"], r"^eventoz10_live_\d{8}T\d{6}Z_[a-f0-9]{6}$")
+        self.assertEqual(payload["outputPath"], "/mediavms/rodeovms/live_record")
+        self.assertEqual(payload["fileTemplate"], f"{payload['baseFile']}_${{SegmentNumber}}")
+        self.assertNotEqual(payload["baseFile"], "live")
         self.assertEqual(
             payload["fileVersionDelegateName"],
             "com.wowza.wms.livestreamrecord.manager.StreamRecorderFileVersionDelegate",
@@ -610,8 +621,29 @@ class WowzaManagementTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["success"], True)
+        self.assertEqual(response.json()["is_recording"], True)
         self.assertEqual(response.json()["data"], {"success": True, "recorderName": "live"})
         wowza_client.start_stream_recording.assert_called_once_with(app_name="eventozrecord")
+
+    @patch("files.wowza_views.WowzaClient")
+    def test_stop_recording_endpoint_stops_segmented_stream_recorder(self, wowza_client_cls):
+        app = WowzaApplication.objects.create(
+            name="eventozrecord",
+            schedule_id="schedule-record",
+            created_by=self.admin,
+            storage_dir="/mediavms/rodeovms/live_record",
+        )
+        wowza_client = Mock()
+        wowza_client.stop_stream_recording.return_value = {"success": True}
+        wowza_client_cls.return_value = wowza_client
+        self.client.force_login(self.admin)
+
+        response = self.client.delete(f"/api/v1/manage_wowza/applications/{app.id}/recording")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["success"], True)
+        self.assertEqual(response.json()["is_recording"], False)
+        wowza_client.stop_stream_recording.assert_called_once_with(app_name="eventozrecord")
 
     def test_start_recording_endpoint_rejects_non_admin(self):
         app = WowzaApplication.objects.create(

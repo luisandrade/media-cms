@@ -300,6 +300,7 @@ export class ManageWowzaPage extends Page {
   }
 
   async onStartRecording(app) {
+    const isRecording = !!app.is_recording;
     this.setState({
       recordingApplicationId: app.id,
       error: null,
@@ -308,7 +309,7 @@ export class ManageWowzaPage extends Page {
 
     try {
       const response = await fetch(`${ApiUrlContext._currentValue.manage.wowzaApplications}/${app.id}/recording`, {
-        method: 'POST',
+        method: isRecording ? 'DELETE' : 'POST',
         credentials: 'same-origin',
         headers: {
           'X-CSRFToken': csrfToken(),
@@ -317,7 +318,7 @@ export class ManageWowzaPage extends Page {
       const payload = await response.json();
 
       if (!response.ok || false === payload.success) {
-        throw new Error(payload.message || 'No fue posible iniciar el recording.');
+        throw new Error(payload.message || `No fue posible ${isRecording ? 'detener' : 'iniciar'} el recording.`);
       }
 
       this.setState({
@@ -584,7 +585,7 @@ export class ManageWowzaPage extends Page {
 
               {validationError ? <div className="manage-wowza-message manage-wowza-message-error">{validationError}</div> : null}
               {error ? <div className="manage-wowza-message manage-wowza-message-error">{error}</div> : null}
-              {result ? <div className="manage-wowza-message manage-wowza-message-success">Aplicación creada y configurada correctamente.</div> : null}
+              {result ? <div className="manage-wowza-message manage-wowza-message-success">{result.message || 'Operación completada correctamente.'}</div> : null}
 
               <button
                 className="manage-wowza-submit"
@@ -652,14 +653,26 @@ export class ManageWowzaPage extends Page {
                       </span>
                       <span>
                         <button
-                          className="manage-wowza-record"
+                          className={`manage-wowza-record ${app.is_recording ? 'manage-wowza-record-active' : ''}`}
                           type="button"
                           onClick={() => this.onStartRecording(app)}
                           disabled={recordingApplicationId === app.id}
-                          title="Iniciar recording segmentado por duración"
+                          title={app.is_recording ? 'Detener recording' : 'Iniciar recording segmentado por duración'}
                         >
-                          {recordingApplicationId === app.id ? <SpinnerLoader size="small" /> : <MaterialIcon type="fiber_manual_record" />}
-                          <span>{recordingApplicationId === app.id ? 'Iniciando' : 'Iniciar recording'}</span>
+                          {recordingApplicationId === app.id ? (
+                            <SpinnerLoader size="small" />
+                          ) : (
+                            <MaterialIcon type={app.is_recording ? 'stop_circle' : 'fiber_manual_record'} />
+                          )}
+                          <span>
+                            {recordingApplicationId === app.id
+                              ? app.is_recording
+                                ? 'Deteniendo'
+                                : 'Iniciando'
+                              : app.is_recording
+                              ? 'Grabando'
+                              : 'Iniciar recording'}
+                          </span>
                         </button>
                       </span>
                       <span>{app.publish_username || app.name}</span>
