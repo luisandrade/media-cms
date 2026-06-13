@@ -1,6 +1,5 @@
 from unittest.mock import Mock, patch
 
-from django.contrib.messages import get_messages
 from django.test import TestCase, override_settings
 from django.urls import reverse
 
@@ -93,23 +92,45 @@ class SubscriptionViewsTests(TestCase):
         self.assertEqual(customer.issuer_bank, "")
 
     @patch("payments.views.FlowClient")
-    def test_activate_subscription_hides_duplicate_flow_customer_error(self, flow_client_cls):
+    def test_activate_subscription_restores_duplicate_flow_customer_and_registers_card(self, flow_client_cls):
         flow_client = Mock()
         flow_client.is_configured.return_value = True
         flow_client.get_plan.return_value = {"planId": "media-cms-monthly"}
         flow_client.create_customer.return_value = {
             "error": f"There is a customer with this externalId: user-{self.user.pk}",
         }
+        flow_client.get_customer_subscriptions.return_value = {"total": 0, "hasMore": 0, "data": []}
+        flow_client.list_customers.return_value = {
+            "total": 1,
+            "hasMore": 0,
+            "data": [
+                {
+                    "customerId": "cus_existing_in_flow",
+                    "externalId": f"user-{self.user.pk}",
+                    "email": self.user.email,
+                    "name": self.user.name,
+                    "status": "1",
+                }
+            ],
+        }
+        flow_client.register_customer.return_value = FlowRedirectResult(
+            redirect_url="https://flow.test/register?token=tok_existing",
+            token="tok_existing",
+            raw={"url": "https://flow.test/register", "token": "tok_existing"},
+        )
         flow_client_cls.return_value = flow_client
 
-        response = self.client.post(reverse("subscription_activate"), follow=True)
+        response = self.client.post(reverse("subscription_activate"))
 
-        self.assertEqual(response.status_code, 200)
-        rendered_messages = [str(message) for message in get_messages(response.wsgi_request)]
-        self.assertTrue(
-            any("La cuenta de suscripción ya existe para tu usuario" in message for message in rendered_messages)
-        )
-        self.assertFalse(any("There is a customer with this externalId" in message for message in rendered_messages))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], "https://flow.test/register?token=tok_existing")
+        customer = FlowCustomer.objects.get(user=self.user)
+        subscription = UserSubscription.objects.get(user=self.user)
+        self.assertEqual(customer.flow_customer_id, "cus_existing_in_flow")
+        self.assertEqual(customer.external_id, f"user-{self.user.pk}")
+        self.assertEqual(subscription.customer, customer)
+        self.assertEqual(subscription.status, UserSubscription.STATUS_PENDING_CARD)
+        self.assertEqual(subscription.register_token, "tok_existing")
 
     @patch("payments.views.FlowClient")
     def test_activate_subscription_with_existing_pending_flow_customer_retries_card_registration(self, flow_client_cls):
@@ -124,6 +145,7 @@ class SubscriptionViewsTests(TestCase):
         flow_client = Mock()
         flow_client.is_configured.return_value = True
         flow_client.get_plan.return_value = {"planId": "media-cms-monthly"}
+        flow_client.get_customer_subscriptions.return_value = {"total": 0, "hasMore": 0, "data": []}
         flow_client.register_customer.return_value = FlowRedirectResult(
             redirect_url="https://flow.test/register?token=tok_retry",
             token="tok_retry",
@@ -144,6 +166,52 @@ class SubscriptionViewsTests(TestCase):
         self.assertEqual(subscription.customer, customer)
         self.assertEqual(subscription.status, UserSubscription.STATUS_PENDING_CARD)
         self.assertEqual(subscription.register_token, "tok_retry")
+
+    @patch("payments.views.FlowClient")
+    def test_subscription_status_refreshes_existing_subscription_from_flow(self, flow_client_cls):
+        plan = SubscriptionPlan.objects.create(
+            flow_plan_id="media-cms-monthly",
+            name="Suscripción mensual",
+            amount=1200,
+            currency="CLP",
+            interval=3,
+        )
+        customer = FlowCustomer.objects.create(
+            user=self.user,
+            flow_customer_id="cus_123",
+            external_id=f"user-{self.user.pk}",
+            email=self.user.email,
+            name=self.user.name,
+        )
+        subscription = UserSubscription.objects.create(
+            user=self.user,
+            customer=customer,
+            plan=plan,
+            status=UserSubscription.STATUS_PENDING_CARD,
+            flow_subscription_id="sus_123",
+        )
+
+        flow_client = Mock()
+        flow_client.get_subscription.return_value = {
+            "subscriptionId": "sus_123",
+            "planId": "media-cms-monthly",
+            "customerId": "cus_123",
+            "status": 1,
+            "subscription_start": "2024-01-01 00:00:00",
+            "period_start": "2024-01-01 00:00:00",
+            "period_end": "2024-01-31 00:00:00",
+            "next_invoice_date": "2024-02-01 00:00:00",
+            "cancel_at_period_end": 0,
+        }
+        flow_client_cls.return_value = flow_client
+
+        response = self.client.get(reverse("subscription_status"))
+
+        self.assertEqual(response.status_code, 200)
+        subscription.refresh_from_db()
+        self.assertEqual(subscription.status, UserSubscription.STATUS_ACTIVE)
+        self.assertTrue(response.json()["subscription"]["active"])
+        flow_client.get_subscription.assert_called_once_with(subscription_id="sus_123")
 
     @patch("payments.views.FlowClient")
     def test_register_return_creates_active_subscription(self, flow_client_cls):

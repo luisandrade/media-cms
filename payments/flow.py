@@ -48,6 +48,7 @@ class FlowClient:
         self.status_path = getattr(settings, "FLOW_STATUS_PATH", "/payment/getStatus")
         self.customer_create_path = getattr(settings, "FLOW_CUSTOMER_CREATE_PATH", "/customer/create")
         self.customer_get_path = getattr(settings, "FLOW_CUSTOMER_GET_PATH", "/customer/get")
+        self.customer_subscriptions_path = getattr(settings, "FLOW_CUSTOMER_SUBSCRIPTIONS_PATH", "/customer/getSubscriptions")
         self.customer_register_path = getattr(settings, "FLOW_CUSTOMER_REGISTER_PATH", "/customer/register")
         self.customer_register_status_path = getattr(
             settings,
@@ -179,6 +180,27 @@ class FlowClient:
     def get_customer(self, *, customer_id: str) -> dict[str, Any]:
         params = {"apiKey": self.api_key, "customerId": customer_id}
         return self._request("GET", self.customer_get_path, params)
+
+    def list_customers(self, *, start: int = 0, limit: int = 100, filter_text: str | None = None, status: int | None = None) -> dict[str, Any]:
+        params: dict[str, Any] = {
+            "apiKey": self.api_key,
+            "start": start,
+            "limit": limit,
+        }
+        if filter_text:
+            params["filter"] = filter_text
+        if status is not None:
+            params["status"] = status
+        return self._request("GET", getattr(settings, "FLOW_CUSTOMER_LIST_PATH", "/customer/list"), params)
+
+    def get_customer_subscriptions(self, *, customer_id: str, start: int = 0, limit: int = 100) -> dict[str, Any]:
+        params = {
+            "apiKey": self.api_key,
+            "customerId": customer_id,
+            "start": start,
+            "limit": limit,
+        }
+        return self._request("GET", self.customer_subscriptions_path, params)
 
     def register_customer(self, *, customer_id: str, url_return: str) -> FlowRedirectResult:
         params = {

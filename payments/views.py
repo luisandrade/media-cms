@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Any
+import json
 
 from django.conf import settings
 from django.contrib import messages
@@ -145,6 +146,96 @@ def _duplicate_customer_message() -> str:
         "La cuenta de suscripción ya existe para tu usuario. "
         "Si no ves tu suscripción activa, contáctanos para sincronizarla."
     )
+
+
+def _flow_list_items(data: dict[str, Any]) -> list[dict[str, Any]]:
+    items = data.get("data") or []
+    if isinstance(items, str):
+        try:
+            items = json.loads(items)
+        except Exception:  # noqa: BLE001
+            return []
+    if not isinstance(items, list):
+        return []
+    return [item for item in items if isinstance(item, dict)]
+
+
+def find_flow_customer_by_external_id(flow: FlowClient, external_id: str, *, filter_text: str = "") -> dict[str, Any] | None:
+    start = 0
+    limit = 100
+    max_pages = int(getattr(settings, "FLOW_CUSTOMER_LIST_MAX_PAGES", 10))
+    for _page in range(max_pages):
+        data = flow.list_customers(start=start, limit=limit, filter_text=filter_text or None)
+        for item in _flow_list_items(data):
+            if str(item.get("externalId") or "") == external_id:
+                return item
+        if not data.get("hasMore"):
+            break
+        start += limit
+    return None
+
+
+def create_or_restore_flow_customer(flow: FlowClient, user, email: str) -> dict[str, Any]:
+    external_id = f"user-{user.pk}"
+    try:
+        customer_data = flow.create_customer(
+            name=_user_display_name(user),
+            email=email,
+            external_id=external_id,
+        )
+    except FlowAPIError as exc:
+        if not _flow_duplicate_customer_external_id(exc.raw):
+            raise
+        customer_data = find_flow_customer_by_external_id(flow, external_id, filter_text=email)
+        if customer_data:
+            logger.info("Restored existing Flow customer from Flow list. user_id=%s external_id=%s", user.pk, external_id)
+            return customer_data
+        raise
+
+    if _flow_duplicate_customer_external_id(customer_data):
+        restored_customer = find_flow_customer_by_external_id(flow, external_id, filter_text=email)
+        if restored_customer:
+            logger.info("Restored existing Flow customer from Flow list. user_id=%s external_id=%s", user.pk, external_id)
+            return restored_customer
+    return customer_data
+
+
+def find_flow_subscription_for_customer(flow: FlowClient, customer_id: str, plan_id: str) -> dict[str, Any] | None:
+    start = 0
+    limit = 100
+    max_pages = int(getattr(settings, "FLOW_CUSTOMER_SUBSCRIPTIONS_MAX_PAGES", 10))
+    matches: list[dict[str, Any]] = []
+    for _page in range(max_pages):
+        data = flow.get_customer_subscriptions(customer_id=customer_id, start=start, limit=limit)
+        for item in _flow_list_items(data):
+            if str(item.get("planId") or "") == plan_id:
+                matches.append(item)
+        if not data.get("hasMore"):
+            break
+        start += limit
+
+    if not matches:
+        return None
+
+    def priority(item: dict[str, Any]) -> int:
+        try:
+            flow_status = int(item.get("status"))
+        except Exception:  # noqa: BLE001
+            flow_status = None
+        if flow_status in (1, 2):
+            return 0
+        if flow_status == 0:
+            return 1
+        if flow_status == 4:
+            return 2
+        return 3
+
+    matches.sort(key=priority)
+    selected = matches[0]
+    subscription_id = selected.get("subscriptionId") or selected.get("sub_id")
+    if subscription_id:
+        return flow.get_subscription(subscription_id=str(subscription_id))
+    return selected
 
 
 def _subscription_status_from_flow(value: Any) -> str:
@@ -297,6 +388,21 @@ def sync_user_subscription(subscription: UserSubscription, data: dict[str, Any],
             "updated_at",
         ]
     )
+    return subscription
+
+
+def refresh_user_subscription_from_flow(subscription: UserSubscription, flow: FlowClient) -> UserSubscription:
+    subscription_data = None
+    if subscription.flow_subscription_id:
+        subscription_data = flow.get_subscription(subscription_id=subscription.flow_subscription_id)
+    else:
+        subscription_data = find_flow_subscription_for_customer(
+            flow,
+            subscription.customer.flow_customer_id,
+            subscription.plan.flow_plan_id,
+        )
+    if subscription_data and subscription_data.get("subscriptionId"):
+        return sync_user_subscription(subscription, subscription_data, raw_status=subscription_data)
     return subscription
 
 
@@ -811,6 +917,11 @@ class SubscriptionPortalView(APIView):
 
         plan = get_default_subscription_plan()
         subscription = UserSubscription.objects.filter(user=request.user).select_related("plan", "customer").first()
+        if subscription:
+            try:
+                subscription = refresh_user_subscription_from_flow(subscription, FlowClient())
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("Could not refresh Flow subscription for portal. user_id=%s error=%s", request.user.pk, exc)
         context = {
             "plan": plan,
             "subscription": subscription,
@@ -829,6 +940,11 @@ class SubscriptionStatusView(APIView):
 
         plan = get_default_subscription_plan()
         subscription = UserSubscription.objects.filter(user=request.user).select_related("plan", "customer").first()
+        if subscription:
+            try:
+                subscription = refresh_user_subscription_from_flow(subscription, FlowClient())
+            except Exception as exc:  # noqa: BLE001
+                logger.warning("Could not refresh Flow subscription status. user_id=%s error=%s", request.user.pk, exc)
         return Response(
             {
                 "enabled": True,
@@ -884,14 +1000,14 @@ class SubscriptionActivateView(APIView):
             customer = FlowCustomer.objects.filter(user=request.user).first()
             if not customer:
                 try:
-                    customer_data = flow.create_customer(
-                        name=_user_display_name(request.user),
-                        email=email,
-                        external_id=f"user-{request.user.pk}",
-                    )
+                    customer_data = create_or_restore_flow_customer(flow, request.user, email)
                 except Exception as exc:  # noqa: BLE001
                     if isinstance(exc, FlowAPIError) and _flow_duplicate_customer_external_id(exc.raw):
-                        messages.warning(request, _duplicate_customer_message())
+                        messages.error(
+                            request,
+                            "Flow indica que el cliente ya existe, pero no fue posible obtener su customerId. "
+                            "Revisa el cliente en Flow o aumenta FLOW_CUSTOMER_LIST_MAX_PAGES para sincronizarlo.",
+                        )
                     else:
                         messages.error(
                             request,
@@ -919,22 +1035,59 @@ class SubscriptionActivateView(APIView):
                     issuer_bank=_flow_text(customer_data.get("issuerBank")),
                     raw_create_response=customer_data,
                 )
-            else:
-                existing_subscription = UserSubscription.objects.filter(user=request.user).first()
-                can_retry_card_registration = (
-                    not existing_subscription
-                    or (
-                        existing_subscription.status
-                        in {
-                            UserSubscription.STATUS_PENDING_CARD,
-                            UserSubscription.STATUS_REGISTRATION_FAILED,
-                        }
-                        and not existing_subscription.flow_subscription_id
-                    )
-                )
-                if not can_retry_card_registration:
-                    messages.warning(request, _duplicate_customer_message())
+
+            existing_subscription = UserSubscription.objects.filter(user=request.user).select_related("plan", "customer").first()
+            if existing_subscription:
+                try:
+                    existing_subscription = refresh_user_subscription_from_flow(existing_subscription, flow)
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning("Could not refresh existing Flow subscription before activation. user_id=%s error=%s", request.user.pk, exc)
+                if existing_subscription.is_active:
+                    messages.info(request, "Tu suscripción ya está activa.")
                     return HttpResponseRedirect(reverse("subscription_portal"))
+            else:
+                remote_subscription = None
+                try:
+                    remote_subscription = find_flow_subscription_for_customer(
+                        flow,
+                        customer.flow_customer_id,
+                        plan.flow_plan_id,
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    logger.warning("Could not discover Flow subscription before activation. user_id=%s error=%s", request.user.pk, exc)
+                if remote_subscription and remote_subscription.get("subscriptionId"):
+                    existing_subscription = UserSubscription.objects.create(
+                        user=request.user,
+                        plan=plan,
+                        customer=customer,
+                        status=UserSubscription.STATUS_PENDING_CARD,
+                    )
+                    existing_subscription = sync_user_subscription(
+                        existing_subscription,
+                        remote_subscription,
+                        raw_status=remote_subscription,
+                    )
+                    if existing_subscription.is_active:
+                        messages.info(request, "Tu suscripción ya está activa.")
+                        return HttpResponseRedirect(reverse("subscription_portal"))
+
+            can_start_card_registration = (
+                not existing_subscription
+                or existing_subscription.status
+                in {
+                    UserSubscription.STATUS_PENDING_CARD,
+                    UserSubscription.STATUS_REGISTRATION_FAILED,
+                    UserSubscription.STATUS_CANCELED,
+                    UserSubscription.STATUS_INACTIVE,
+                }
+                or not existing_subscription.is_active
+            )
+            if not can_start_card_registration:
+                messages.warning(
+                    request,
+                    "Ya existe una suscripción asociada a tu usuario. Estamos revisando su estado en Flow.",
+                )
+                return HttpResponseRedirect(reverse("subscription_portal"))
 
             subscription, _created = UserSubscription.objects.update_or_create(
                 user=request.user,
