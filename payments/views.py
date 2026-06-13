@@ -882,7 +882,6 @@ class SubscriptionActivateView(APIView):
 
         with transaction.atomic():
             customer = FlowCustomer.objects.filter(user=request.user).first()
-            customer_created = False
             if not customer:
                 try:
                     customer_data = flow.create_customer(
@@ -920,11 +919,22 @@ class SubscriptionActivateView(APIView):
                     issuer_bank=_flow_text(customer_data.get("issuerBank")),
                     raw_create_response=customer_data,
                 )
-                customer_created = True
-
-            if not customer_created:
-                messages.warning(request, _duplicate_customer_message())
-                return HttpResponseRedirect(reverse("subscription_portal"))
+            else:
+                existing_subscription = UserSubscription.objects.filter(user=request.user).first()
+                can_retry_card_registration = (
+                    not existing_subscription
+                    or (
+                        existing_subscription.status
+                        in {
+                            UserSubscription.STATUS_PENDING_CARD,
+                            UserSubscription.STATUS_REGISTRATION_FAILED,
+                        }
+                        and not existing_subscription.flow_subscription_id
+                    )
+                )
+                if not can_retry_card_registration:
+                    messages.warning(request, _duplicate_customer_message())
+                    return HttpResponseRedirect(reverse("subscription_portal"))
 
             subscription, _created = UserSubscription.objects.update_or_create(
                 user=request.user,

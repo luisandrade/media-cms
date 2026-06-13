@@ -1,3 +1,33 @@
+{% if TOPBAR_BACKGROUND_COLOR or SIDEBAR_BACKGROUND_COLOR or BODY_BACKGROUND_COLOR or BUTTON_BACKGROUND_COLOR or BUTTON_BACKGROUND_HOVER_COLOR %}
+<style>
+  body,
+  body.dark_theme {
+    {% if TOPBAR_BACKGROUND_COLOR %}--header-bg-color: {{ TOPBAR_BACKGROUND_COLOR }};{% endif %}
+    {% if SIDEBAR_BACKGROUND_COLOR %}--sidebar-bg-color: {{ SIDEBAR_BACKGROUND_COLOR }};{% endif %}
+    {% if BODY_BACKGROUND_COLOR %}--body-bg-color: {{ BODY_BACKGROUND_COLOR }};{% endif %}
+    {% if BUTTON_BACKGROUND_COLOR %}--default-theme-color: {{ BUTTON_BACKGROUND_COLOR }};{% endif %}
+    {% if BUTTON_BACKGROUND_COLOR %}--default-brand-color: {{ BUTTON_BACKGROUND_COLOR }};{% endif %}
+    {% if BUTTON_BACKGROUND_COLOR %}--primary-color: {{ BUTTON_BACKGROUND_COLOR }};{% endif %}
+    {% if BUTTON_BACKGROUND_COLOR %}--links-color: {{ BUTTON_BACKGROUND_COLOR }};{% endif %}
+    {% if BUTTON_BACKGROUND_HOVER_COLOR %}--primary-hover: {{ BUTTON_BACKGROUND_HOVER_COLOR }};{% endif %}
+  }
+  {% if BUTTON_BACKGROUND_COLOR %}
+  #video-editor-trim-root .save-segments-button,
+  #video-editor-trim-root button.save-segments-button,
+  #video-editor-trim-root .save-button,
+  #video-editor-trim-root button.save-button,
+  #video-editor-trim-root .save-copy-button,
+  #video-editor-trim-root button.save-copy-button {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+  }
+  .nav-menu li.link-item.active > * {
+    border-left-color: var(--primary-color) !important;
+  }
+  {% endif %}
+</style>
+{% endif %}
+
 <script type="text/javascript">
 
 	var MediaCMS = {

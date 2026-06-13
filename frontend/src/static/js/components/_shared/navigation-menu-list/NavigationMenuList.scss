@@ -152,7 +152,7 @@
     &.link-item {
       &.active {
         > * {
-          border-left: 4px solid #e50914;
+          border-left: 4px solid var(--primary-color);
         }
       }
     }

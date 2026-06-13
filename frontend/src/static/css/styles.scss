@@ -413,11 +413,11 @@ button {
   color: var(--video-editor-card-text-color) !important;
 }
 
-/* Force save segments button to brand red in all themes */
+/* Force save segments button to configured brand color in all themes */
 #video-editor-trim-root .save-segments-button,
 #video-editor-trim-root button.save-segments-button {
-  background-color: #e50914 !important;
-  border-color: #e50914 !important;
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
   color: #ffffff !important;
   border-radius: 0 !important;
 }
@@ -427,8 +427,8 @@ button {
 #video-editor-trim-root button.save-button,
 #video-editor-trim-root .save-copy-button,
 #video-editor-trim-root button.save-copy-button {
-  background-color: #e50914 !important;
-  border-color: #e50914 !important;
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
   color: #ffffff !important;
   border-radius: 0 !important;
 }

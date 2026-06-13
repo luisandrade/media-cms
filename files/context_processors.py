@@ -25,6 +25,11 @@ def stuff(request):
     ret["UPLOAD_MAX_SIZE"] = settings.UPLOAD_MAX_SIZE
     ret["UPLOAD_MAX_FILES_NUMBER"] = settings.UPLOAD_MAX_FILES_NUMBER
     ret["PRE_UPLOAD_MEDIA_MESSAGE"] = settings.PRE_UPLOAD_MEDIA_MESSAGE
+    ret["TOPBAR_BACKGROUND_COLOR"] = getattr(settings, "TOPBAR_BACKGROUND_COLOR", "")
+    ret["SIDEBAR_BACKGROUND_COLOR"] = getattr(settings, "SIDEBAR_BACKGROUND_COLOR", "")
+    ret["BODY_BACKGROUND_COLOR"] = getattr(settings, "BODY_BACKGROUND_COLOR", "")
+    ret["BUTTON_BACKGROUND_COLOR"] = getattr(settings, "BUTTON_BACKGROUND_COLOR", "")
+    ret["BUTTON_BACKGROUND_HOVER_COLOR"] = getattr(settings, "BUTTON_BACKGROUND_HOVER_COLOR", "")
     ret["POST_UPLOAD_AUTHOR_MESSAGE_UNLISTED_NO_COMMENTARY"] = settings.POST_UPLOAD_AUTHOR_MESSAGE_UNLISTED_NO_COMMENTARY
     ret["IS_MEDIACMS_ADMIN"] = request.user.is_superuser
     ret["CAN_MANAGE_WOWZA"] = request.user.is_authenticated and (request.user.is_superuser or request.user.is_staff)
