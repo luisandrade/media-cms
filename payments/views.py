@@ -222,11 +222,11 @@ def find_flow_subscription_for_customer(flow: FlowClient, customer_id: str, plan
             flow_status = int(item.get("status"))
         except Exception:  # noqa: BLE001
             flow_status = None
-        if flow_status in (1, 2):
+        if flow_status in (UserSubscription.FLOW_STATUS_ACTIVE, UserSubscription.FLOW_STATUS_TRIAL):
             return 0
-        if flow_status == 0:
+        if flow_status == UserSubscription.FLOW_STATUS_INACTIVE:
             return 1
-        if flow_status == 4:
+        if flow_status == UserSubscription.FLOW_STATUS_CANCELED:
             return 2
         return 3
 
@@ -244,13 +244,13 @@ def _subscription_status_from_flow(value: Any) -> str:
     except Exception:  # noqa: BLE001
         numeric = None
 
-    if numeric == 1:
+    if numeric == UserSubscription.FLOW_STATUS_ACTIVE:
         return UserSubscription.STATUS_ACTIVE
-    if numeric == 2:
+    if numeric == UserSubscription.FLOW_STATUS_TRIAL:
         return UserSubscription.STATUS_TRIAL
-    if numeric == 4:
+    if numeric == UserSubscription.FLOW_STATUS_CANCELED:
         return UserSubscription.STATUS_CANCELED
-    if numeric == 0:
+    if numeric == UserSubscription.FLOW_STATUS_INACTIVE:
         return UserSubscription.STATUS_INACTIVE
     return UserSubscription.STATUS_INACTIVE
 
@@ -360,6 +360,10 @@ def sync_user_subscription(subscription: UserSubscription, data: dict[str, Any],
     subscription.period_start = parse_flow_datetime(data.get("period_start"))
     subscription.period_end = parse_flow_datetime(data.get("period_end"))
     subscription.next_invoice_date = parse_flow_datetime(data.get("next_invoice_date"))
+    try:
+        subscription.morose = int(data.get("morose")) if data.get("morose") is not None else subscription.morose
+    except Exception:  # noqa: BLE001
+        pass
     subscription.trial_start = parse_flow_datetime(data.get("trial_start"))
     subscription.trial_end = parse_flow_datetime(data.get("trial_end"))
     subscription.cancel_at_period_end = bool(int(data.get("cancel_at_period_end", 0) or 0))
@@ -378,6 +382,7 @@ def sync_user_subscription(subscription: UserSubscription, data: dict[str, Any],
             "period_start",
             "period_end",
             "next_invoice_date",
+            "morose",
             "trial_start",
             "trial_end",
             "cancel_at_period_end",
@@ -426,6 +431,7 @@ def serialize_subscription(subscription: UserSubscription | None) -> dict[str, A
         "cancel_at_period_end": subscription.cancel_at_period_end,
         "next_invoice_date": subscription.next_invoice_date,
         "period_end": subscription.period_end,
+        "morose": subscription.morose,
         "last4_card_digits": subscription.customer.last4_card_digits,
         "credit_card_type": subscription.customer.credit_card_type,
     }

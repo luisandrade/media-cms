@@ -2,10 +2,11 @@ from unittest.mock import Mock, patch
 
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from django.utils import timezone
 
 from files.tests.user_utils import create_account
 from payments.flow import FlowRedirectResult
-from payments.models import FlowCustomer, SubscriptionPlan, UserSubscription
+from payments.models import FlowCustomer, SubscriptionPlan, UserSubscription, user_has_active_subscription
 
 
 @override_settings(
@@ -25,6 +26,93 @@ class SubscriptionViewsTests(TestCase):
         self.password = "pass1234"
         self.user = create_account(password=self.password, email="subscription@example.com")
         self.client.force_login(self.user)
+
+    def test_active_subscription_requires_flow_subscription_id_and_active_flow_status(self):
+        plan = SubscriptionPlan.objects.create(
+            flow_plan_id="media-cms-monthly",
+            name="Suscripción mensual",
+            amount=1200,
+            currency="CLP",
+            interval=3,
+        )
+        customer = FlowCustomer.objects.create(
+            user=self.user,
+            flow_customer_id="cus_123",
+            external_id=f"user-{self.user.pk}",
+            email=self.user.email,
+            name=self.user.name,
+        )
+        subscription = UserSubscription.objects.create(
+            user=self.user,
+            customer=customer,
+            plan=plan,
+            status=UserSubscription.STATUS_ACTIVE,
+        )
+
+        self.assertFalse(subscription.is_active)
+        self.assertFalse(user_has_active_subscription(self.user))
+
+        subscription.flow_subscription_id = "sus_123"
+        subscription.flow_status = UserSubscription.FLOW_STATUS_INACTIVE
+        subscription.last_synced_at = timezone.now()
+        subscription.save(update_fields=["flow_subscription_id", "flow_status", "last_synced_at", "updated_at"])
+        self.user.refresh_from_db()
+        self.assertFalse(subscription.is_active)
+        self.assertFalse(user_has_active_subscription(self.user))
+
+        subscription.flow_status = UserSubscription.FLOW_STATUS_ACTIVE
+        subscription.save(update_fields=["flow_status", "updated_at"])
+        self.user.refresh_from_db()
+        self.assertTrue(subscription.is_active)
+        self.assertTrue(user_has_active_subscription(self.user))
+
+        subscription.morose = 1
+        subscription.save(update_fields=["morose", "updated_at"])
+        self.user.refresh_from_db()
+        self.assertFalse(subscription.is_active)
+        self.assertFalse(user_has_active_subscription(self.user))
+
+    @patch("payments.flow.FlowClient")
+    def test_user_has_active_subscription_syncs_morose_status_from_flow(self, flow_client_cls):
+        plan = SubscriptionPlan.objects.create(
+            flow_plan_id="media-cms-monthly",
+            name="Suscripción mensual",
+            amount=1200,
+            currency="CLP",
+            interval=3,
+        )
+        customer = FlowCustomer.objects.create(
+            user=self.user,
+            flow_customer_id="cus_123",
+            external_id=f"user-{self.user.pk}",
+            email=self.user.email,
+            name=self.user.name,
+        )
+        UserSubscription.objects.create(
+            user=self.user,
+            customer=customer,
+            plan=plan,
+            status=UserSubscription.STATUS_ACTIVE,
+            flow_status=UserSubscription.FLOW_STATUS_ACTIVE,
+            flow_subscription_id="sus_123",
+            morose=0,
+        )
+        flow_client = Mock()
+        flow_client.get_subscription.return_value = {
+            "subscriptionId": "sus_123",
+            "planId": "media-cms-monthly",
+            "customerId": "cus_123",
+            "status": 1,
+            "morose": 1,
+            "cancel_at_period_end": 0,
+        }
+        flow_client_cls.return_value = flow_client
+
+        self.assertFalse(user_has_active_subscription(self.user))
+
+        subscription = UserSubscription.objects.get(user=self.user)
+        self.assertEqual(subscription.morose, 1)
+        self.assertFalse(subscription.is_active)
 
     @patch("payments.views.FlowClient")
     def test_activate_subscription_redirects_to_flow_register(self, flow_client_cls):
@@ -201,6 +289,7 @@ class SubscriptionViewsTests(TestCase):
             "period_start": "2024-01-01 00:00:00",
             "period_end": "2024-01-31 00:00:00",
             "next_invoice_date": "2024-02-01 00:00:00",
+            "morose": 0,
             "cancel_at_period_end": 0,
         }
         flow_client_cls.return_value = flow_client
@@ -210,6 +299,8 @@ class SubscriptionViewsTests(TestCase):
         self.assertEqual(response.status_code, 200)
         subscription.refresh_from_db()
         self.assertEqual(subscription.status, UserSubscription.STATUS_ACTIVE)
+        self.assertEqual(subscription.flow_status, UserSubscription.FLOW_STATUS_ACTIVE)
+        self.assertEqual(subscription.morose, 0)
         self.assertTrue(response.json()["subscription"]["active"])
         flow_client.get_subscription.assert_called_once_with(subscription_id="sus_123")
 

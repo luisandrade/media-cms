@@ -148,12 +148,14 @@ class UserSubscriptionAdmin(admin.ModelAdmin):
         "user",
         "plan",
         "status",
+        "flow_status",
+        "morose",
         "flow_subscription_id",
         "cancel_at_period_end",
         "next_invoice_date",
         "updated_at",
     )
-    list_filter = ("status", "cancel_at_period_end", "updated_at")
+    list_filter = ("status", "flow_status", "morose", "cancel_at_period_end", "updated_at")
     search_fields = ("user__username", "user__email", "flow_subscription_id", "customer__flow_customer_id")
     raw_id_fields = ("user", "plan", "customer")
     readonly_fields = (

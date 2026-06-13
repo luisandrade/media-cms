@@ -142,6 +142,11 @@ class FlowCustomer(models.Model):
 
 
 class UserSubscription(models.Model):
+    FLOW_STATUS_INACTIVE = 0
+    FLOW_STATUS_ACTIVE = 1
+    FLOW_STATUS_TRIAL = 2
+    FLOW_STATUS_CANCELED = 4
+
     STATUS_PENDING_CARD = "pending_card"
     STATUS_ACTIVE = "active"
     STATUS_TRIAL = "trial"
@@ -150,12 +155,12 @@ class UserSubscription(models.Model):
     STATUS_REGISTRATION_FAILED = "registration_failed"
 
     STATUS_CHOICES = (
-        (STATUS_PENDING_CARD, "Pending card registration"),
-        (STATUS_ACTIVE, "Active"),
-        (STATUS_TRIAL, "Trial"),
-        (STATUS_CANCELED, "Canceled"),
-        (STATUS_INACTIVE, "Inactive"),
-        (STATUS_REGISTRATION_FAILED, "Registration failed"),
+        (STATUS_PENDING_CARD, "Registro de tarjeta pendiente"),
+        (STATUS_ACTIVE, "Activa"),
+        (STATUS_TRIAL, "En período de trial"),
+        (STATUS_CANCELED, "Cancelada"),
+        (STATUS_INACTIVE, "Inactiva"),
+        (STATUS_REGISTRATION_FAILED, "Registro fallido"),
     )
 
     user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="subscription")
@@ -170,6 +175,7 @@ class UserSubscription(models.Model):
     period_start = models.DateTimeField(null=True, blank=True)
     period_end = models.DateTimeField(null=True, blank=True)
     next_invoice_date = models.DateTimeField(null=True, blank=True)
+    morose = models.IntegerField(null=True, blank=True)
     trial_start = models.DateTimeField(null=True, blank=True)
     trial_end = models.DateTimeField(null=True, blank=True)
     cancel_at_period_end = models.BooleanField(default=False)
@@ -193,7 +199,95 @@ class UserSubscription(models.Model):
 
     @property
     def is_active(self) -> bool:
-        return self.status in {self.STATUS_ACTIVE, self.STATUS_TRIAL}
+        return (
+            bool(self.flow_subscription_id)
+            and self.flow_status in {self.FLOW_STATUS_ACTIVE, self.FLOW_STATUS_TRIAL}
+            and (self.morose is None or self.morose == 0)
+            and self.status in {self.STATUS_ACTIVE, self.STATUS_TRIAL}
+        )
+
+
+def _subscription_status_from_flow(value):
+    try:
+        numeric = int(value)
+    except Exception:  # noqa: BLE001
+        numeric = None
+
+    if numeric == UserSubscription.FLOW_STATUS_ACTIVE:
+        return UserSubscription.STATUS_ACTIVE
+    if numeric == UserSubscription.FLOW_STATUS_TRIAL:
+        return UserSubscription.STATUS_TRIAL
+    if numeric == UserSubscription.FLOW_STATUS_CANCELED:
+        return UserSubscription.STATUS_CANCELED
+    if numeric == UserSubscription.FLOW_STATUS_INACTIVE:
+        return UserSubscription.STATUS_INACTIVE
+    return UserSubscription.STATUS_INACTIVE
+
+
+def _subscription_access_sync_due(subscription: UserSubscription) -> bool:
+    interval = int(getattr(settings, "FLOW_SUBSCRIPTION_ACCESS_SYNC_SECONDS", 3600))
+    if interval < 0:
+        return False
+    if not subscription.last_synced_at:
+        return True
+    return subscription.last_synced_at <= timezone.now() - timezone.timedelta(seconds=interval)
+
+
+def _sync_subscription_access_status(subscription: UserSubscription) -> UserSubscription:
+    if not subscription.flow_subscription_id or not _subscription_access_sync_due(subscription):
+        return subscription
+
+    try:
+        from .flow import FlowClient
+
+        data = FlowClient().get_subscription(subscription_id=subscription.flow_subscription_id)
+    except Exception:  # noqa: BLE001
+        return subscription
+
+    flow_status = data.get("status")
+    try:
+        subscription.flow_status = int(flow_status) if flow_status is not None else subscription.flow_status
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        subscription.morose = int(data.get("morose")) if data.get("morose") is not None else subscription.morose
+    except Exception:  # noqa: BLE001
+        pass
+
+    subscription.status = _subscription_status_from_flow(flow_status)
+    subscription.subscription_start = parse_flow_datetime(data.get("subscription_start"))
+    subscription.subscription_end = parse_flow_datetime(data.get("subscription_end"))
+    subscription.period_start = parse_flow_datetime(data.get("period_start"))
+    subscription.period_end = parse_flow_datetime(data.get("period_end"))
+    subscription.next_invoice_date = parse_flow_datetime(data.get("next_invoice_date"))
+    subscription.trial_start = parse_flow_datetime(data.get("trial_start"))
+    subscription.trial_end = parse_flow_datetime(data.get("trial_end"))
+    subscription.cancel_at_period_end = bool(int(data.get("cancel_at_period_end", 0) or 0))
+    subscription.cancel_at = parse_flow_datetime(data.get("cancel_at"))
+    subscription.last_synced_at = timezone.now()
+    subscription.raw_subscription_status = data
+    subscription.raw_subscription_response = data
+    subscription.save(
+        update_fields=[
+            "status",
+            "flow_status",
+            "subscription_start",
+            "subscription_end",
+            "period_start",
+            "period_end",
+            "next_invoice_date",
+            "morose",
+            "trial_start",
+            "trial_end",
+            "cancel_at_period_end",
+            "cancel_at",
+            "last_synced_at",
+            "raw_subscription_status",
+            "raw_subscription_response",
+            "updated_at",
+        ]
+    )
+    return subscription
 
 
 def user_has_active_subscription(user) -> bool:
@@ -203,7 +297,9 @@ def user_has_active_subscription(user) -> bool:
         subscription = getattr(user, "subscription", None)
     except Exception:
         subscription = None
-    return bool(subscription and subscription.status in {UserSubscription.STATUS_ACTIVE, UserSubscription.STATUS_TRIAL})
+    if subscription:
+        subscription = _sync_subscription_access_status(subscription)
+    return bool(subscription and subscription.is_active)
 
 
 def parse_flow_datetime(value):
