@@ -553,7 +553,9 @@
 }
 
 .manage-statistics-card {
-  min-height: 190px;
+  height: 180px;
+  display: flex;
+  flex-direction: column;
   padding: 25px 36px 25px;
   border: 1px solid #e1e1e1;
   border-radius: 20px;
@@ -568,16 +570,16 @@
 }
 
 .manage-statistics-card-icon {
-  width: 60px;
-  height: 60px;
+  width: 54px;
+  height: 54px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border-radius: 20px;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
 
   .material-icons {
-    font-size: 2.2rem;
+    font-size: 2rem;
   }
 }
 
@@ -601,6 +603,26 @@
   background: rgba(44, 72, 110, 0.68);
 }
 
+.manage-statistics-card-subscribers .manage-statistics-card-icon {
+  color: #f472b6;
+  background: rgba(112, 48, 91, 0.62);
+}
+
+.manage-statistics-card-comments .manage-statistics-card-icon {
+  color: #38bdf8;
+  background: rgba(34, 82, 116, 0.62);
+}
+
+.manage-statistics-card-live-signals .manage-statistics-card-icon {
+  color: #f87171;
+  background: rgba(116, 44, 52, 0.62);
+}
+
+.manage-statistics-card-storage .manage-statistics-card-icon {
+  color: #a78bfa;
+  background: rgba(77, 58, 130, 0.62);
+}
+
 .manage-statistics-card-value {
   color: #1f1f1f;
   font-size: 28.8px;
@@ -612,15 +634,58 @@
   .dark_theme & {
     color: #ffffff;
   }
+
+  span {
+    color: rgba(68, 68, 68, 0.58);
+    font-size: 0.55em;
+    letter-spacing: 0;
+    white-space: nowrap;
+
+    .dark_theme & {
+      color: rgba(221, 226, 255, 0.54);
+    }
+  }
 }
 
 .manage-statistics-card-label {
   color: rgba(68, 68, 68, 0.72);
   font-size: 0.85rem;
   font-weight: 600;
+  margin-top: auto;
 
   .dark_theme & {
     color: rgba(221, 226, 255, 0.58);
+  }
+}
+
+.manage-statistics-card-meta {
+  margin: -2px 0 8px;
+  color: rgba(68, 68, 68, 0.68);
+  font-size: 0.78rem;
+  font-weight: 700;
+
+  .dark_theme & {
+    color: rgba(221, 226, 255, 0.62);
+  }
+}
+
+.manage-statistics-storage-progress {
+  height: 6px;
+  margin: 0 0 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(68, 68, 68, 0.14);
+
+  .dark_theme & {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  span {
+    display: block;
+    min-width: 2px;
+    height: 100%;
+    border-radius: inherit;
+    background: var(--primary-color, var(--default-theme-color));
   }
 }
 
@@ -635,14 +700,14 @@
   }
 
   .manage-statistics-card {
-    min-height: 190px;
+    height: 180px;
     padding: 24px 22px;
   }
 
   .manage-statistics-card-icon {
-    width: 60px;
-    height: 60px;
-    margin-bottom: 18px;
+    width: 54px;
+    height: 54px;
+    margin-bottom: 14px;
     border-radius: 16px;
 
     .material-icons {

@@ -188,6 +188,7 @@ MEDIA_ENCODING_DIR = "encoded/"
 THUMBNAIL_UPLOAD_DIR = f"{MEDIA_UPLOAD_DIR}/thumbnails/"
 SUBTITLES_UPLOAD_DIR = f"{MEDIA_UPLOAD_DIR}/subtitles/"
 HLS_DIR = os.path.join(MEDIA_ROOT, "hls/")
+MEDIA_STORAGE_LIMIT_GB = float(os.getenv("MEDIA_STORAGE_LIMIT_GB", "1000"))
 LIVE_RECORD_SYNC_ENABLED = (os.getenv("LIVE_RECORD_SYNC_ENABLED", "true") or "").strip().lower() in {"1", "true", "yes", "y", "on"}
 LIVE_RECORD_SYNC_USERNAME = os.getenv("LIVE_RECORD_SYNC_USERNAME", os.getenv("ADMIN_USER", "admin"))
 LIVE_RECORD_SYNC_FOLDER = os.getenv("LIVE_RECORD_SYNC_FOLDER", os.path.join(MEDIA_ROOT, "live_record"))

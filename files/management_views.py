@@ -1,5 +1,6 @@
 from drf_yasg import openapi as openapi
 from drf_yasg.utils import swagger_auto_schema
+from django.db.models import Q
 from django.db.utils import OperationalError, ProgrammingError
 from rest_framework import status
 from rest_framework.parsers import JSONParser
@@ -9,12 +10,13 @@ from rest_framework.views import APIView
 
 from users.models import User
 from users.serializers import UserSerializer
-from payments.models import Payment
+from payments.models import Payment, UserSubscription
 
 from .methods import is_mediacms_manager
-from .models import Category, Comment, Media
+from .models import Category, Comment, Media, WowzaApplication
 from .permissions import IsMediacmsEditor
 from .serializers import CommentSerializer, MediaSerializer
+from .storage_usage import get_media_storage_usage
 
 
 class StatisticsView(APIView):
@@ -34,6 +36,21 @@ class StatisticsView(APIView):
             total_sales = Payment.objects.filter(status=Payment.STATUS_PAID).count()
         except (OperationalError, ProgrammingError):
             total_sales = 0
+
+        try:
+            total_subscribers = UserSubscription.objects.filter(
+                flow_subscription_id__isnull=False,
+                flow_status__in=[
+                    UserSubscription.FLOW_STATUS_ACTIVE,
+                    UserSubscription.FLOW_STATUS_TRIAL,
+                ],
+                status__in=[
+                    UserSubscription.STATUS_ACTIVE,
+                    UserSubscription.STATUS_TRIAL,
+                ],
+            ).filter(Q(morose=0) | Q(morose__isnull=True)).exclude(flow_subscription_id="").count()
+        except (OperationalError, ProgrammingError):
+            total_subscribers = 0
 
         top_categories = [
             {
@@ -101,6 +118,10 @@ class StatisticsView(APIView):
                 "total_members": User.objects.count(),
                 "total_categories": Category.objects.count(),
                 "total_sales": total_sales,
+                "total_subscribers": total_subscribers,
+                "total_comments": Comment.objects.count(),
+                "total_live_signals": WowzaApplication.objects.filter(is_active=True).count(),
+                "storage_usage": get_media_storage_usage(),
                 "top_categories": top_categories,
                 "recent_activity": recent_activity,
                 "top_rated_videos": top_rated_videos,

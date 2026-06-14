@@ -37,6 +37,31 @@ const STAT_CARDS = [
     label: 'Total sales',
     className: 'sales',
   },
+  {
+    key: 'total_subscribers',
+    icon: 'subscriptions',
+    label: 'Total subscribers',
+    className: 'subscribers',
+  },
+  {
+    key: 'total_comments',
+    icon: 'forum',
+    label: 'Total comments',
+    className: 'comments',
+  },
+  {
+    key: 'total_live_signals',
+    icon: 'live_tv',
+    label: 'Total live signals',
+    className: 'live-signals',
+  },
+  {
+    key: 'storage_usage',
+    icon: 'storage',
+    label: 'Storage used',
+    className: 'storage',
+    type: 'storage',
+  },
 ];
 
 function formatCount(value) {
@@ -48,6 +73,15 @@ function formatCompactCount(value) {
     notation: 'compact',
     maximumFractionDigits: 1,
   }).format('number' === typeof value ? value : 0);
+}
+
+function formatStorageGb(value) {
+  const number = 'number' === typeof value ? value : 0;
+  const maximumFractionDigits = number >= 100 ? 0 : number >= 10 ? 1 : 2;
+
+  return `${new Intl.NumberFormat(undefined, {
+    maximumFractionDigits,
+  }).format(number)} GB`;
 }
 
 function formatActivityDate(value) {
@@ -139,8 +173,29 @@ export class ManageStatisticsPage extends Page {
                       <div className="manage-statistics-card-icon">
                         <MaterialIcon type={card.icon} />
                       </div>
-                      <div className="manage-statistics-card-value">{formatCount(stats ? stats[card.key] : 0)}</div>
-                      <div className="manage-statistics-card-label">{translateString(card.label)}</div>
+                      {'storage' === card.type ? (
+                        <>
+                          <div className="manage-statistics-card-value">
+                            {formatStorageGb(stats.storage_usage ? stats.storage_usage.used_gb : 0)}
+                            <span> / {formatStorageGb(stats.storage_usage ? stats.storage_usage.limit_gb : 0)}</span>
+                          </div>
+                          <div className="manage-statistics-storage-progress">
+                            <span
+                              style={{
+                                width: `${Math.max(
+                                  0,
+                                  Math.min(100, stats.storage_usage ? stats.storage_usage.used_percent : 0)
+                                )}%`,
+                              }}
+                            />
+                          </div>
+                        </>
+                      ) : (
+                        <div className="manage-statistics-card-value">{formatCount(stats ? stats[card.key] : 0)}</div>
+                      )}
+                      {'storage' === card.type ? null : (
+                        <div className="manage-statistics-card-label">{translateString(card.label)}</div>
+                      )}
                     </article>
                   ))}
                 </div>

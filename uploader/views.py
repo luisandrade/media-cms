@@ -11,6 +11,7 @@ from django.views import generic
 from cms.permissions import user_allowed_to_upload
 from files.helpers import rm_file
 from files.models import Media
+from files.storage_usage import STORAGE_LIMIT_MESSAGE, media_storage_has_capacity
 
 from .fineuploader import ChunkedFineUploader
 from .forms import FineUploaderUploadForm, FineUploaderUploadSuccessForm
@@ -49,6 +50,10 @@ class FineUploaderView(generic.FormView):
         return super(FineUploaderView, self).dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
+        incoming_size = form.cleaned_data.get("qqtotalfilesize") or 0
+        if not media_storage_has_capacity(incoming_size):
+            return self.make_response({"success": False, "error": STORAGE_LIMIT_MESSAGE}, status=403)
+
         self.upload = ChunkedFineUploader(form.cleaned_data, self.concurrent)
         if self.upload.concurrent and self.chunks_done:
             try:

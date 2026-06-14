@@ -78,6 +78,7 @@ from .serializers import (
     TagSerializer,
     AdsSerializer
 )
+from .storage_usage import STORAGE_LIMIT_MESSAGE, media_storage_has_capacity
 from .stop_words import STOP_WORDS
 from .tasks import save_user_action, video_trim_task
 import json
@@ -704,7 +705,7 @@ def upload_media(request):
     context = {}
     context["form"] = form
     context["can_add"] = user_allowed_to_upload(request)
-    can_upload_exp = settings.CANNOT_ADD_MEDIA_MESSAGE
+    can_upload_exp = STORAGE_LIMIT_MESSAGE if not media_storage_has_capacity() else settings.CANNOT_ADD_MEDIA_MESSAGE
     context["can_upload_exp"] = can_upload_exp
 
     return render(request, "cms/add-media.html", context)
@@ -1050,6 +1051,8 @@ class MediaList(APIView):
         serializer = MediaSerializer(data=request.data, context={"request": request})
         if serializer.is_valid():
             media_file = request.data["media_file"]
+            if not media_storage_has_capacity(getattr(media_file, "size", 0)):
+                return Response({"detail": STORAGE_LIMIT_MESSAGE}, status=status.HTTP_403_FORBIDDEN)
             serializer.save(user=request.user, media_file=media_file)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -2,6 +2,7 @@ from django.conf import settings
 from rest_framework import permissions
 
 from files.methods import is_mediacms_editor, is_mediacms_manager
+from files.storage_usage import media_storage_has_capacity
 
 
 class IsAuthorizedToAdd(permissions.BasePermission):
@@ -60,6 +61,8 @@ def user_allowed_to_upload(request):
     to upload content lives here
     """
     if request.user.is_anonymous:
+        return False
+    if not media_storage_has_capacity():
         return False
     if request.user.is_superuser:
         return True
