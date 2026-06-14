@@ -11,8 +11,11 @@ from django.core.cache import cache
 
 try:
     import geoip2.database
-except Exception:  # pragma: no cover
+except Exception as exc:  # pragma: no cover
     geoip2 = None
+    GEOIP2_IMPORT_ERROR = repr(exc)
+else:
+    GEOIP2_IMPORT_ERROR = ""
 
 
 @dataclass(frozen=True)

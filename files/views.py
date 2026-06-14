@@ -582,6 +582,7 @@ def embed_media(request):
             "geoip": {
                 "enabled": bool(getattr(settings, "CDN_BALANCER_ENABLED", True)),
                 "geoip2_available": cdn_balancer_module.geoip2 is not None,
+                "geoip2_import_error": getattr(cdn_balancer_module, "GEOIP2_IMPORT_ERROR", ""),
                 "city_db_path": getattr(settings, "CDN_BALANCER_CITY_DB_PATH", ""),
                 "asn_db_path": getattr(settings, "CDN_BALANCER_ASN_DB_PATH", ""),
             },
@@ -860,6 +861,7 @@ def view_media(request):
             "geoip": {
                 "enabled": bool(getattr(settings, "CDN_BALANCER_ENABLED", True)),
                 "geoip2_available": cdn_balancer_module.geoip2 is not None,
+                "geoip2_import_error": getattr(cdn_balancer_module, "GEOIP2_IMPORT_ERROR", ""),
                 "city_db_path": getattr(settings, "CDN_BALANCER_CITY_DB_PATH", ""),
                 "asn_db_path": getattr(settings, "CDN_BALANCER_ASN_DB_PATH", ""),
             },
