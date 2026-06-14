@@ -275,10 +275,10 @@
   justify-content: center;
   padding: 0 16px;
   color: #ffffff;
-  background: #ff121f;
+  background: var(--primary-color, var(--theme-color, var(--default-theme-color)));
 
   &:hover:not(:disabled) {
-    background: #d90d17;
+    background: var(--primary-hover, var(--primary-color, var(--theme-color, var(--default-theme-color))));
   }
 
   .spinner-loader {

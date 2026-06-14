@@ -48,11 +48,11 @@ body {
 
   /* ################################################## */
 
-  --nav-menu-active-item-bg-color: rgba(229, 9, 20, 0.15);
+  --nav-menu-active-item-bg-color: var(--primary-hover);
 
-  --nav-menu-item-hover-bg-color: rgba(229, 9, 20, 0.15);
+  --nav-menu-item-hover-bg-color: var(--primary-hover);
 
-  --in-popup-nav-menu-item-hover-bg-color: rgba(229, 9, 20, 0.15);
+  --in-popup-nav-menu-item-hover-bg-color: var(--primary-hover);
 
   /* ################################################## */
 
