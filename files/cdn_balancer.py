@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ipaddress
+import os
 import random
 import threading
 import unicodedata
@@ -211,6 +212,7 @@ _city_reader = None
 _asn_reader = None
 _city_reader_path = None
 _asn_reader_path = None
+GEOIP2_LOOKUP_STATUS = {}
 
 
 def _get_reader(kind: str, db_path: str):
@@ -249,19 +251,31 @@ def _get_reader(kind: str, db_path: str):
 
 
 def _lookup_asn_city(client_ip: str) -> tuple[int | None, str | None]:
+    global GEOIP2_LOOKUP_STATUS
+
     city_db = getattr(settings, "CDN_BALANCER_CITY_DB_PATH", "")
     asn_db = getattr(settings, "CDN_BALANCER_ASN_DB_PATH", "")
 
     asn = None
     city_name_es = None
+    status = {
+        "client_ip": client_ip,
+        "asn_db_path": asn_db,
+        "city_db_path": city_db,
+        "asn_db_exists": bool(asn_db and os.path.exists(asn_db)),
+        "city_db_exists": bool(city_db and os.path.exists(city_db)),
+        "asn_error": "",
+        "city_error": "",
+    }
 
     try:
         asn_reader = _get_reader("asn", asn_db)
         if asn_reader is not None:
             asn_resp = asn_reader.asn(client_ip)
             asn = getattr(asn_resp, "autonomous_system_number", None)
-    except Exception:
+    except Exception as exc:
         asn = None
+        status["asn_error"] = repr(exc)
 
     try:
         city_reader = _get_reader("city", city_db)
@@ -272,9 +286,13 @@ def _lookup_asn_city(client_ip: str) -> tuple[int | None, str | None]:
                 city_name_es = city_resp.city.names.get("es")
             except Exception:
                 city_name_es = None
-    except Exception:
+    except Exception as exc:
         city_name_es = None
+        status["city_error"] = repr(exc)
 
+    status["asn"] = asn
+    status["city"] = city_name_es
+    GEOIP2_LOOKUP_STATUS = status
     return asn, city_name_es
 
 

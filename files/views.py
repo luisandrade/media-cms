@@ -585,6 +585,7 @@ def embed_media(request):
                 "geoip2_import_error": getattr(cdn_balancer_module, "GEOIP2_IMPORT_ERROR", ""),
                 "city_db_path": getattr(settings, "CDN_BALANCER_CITY_DB_PATH", ""),
                 "asn_db_path": getattr(settings, "CDN_BALANCER_ASN_DB_PATH", ""),
+                "lookup_status": getattr(cdn_balancer_module, "GEOIP2_LOOKUP_STATUS", {}),
             },
         }
         logger.info(
@@ -864,6 +865,7 @@ def view_media(request):
                 "geoip2_import_error": getattr(cdn_balancer_module, "GEOIP2_IMPORT_ERROR", ""),
                 "city_db_path": getattr(settings, "CDN_BALANCER_CITY_DB_PATH", ""),
                 "asn_db_path": getattr(settings, "CDN_BALANCER_ASN_DB_PATH", ""),
+                "lookup_status": getattr(cdn_balancer_module, "GEOIP2_LOOKUP_STATUS", {}),
             },
         }
         logger.info(
