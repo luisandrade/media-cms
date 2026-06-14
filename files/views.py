@@ -451,6 +451,30 @@ def _build_local_vod_playback_urls(media):
     return {}
 
 
+def _playback_debug_info(playback_urls, *, media, balanced):
+    urls = {}
+    for key, entry in (playback_urls or {}).items():
+        if key == "_balancer" or not isinstance(entry, dict):
+            continue
+        url = entry.get("url")
+        if url:
+            urls[key] = url
+
+    playback_url = urls.get("vod") or next(iter(urls.values()), "")
+    playback_kind = "live" if getattr(media, "stream", "") else "vod"
+    return {
+        "playback_kind": playback_kind,
+        "playback_url": playback_url,
+        "playback_urls": urls,
+        "client_ip": balanced.client_ip,
+        "asn": balanced.asn,
+        "city": balanced.city,
+        "vod_host": balanced.vod_host,
+        "live_host": balanced.live_host,
+        "decision": balanced.decision,
+    }
+
+
 def embed_media(request):
     from django.shortcuts import redirect, render
     from .models import Media
@@ -537,14 +561,11 @@ def embed_media(request):
                 "token": None,
             }
 
+    playback_debug = None
     if balancer_debug:
+        playback_debug = _playback_debug_info(playback_urls, media=media, balanced=balanced)
         playback_urls["_balancer"] = {
-            "client_ip": balanced.client_ip,
-            "asn": balanced.asn,
-            "city": balanced.city,
-            "vod_host": vod_host,
-            "live_host": live_host,
-            "decision": balanced.decision,
+            **playback_debug,
             "meta": {
                 "remote_addr": request.META.get("REMOTE_ADDR"),
                 "x_forwarded_for": request.META.get("HTTP_X_FORWARDED_FOR"),
@@ -571,7 +592,9 @@ def embed_media(request):
 
     return render(request, "cms/embed.html", {
         "media": friendly_token,
-        "playback_urls": json.dumps(playback_urls)
+        "playback_urls": json.dumps(playback_urls),
+        "balancer_debug": balancer_debug,
+        "playback_debug": json.dumps(playback_debug, indent=2, ensure_ascii=False) if playback_debug else "",
     })
 
 @portal_login_required
@@ -816,14 +839,11 @@ def view_media(request):
                 "token": None,
             }
 
+    playback_debug = None
     if balancer_debug:
+        playback_debug = _playback_debug_info(playback_urls, media=media, balanced=balanced)
         playback_urls["_balancer"] = {
-            "client_ip": balanced.client_ip,
-            "asn": balanced.asn,
-            "city": balanced.city,
-            "vod_host": vod_host,
-            "live_host": live_host,
-            "decision": balanced.decision,
+            **playback_debug,
             "meta": {
                 "remote_addr": request.META.get("REMOTE_ADDR"),
                 "x_forwarded_for": request.META.get("HTTP_X_FORWARDED_FOR"),
@@ -849,6 +869,8 @@ def view_media(request):
         )
 
     context["playback_urls"] = json.dumps(playback_urls)  # ✅ Aquí se agrega al contexto
+    context["balancer_debug"] = balancer_debug
+    context["playback_debug"] = json.dumps(playback_debug, indent=2, ensure_ascii=False) if playback_debug else ""
 
     return render(request, "cms/media.html", context)
 

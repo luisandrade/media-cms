@@ -5,7 +5,13 @@
 <link href="{% static "css/embed.css" %}" rel="preload" as="style">
 <link href="{% static "css/embed.css" %}" rel="stylesheet">
 {%endblock topimports %}
-{% block content %}<div id="page-embed" data-playback-urls='{{ playback_urls }}'></div>{% endblock content %}
+{% block content %}
+{% if balancer_debug %}
+<div style="position:fixed;z-index:9999;left:0;right:0;top:0;max-height:45%;overflow:auto;background:#111;color:#0f0;font:13px/1.4 monospace;padding:12px;white-space:pre-wrap;word-break:break-all;">CDN playback debug
+{{ playback_debug|safe }}</div>
+{% endif %}
+<div id="page-embed" data-playback-urls='{{ playback_urls }}'></div>
+{% endblock content %}
 
 {% block bottomimports %}
 <script src="{% static "js/embed.js" %}?v={{ VERSION }}"></script>
