@@ -40,6 +40,11 @@ urlpatterns = [
         name="subscription_activate",
     ),
     path(
+        "subscriptions/update-card/",
+        views.SubscriptionUpdateCardView.as_view(),
+        name="subscription_update_card",
+    ),
+    path(
         "subscriptions/cancel/",
         views.SubscriptionCancelView.as_view(),
         name="subscription_cancel",

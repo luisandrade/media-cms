@@ -364,6 +364,120 @@ class SubscriptionViewsTests(TestCase):
         self.assertEqual(customer.last4_card_digits, "4425")
 
     @patch("payments.views.FlowClient")
+    def test_update_card_redirects_to_flow_register(self, flow_client_cls):
+        plan = SubscriptionPlan.objects.create(
+            flow_plan_id="media-cms-monthly",
+            name="Suscripción mensual",
+            amount=1200,
+            currency="CLP",
+            interval=3,
+        )
+        customer = FlowCustomer.objects.create(
+            user=self.user,
+            flow_customer_id="cus_123",
+            external_id=f"user-{self.user.pk}",
+            email=self.user.email,
+            name=self.user.name,
+            credit_card_type="Visa",
+            last4_card_digits="1111",
+        )
+        subscription = UserSubscription.objects.create(
+            user=self.user,
+            customer=customer,
+            plan=plan,
+            status=UserSubscription.STATUS_ACTIVE,
+            flow_subscription_id="sus_123",
+            flow_status=UserSubscription.FLOW_STATUS_ACTIVE,
+            morose=0,
+        )
+
+        flow_client = Mock()
+        flow_client.is_configured.return_value = True
+        flow_client.register_customer.return_value = FlowRedirectResult(
+            redirect_url="https://flow.test/register?token=tok_card_update",
+            token="tok_card_update",
+            raw={"url": "https://flow.test/register", "token": "tok_card_update"},
+        )
+        flow_client_cls.return_value = flow_client
+
+        response = self.client.post(reverse("subscription_update_card"))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], "https://flow.test/register?token=tok_card_update")
+        flow_client.register_customer.assert_called_once_with(
+            customer_id="cus_123",
+            url_return="http://testserver" + reverse("subscription_register_return"),
+        )
+        subscription.refresh_from_db()
+        self.assertEqual(subscription.register_token, "tok_card_update")
+        self.assertEqual(subscription.status, UserSubscription.STATUS_ACTIVE)
+
+    @patch("payments.views.FlowClient")
+    def test_register_return_updates_card_without_creating_duplicate_subscription(self, flow_client_cls):
+        plan = SubscriptionPlan.objects.create(
+            flow_plan_id="media-cms-monthly",
+            name="Suscripción mensual",
+            amount=1200,
+            currency="CLP",
+            interval=3,
+        )
+        customer = FlowCustomer.objects.create(
+            user=self.user,
+            flow_customer_id="cus_123",
+            external_id=f"user-{self.user.pk}",
+            email=self.user.email,
+            name=self.user.name,
+            credit_card_type="Visa",
+            last4_card_digits="1111",
+        )
+        subscription = UserSubscription.objects.create(
+            user=self.user,
+            customer=customer,
+            plan=plan,
+            status=UserSubscription.STATUS_ACTIVE,
+            flow_subscription_id="sus_123",
+            flow_status=UserSubscription.FLOW_STATUS_ACTIVE,
+            morose=0,
+            register_token="tok_card_update",
+        )
+
+        flow_client = Mock()
+        flow_client.get_customer_register_status.return_value = {
+            "status": "1",
+            "customerId": "cus_123",
+            "creditCardType": "Mastercard",
+            "last4CardDigits": "9876",
+            "cardNumber": "555555 **** **** 9876",
+            "issuerBank": "BANCO NUEVO",
+        }
+        flow_client.get_subscription.return_value = {
+            "subscriptionId": "sus_123",
+            "planId": "media-cms-monthly",
+            "customerId": "cus_123",
+            "status": 1,
+            "subscription_start": "2024-01-01 00:00:00",
+            "period_start": "2024-01-01 00:00:00",
+            "period_end": "2024-01-31 00:00:00",
+            "next_invoice_date": "2024-02-01 00:00:00",
+            "morose": 0,
+            "cancel_at_period_end": 0,
+        }
+        flow_client_cls.return_value = flow_client
+
+        response = self.client.post(reverse("subscription_register_return"), {"token": "tok_card_update"})
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response["Location"], reverse("subscription_portal"))
+        flow_client.create_subscription.assert_not_called()
+        flow_client.get_subscription.assert_called_once_with(subscription_id="sus_123")
+        subscription.refresh_from_db()
+        customer.refresh_from_db()
+        self.assertEqual(subscription.register_token, "")
+        self.assertEqual(subscription.status, UserSubscription.STATUS_ACTIVE)
+        self.assertEqual(customer.credit_card_type, "Mastercard")
+        self.assertEqual(customer.last4_card_digits, "9876")
+
+    @patch("payments.views.FlowClient")
     def test_cancel_subscription_updates_status(self, flow_client_cls):
         plan = SubscriptionPlan.objects.create(
             flow_plan_id="media-cms-monthly",

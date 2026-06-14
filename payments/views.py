@@ -1126,6 +1126,49 @@ class SubscriptionActivateView(APIView):
         return HttpResponseRedirect(register_result.redirect_url)
 
 
+class SubscriptionUpdateCardView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+    parser_classes = [FormParser, MultiPartParser, JSONParser]
+
+    def post(self, request):
+        if not subscription_feature_enabled():
+            return Response({"detail": "Subscriptions disabled."}, status=status.HTTP_404_NOT_FOUND)
+
+        subscription = UserSubscription.objects.filter(user=request.user).select_related("plan", "customer").first()
+        if not subscription or not subscription.customer_id:
+            messages.error(request, "Primero debes iniciar una suscripción para poder actualizar la tarjeta.")
+            return HttpResponseRedirect(reverse("subscription_portal"))
+
+        flow = FlowClient()
+        if not flow.is_configured():
+            return Response(
+                {"detail": "Flow is not configured. Set FLOW_API_KEY and FLOW_SECRET_KEY."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )
+
+        callback_url = getattr(settings, "FLOW_SUBSCRIPTION_REGISTER_RETURN_URL", None) or request.build_absolute_uri(
+            reverse("subscription_register_return")
+        )
+        callback_url = _coerce_https_if_forwarded(request, callback_url)
+        try:
+            register_result = flow.register_customer(
+                customer_id=subscription.customer.flow_customer_id,
+                url_return=callback_url,
+            )
+        except Exception as exc:  # noqa: BLE001
+            detail = str(exc)
+            if isinstance(exc, FlowAPIError) and exc.raw:
+                detail = str(exc.raw.get("message") or exc.raw.get("error") or detail)
+            messages.error(request, f"No fue posible iniciar la actualización de tarjeta en Flow: {detail}")
+            return HttpResponseRedirect(reverse("subscription_portal"))
+
+        subscription.register_token = register_result.token or ""
+        subscription.raw_register_response = register_result.raw
+        subscription.save(update_fields=["register_token", "raw_register_response", "updated_at"])
+
+        return HttpResponseRedirect(register_result.redirect_url)
+
+
 class SubscriptionRegisterReturnView(APIView):
     permission_classes = [permissions.AllowAny]
     authentication_classes: list = []
@@ -1168,17 +1211,29 @@ class SubscriptionRegisterReturnView(APIView):
             messages.error(request, "Flow no pudo registrar la tarjeta para la suscripción.")
             return HttpResponseRedirect(reverse("subscription_portal"))
 
-        subscription_data = flow.create_subscription(
-            plan_id=subscription.plan.flow_plan_id,
-            customer_id=subscription.customer.flow_customer_id,
-            trial_period_days=subscription.plan.trial_period_days if subscription.plan.trial_period_days else None,
-            periods_number=subscription.plan.periods_number if subscription.plan.periods_number else None,
-        )
+        if subscription.flow_subscription_id:
+            try:
+                subscription = refresh_user_subscription_from_flow(subscription, flow)
+            except Exception as exc:  # noqa: BLE001
+                logger.warning(
+                    "Could not refresh subscription after card update. subscription_id=%s error=%s",
+                    subscription.pk,
+                    exc,
+                )
+            message = "Tu tarjeta fue actualizada correctamente."
+        else:
+            subscription_data = flow.create_subscription(
+                plan_id=subscription.plan.flow_plan_id,
+                customer_id=subscription.customer.flow_customer_id,
+                trial_period_days=subscription.plan.trial_period_days if subscription.plan.trial_period_days else None,
+                periods_number=subscription.plan.periods_number if subscription.plan.periods_number else None,
+            )
+            sync_user_subscription(subscription, subscription_data)
+            message = "Tu suscripción quedó activada correctamente."
 
-        sync_user_subscription(subscription, subscription_data)
         subscription.register_token = ""
         subscription.save(update_fields=["register_token", "updated_at"])
-        messages.info(request, "Tu suscripción quedó activada correctamente.")
+        messages.info(request, message)
         return HttpResponseRedirect(reverse("subscription_portal"))
 
     def get(self, request):

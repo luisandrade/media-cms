@@ -38,6 +38,13 @@
             </form>
             {% endif %}
 
+            {% if subscription and subscription.customer %}
+            <form action="{% url 'subscription_update_card' %}" method="post" style="margin-top: 16px;">
+                {% csrf_token %}
+                <button class="primaryAction" type="submit">Actualizar tarjeta</button>
+            </form>
+            {% endif %}
+
             {% if subscription and subscription.flow_subscription_id and subscription.is_active %}
             <form action="{% url 'subscription_cancel' %}" method="post" style="margin-top: 16px;">
                 {% csrf_token %}
