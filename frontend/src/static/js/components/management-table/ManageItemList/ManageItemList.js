@@ -184,7 +184,7 @@ function BulkActions(props) {
       if (adId) {
         props.onProceedAssignAd(adId);
       } else {
-        alert('Select an ad first.');
+        alert(translateString('Select an ad first.'));
       }
     } else if (selectedBulkAction === 'delete') {
       props.onProceedRemoval();
@@ -200,34 +200,34 @@ function BulkActions(props) {
   return (
     <div className="manage-items-bulk-action">
       <select value={selectedBulkAction} onChange={onBulkActionSelect}>
-        <option value="">Bulk actions</option>
-        <option value="delete">Delete selected</option>
-        <option value="assign-ad">Assign ad to all media</option>
+        <option value="">{translateString('Bulk actions')}</option>
+        <option value="delete">{translateString('Delete selected')}</option>
+        <option value="assign-ad">{translateString('Assign ad to all media')}</option>
       </select>
 
       {!selectedBulkAction ? null : (
         <PopupTrigger contentRef={popupContentRef}>
-          <button>Apply</button>
+          <button>{translateString('Apply')}</button>
         </PopupTrigger>
       )}
 
       <PopupContent contentRef={popupContentRef}>
         <PopupMain>
           <span className="popup-message-title">
-            {selectedBulkAction === 'assign-ad' ? 'Assign Ad' : 'Bulk removal'}
+            {selectedBulkAction === 'assign-ad' ? translateString('Assign Ad') : translateString('Bulk removal')}
           </span>
           <span className="popup-message-main">
             {selectedBulkAction === 'assign-ad'
-              ? "You're about to assign an ad to all media. Proceed?"
-              : "You're willing to remove selected items permanently?"}
+              ? translateString("You're about to assign an ad to all media. Proceed?")
+              : translateString("You're willing to remove selected items permanently?")}
           </span>
           <hr />
           <span className="popup-message-bottom">
             <button className="button-link cancel-profile-removal" onClick={onClickCancel}>
-              CANCEL
+              {translateString('CANCEL')}
             </button>
             <button className="button-link proceed-profile-removal" onClick={onClickProceed}>
-              PROCEED
+              {translateString('PROCEED')}
             </button>
           </span>
         </PopupMain>
@@ -248,9 +248,9 @@ function assignAdToAllMedia(adId) {
   })
     .then(res => {
       if (res.ok) {
-        alert('Ad assigned successfully to all media.');
+        alert(translateString('Ad assigned successfully to all media.'));
       } else {
-        alert('Failed to assign ad.');
+        alert(translateString('Failed to assign ad.'));
       }
     })
     .catch(error => {

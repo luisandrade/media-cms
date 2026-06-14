@@ -6,6 +6,7 @@ import { FiltersToggleButton } from '../components/_shared';
 import { MediaListWrapper } from '../components/MediaListWrapper';
 import { ManageUsersFilters } from '../components/management-table/ManageUsersFilters.jsx';
 import { ManageItemList } from '../components/management-table/ManageItemList/ManageItemList';
+import { translateString } from '../utils/helpers/';
 import { Page } from './_Page';
 
 function genReqUrl(url, filters, sort, page) {
@@ -118,9 +119,9 @@ export class ManageUsersPage extends Page {
       },
       function () {
         if (multipleItems) {
-          PageActions.addNotification('The users deleted successfully.', 'usersRemovalSucceed');
+          PageActions.addNotification(translateString('The users deleted successfully.'), 'usersRemovalSucceed');
         } else {
-          PageActions.addNotification('The user deleted successfully.', 'userRemovalSucceed');
+          PageActions.addNotification(translateString('The user deleted successfully.'), 'userRemovalSucceed');
         }
       }
     );
@@ -128,9 +129,9 @@ export class ManageUsersPage extends Page {
 
   onItemsRemovalFail(multipleItems) {
     if (multipleItems) {
-      PageActions.addNotification('The users removal failed. Please try again.', 'usersRemovalFailed');
+      PageActions.addNotification(translateString('The users removal failed. Please try again.'), 'usersRemovalFailed');
     } else {
-      PageActions.addNotification('The user removal failed. Please try again.', 'userRemovalFailed');
+      PageActions.addNotification(translateString('The user removal failed. Please try again.'), 'userRemovalFailed');
     }
   }
 
@@ -138,7 +139,7 @@ export class ManageUsersPage extends Page {
     return [
       <MediaListWrapper
         key="2"
-        title={this.props.title + (null === this.state.resultsCount ? '' : ' (' + this.state.resultsCount + ')')}
+        title={translateString(this.props.title) + (null === this.state.resultsCount ? '' : ' (' + this.state.resultsCount + ')')}
         className="search-results-wrap items-list-hor"
       >
         <FiltersToggleButton onClick={this.onToggleFiltersClick} />

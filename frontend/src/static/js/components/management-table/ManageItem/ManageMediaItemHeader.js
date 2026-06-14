@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { useManagementTableHeader } from '../../../utils/hooks/';
+import { translateString } from '../../../utils/helpers/';
 import { MaterialIcon } from '../../_shared/material-icon/MaterialIcon.jsx';
 
 export function ManageMediaItemHeader(props) {
@@ -16,7 +17,7 @@ export function ManageMediaItemHeader(props) {
         onClick={sortByColumn}
         className={'mi-title mi-col-sort' + ('title' === sort ? ('asc' === order ? ' asc' : ' desc') : '')}
       >
-        Title
+        {translateString('Title')}
         <div className="mi-col-sort-icons">
           <span>
             <MaterialIcon type="arrow_drop_up" />
@@ -31,7 +32,7 @@ export function ManageMediaItemHeader(props) {
         onClick={sortByColumn}
         className={'mi-added mi-col-sort' + ('add_date' === sort ? ('asc' === order ? ' asc' : ' desc') : '')}
       >
-        Date added
+        {translateString('Date added')}
         <div className="mi-col-sort-icons">
           <span>
             <MaterialIcon type="arrow_drop_up" />
@@ -41,13 +42,13 @@ export function ManageMediaItemHeader(props) {
           </span>
         </div>
       </div>
-      <div className="mi-author">Author</div>
-      <div className="mi-type">Media type</div>
-      <div className="mi-encoding">Encoding status</div>
-      <div className="mi-state">State</div>
-      <div className="mi-reviewed">Reviewed</div>
-      <div className="mi-featured">Featured</div>
-      <div className="mi-reported">Reported</div>
+      <div className="mi-author">{translateString('Author')}</div>
+      <div className="mi-type">{translateString('Media type')}</div>
+      <div className="mi-encoding">{translateString('Encoding status')}</div>
+      <div className="mi-state">{translateString('State')}</div>
+      <div className="mi-reviewed">{translateString('Reviewed')}</div>
+      <div className="mi-featured">{translateString('Featured')}</div>
+      <div className="mi-reported">{translateString('Reported')}</div>
     </div>
   );
 }

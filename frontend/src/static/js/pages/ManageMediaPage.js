@@ -6,6 +6,7 @@ import { FiltersToggleButton } from '../components/_shared';
 import { MediaListWrapper } from '../components/MediaListWrapper';
 import { ManageMediaFilters } from '../components/management-table/ManageMediaFilters.jsx';
 import { ManageItemList } from '../components/management-table/ManageItemList/ManageItemList';
+import { translateString } from '../utils/helpers/';
 import { Page } from './_Page';
 
 function genReqUrl(url, filters, sort, page) {
@@ -107,19 +108,19 @@ export class ManageMediaPage extends Page {
         requestUrl: ApiUrlContext._currentValue.manage.media,
       },
       function () {
-        PageActions.addNotification('The media deleted successfully.', 'mediaRemovalSucceed');
+        PageActions.addNotification(translateString('The media deleted successfully.'), 'mediaRemovalSucceed');
       }
     );
   }
 
   onItemsRemovalFail(multipleItems) {
-    PageActions.addNotification('The media removal failed. Please try again.', 'mediaRemovalFailed');
+    PageActions.addNotification(translateString('The media removal failed. Please try again.'), 'mediaRemovalFailed');
   }
 
   pageContent() {
     return (
       <MediaListWrapper
-        title={this.state.pageTitle + (null === this.state.resultsCount ? '' : ' (' + this.state.resultsCount + ')')}
+        title={translateString(this.state.pageTitle) + (null === this.state.resultsCount ? '' : ' (' + this.state.resultsCount + ')')}
         className="search-results-wrap items-list-hor"
       >
         <FiltersToggleButton onClick={this.onToggleFiltersClick} />

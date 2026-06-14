@@ -4,6 +4,7 @@ import { ApiUrlContext } from '../utils/contexts/';
 import { PageActions } from '../utils/actions/';
 import { MediaListWrapper } from '../components/MediaListWrapper';
 import { ManageItemList } from '../components/management-table/ManageItemList/ManageItemList';
+import { translateString } from '../utils/helpers/';
 import { Page } from './_Page';
 
 function genReqUrl(url, sort, page) {
@@ -64,9 +65,9 @@ export class ManageCommentsPage extends Page {
       },
       function () {
         if (multipleItems) {
-          PageActions.addNotification('The comments deleted successfully.', 'commentsRemovalSucceed');
+          PageActions.addNotification(translateString('The comments deleted successfully.'), 'commentsRemovalSucceed');
         } else {
-          PageActions.addNotification('The comment deleted successfully.', 'commentRemovalSucceed');
+          PageActions.addNotification(translateString('The comment deleted successfully.'), 'commentRemovalSucceed');
         }
       }
     );
@@ -74,16 +75,16 @@ export class ManageCommentsPage extends Page {
 
   onItemsRemovalFail(multipleItems) {
     if (multipleItems) {
-      PageActions.addNotification('The comments removal failed. Please try again.', 'commentsRemovalFailed');
+      PageActions.addNotification(translateString('The comments removal failed. Please try again.'), 'commentsRemovalFailed');
     } else {
-      PageActions.addNotification('The comment removal failed. Please try again.', 'commentRemovalFailed');
+      PageActions.addNotification(translateString('The comment removal failed. Please try again.'), 'commentRemovalFailed');
     }
   }
 
   pageContent() {
     return (
       <MediaListWrapper
-        title={this.props.title + (null === this.state.resultsCount ? '' : ' (' + this.state.resultsCount + ')')}
+        title={translateString(this.props.title) + (null === this.state.resultsCount ? '' : ' (' + this.state.resultsCount + ')')}
         className="search-results-wrap items-list-hor"
       >
         <ManageItemList

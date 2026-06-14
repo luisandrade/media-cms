@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { useManagementTableHeader } from '../../../utils/hooks/';
+import { translateString } from '../../../utils/helpers/';
 import { MaterialIcon } from '../../_shared/material-icon/MaterialIcon';
 
 export function ManageCommentsItemHeader(props) {
@@ -11,13 +12,13 @@ export function ManageCommentsItemHeader(props) {
       <div className="mi-checkbox">
         <input type="checkbox" checked={isSelected} onChange={checkAll} />
       </div>
-      <div className="mi-author">Author</div>
+      <div className="mi-author">{translateString('Author')}</div>
       <div
         id="text"
         onClick={sortByColumn}
         className={'mi-comment mi-col-sort' + ('text' === sort ? ('asc' === order ? ' asc' : ' desc') : '')}
       >
-        Comment
+        {translateString('Comment')}
         <div className="mi-col-sort-icons">
           <span>
             <MaterialIcon type="arrow_drop_up" />
@@ -32,7 +33,7 @@ export function ManageCommentsItemHeader(props) {
         onClick={sortByColumn}
         className={'mi-added mi-col-sort' + ('add_date' === sort ? ('asc' === order ? ' asc' : ' desc') : '')}
       >
-        Date added
+        {translateString('Date added')}
         <div className="mi-col-sort-icons">
           <span>
             <MaterialIcon type="arrow_drop_up" />
