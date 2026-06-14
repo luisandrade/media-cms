@@ -451,6 +451,12 @@ def _build_local_vod_playback_urls(media):
     return {}
 
 
+def _should_use_local_vod_playback():
+    return bool(getattr(settings, "VIDEO_PLAYBACK_USE_LOCAL_URLS", False)) and not bool(
+        getattr(settings, "CDN_BALANCER_ENABLED", True)
+    )
+
+
 def _playback_debug_info(playback_urls, *, media, balanced):
     urls = {}
     for key, entry in (playback_urls or {}).items():
@@ -547,7 +553,7 @@ def embed_media(request):
                     "token": token,
                 }
     else:
-        if bool(getattr(settings, "VIDEO_PLAYBACK_USE_LOCAL_URLS", False)):
+        if _should_use_local_vod_playback():
             playback_urls = _build_local_vod_playback_urls(media)
         else:
             vod_template = getattr(
@@ -825,7 +831,7 @@ def view_media(request):
                     "token": token,
                 }
     else:
-        if bool(getattr(settings, "VIDEO_PLAYBACK_USE_LOCAL_URLS", False)):
+        if _should_use_local_vod_playback():
             playback_urls = _build_local_vod_playback_urls(media)
         else:
             vod_template = getattr(

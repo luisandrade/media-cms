@@ -120,6 +120,24 @@ def _default_hosts() -> BalancedHosts:
     return BalancedHosts(vod_host=host_default, live_host=host_default, decision="default")
 
 
+def _fallback_hosts(reason: str, *, client_ip: str | None = None) -> BalancedHosts:
+    if not bool(getattr(settings, "CDN_BALANCER_FALLBACK_TO_CDN", True)):
+        defaults = _default_hosts()
+        return BalancedHosts(
+            vod_host=defaults.vod_host,
+            live_host=defaults.live_host,
+            client_ip=client_ip,
+            decision=f"default:{reason}",
+        )
+
+    return BalancedHosts(
+        vod_host=getattr(settings, "CDN_BALANCER_FALLBACK_VOD_HOST", "claro-vtrlolla-vod.cl.cdnz.cl"),
+        live_host=getattr(settings, "CDN_BALANCER_FALLBACK_LIVE_HOST", "claro.02.cl.cdnz.cl"),
+        client_ip=client_ip,
+        decision=f"fallback_cdn:{reason}",
+    )
+
+
 def _select_by_asn_and_city(asn: int | None, city_es: str | None) -> BalancedHosts:
     city = _normalize_city(city_es)
 
@@ -260,7 +278,7 @@ def _lookup_asn_city(client_ip: str) -> tuple[int | None, str | None]:
 def get_balanced_hosts_for_request(request) -> BalancedHosts:
     """Devuelve hosts VOD/LIVE balanceados según IP→(ASN, Ciudad).
 
-    - No lanza excepciones: si falta geoip2/mmdb, cae a defaults.
+    - No lanza excepciones: si falta geoip2/mmdb, cae al CDN fallback configurable.
     - Cachea por IP para bajar costo.
     """
 
@@ -276,33 +294,15 @@ def get_balanced_hosts_for_request(request) -> BalancedHosts:
         )
 
     if not client_ip:
-        defaults = _default_hosts()
-        return BalancedHosts(
-            vod_host=defaults.vod_host,
-            live_host=defaults.live_host,
-            client_ip=None,
-            decision="default:no_ip",
-        )
+        return _fallback_hosts("no_ip", client_ip=None)
 
-    # Si no está geoip2, no intentamos balancear (pero sí reportamos IP).
+    # Si no está geoip2, usar CDN fallback para no volver al origen.
     if geoip2 is None:
-        defaults = _default_hosts()
-        return BalancedHosts(
-            vod_host=defaults.vod_host,
-            live_host=defaults.live_host,
-            client_ip=client_ip,
-            decision="default:no_geoip2",
-        )
+        return _fallback_hosts("no_geoip2", client_ip=client_ip)
 
-    # Si no hay DBs configuradas, no intentamos balancear.
+    # Si no hay DBs configuradas, usar CDN fallback.
     if not getattr(settings, "CDN_BALANCER_CITY_DB_PATH", "") and not getattr(settings, "CDN_BALANCER_ASN_DB_PATH", ""):
-        defaults = _default_hosts()
-        return BalancedHosts(
-            vod_host=defaults.vod_host,
-            live_host=defaults.live_host,
-            client_ip=client_ip,
-            decision="default:no_mmdb",
-        )
+        return _fallback_hosts("no_mmdb", client_ip=client_ip)
 
     cache_ttl = int(getattr(settings, "CDN_BALANCER_CACHE_TTL_SECONDS", 3600))
     cache_key = f"cdn_balancer:v1:{client_ip}"
@@ -318,9 +318,9 @@ def get_balanced_hosts_for_request(request) -> BalancedHosts:
         )
 
     asn, city = _lookup_asn_city(client_ip)
-    # Si no pudimos resolver nada, no cambiamos el host.
+    # Si no pudimos resolver nada, usar CDN fallback para no volver al origen.
     if asn is None and not (city and str(city).strip()):
-        selected = _default_hosts()
+        selected = _fallback_hosts("no_geo_match", client_ip=client_ip)
     else:
         selected = _select_by_asn_and_city(asn, city)
     selected = BalancedHosts(

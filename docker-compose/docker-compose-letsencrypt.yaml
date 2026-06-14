@@ -30,6 +30,11 @@ services:
 
   migrations:
     image: mediacms/mediacms:latest
+    build:
+      context: ..
+      dockerfile: ./Dockerfile
+      args:
+        DEVELOPMENT_MODE: "False"
     volumes:
       - ./:/home/mediacms.io/mediacms/
     environment:
@@ -50,6 +55,11 @@ services:
         condition: service_healthy
   web:
     image: mediacms/mediacms:latest
+    build:
+      context: ..
+      dockerfile: ./Dockerfile
+      args:
+        DEVELOPMENT_MODE: "False"
     deploy:
       replicas: 1
     volumes:
@@ -66,6 +76,11 @@ services:
       - migrations
   celery_beat:
     image: mediacms/mediacms:latest
+    build:
+      context: ..
+      dockerfile: ./Dockerfile
+      args:
+        DEVELOPMENT_MODE: "False"
     volumes:
       - ./:/home/mediacms.io/mediacms/
     environment:
@@ -80,6 +95,11 @@ services:
       - redis
   celery_worker:
     image: mediacms/mediacms:latest
+    build:
+      context: ..
+      dockerfile: ./Dockerfile
+      args:
+        DEVELOPMENT_MODE: "False"
     deploy:
       replicas: 1
     volumes:
