@@ -1,10 +1,13 @@
+import logging
+
 from django.conf import settings
 from django.utils import timezone
 
 from .methods import is_mediacms_editor
-from .models import StreamChatMessage
+from .models import StreamChatBan, StreamChatMessage
 
 
+logger = logging.getLogger(__name__)
 STREAM_CHAT_MAX_LENGTH = int(getattr(settings, "WOWZA_LIVE_CHAT_MAX_LENGTH", 500))
 STREAM_CHAT_HISTORY_LIMIT = int(getattr(settings, "WOWZA_LIVE_CHAT_HISTORY_LIMIT", 50))
 
@@ -27,8 +30,19 @@ def user_can_access_live_chat(user):
         return False
 
 
-def user_can_write_live_chat(user):
-    return user_can_access_live_chat(user)
+def user_is_banned_from_live_chat(user, stream):
+    if not user or not getattr(user, "is_authenticated", False) or not stream:
+        return False
+
+    return StreamChatBan.objects.filter(stream=stream, user=user, is_active=True).exists()
+
+
+def user_can_write_live_chat(user, stream=None):
+    if not user_can_access_live_chat(user):
+        return False
+    if stream and user_is_banned_from_live_chat(user, stream):
+        return False
+    return True
 
 
 def user_can_moderate_live_chat(user):
@@ -59,6 +73,19 @@ def serialize_chat_message(message):
     }
 
 
+def ban_user_from_live_chat(*, stream, user, banned_by, reason=""):
+    ban, _created = StreamChatBan.objects.update_or_create(
+        stream=stream,
+        user=user,
+        is_active=True,
+        defaults={
+            "banned_by": banned_by,
+            "reason": (reason or "").strip()[:255],
+        },
+    )
+    return ban
+
+
 def chat_group_name(stream_id):
     return f"wowza_live_chat_{stream_id}"
 
@@ -72,6 +99,8 @@ def list_chat_messages(stream, *, before_id=None, limit=None):
 
 
 def create_chat_message(*, stream, user, message):
+    if user_is_banned_from_live_chat(user, stream):
+        raise PermissionError("Has sido bloqueado para escribir en este chat.")
     return StreamChatMessage.objects.create(stream=stream, user=user, message=normalize_chat_message(message))
 
 
@@ -94,10 +123,13 @@ def broadcast_chat_event(stream_id, event):
     if not channel_layer:
         return
 
-    async_to_sync(channel_layer.group_send)(
-        chat_group_name(stream_id),
-        {
-            "type": "chat.event",
-            "event": event,
-        },
-    )
+    try:
+        async_to_sync(channel_layer.group_send)(
+            chat_group_name(stream_id),
+            {
+                "type": "chat.event",
+                "event": event,
+            },
+        )
+    except Exception:
+        logger.exception("No fue posible emitir evento del chat live stream_id=%s", stream_id)

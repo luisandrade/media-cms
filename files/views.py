@@ -930,7 +930,7 @@ def view_wowza_live(request, app_name):
         "chat_enabled": chat_enabled,
         "chat_api_url": reverse("wowza_live_chat_messages", args=[app.name]) if chat_enabled else "",
         "chat_ws_url": f"{chat_ws_scheme}://{request.get_host()}/ws/live-chat/{app.id}/" if chat_enabled else "",
-        "chat_can_write": chat_enabled and user_can_write_live_chat(request.user),
+        "chat_can_write": chat_enabled and user_can_write_live_chat(request.user, app),
         "chat_can_moderate": chat_enabled and user_can_moderate_live_chat(request.user),
     }
     return render(request, "cms/wowza_live.html", context)

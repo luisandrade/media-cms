@@ -5,7 +5,7 @@ from django.conf import settings
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
-from files.models import StreamChatMessage, WowzaApplication
+from files.models import StreamChatBan, StreamChatMessage, WowzaApplication
 from files.tests.user_utils import create_account
 from files.wowza_views import hls_playlist_is_live, serialize_recording_status
 from files.wowza import (
@@ -322,6 +322,31 @@ class WowzaManagementTests(TestCase):
         self.assertEqual(list_response.json()["results"][0]["message"], "Hola desde el chat")
         self.assertEqual(list_response.json()["can_write"], True)
 
+    @patch("channels.layers.get_channel_layer")
+    def test_wowza_live_chat_post_survives_broadcast_failure(self, get_channel_layer_mock):
+        class FailingChannelLayer:
+            async def group_send(self, *args, **kwargs):
+                raise RuntimeError("redis unavailable")
+
+        get_channel_layer_mock.return_value = FailingChannelLayer()
+        WowzaApplication.objects.create(
+            name="eventozlive",
+            schedule_id="schedule-live",
+            created_by=self.admin,
+            storage_dir=f"/nas/{self.admin.id}",
+        )
+        self.client.force_login(self.admin)
+
+        response = self.client.post(
+            "/api/v1/wowza_live/eventozlive/chat",
+            data=json.dumps({"message": "Mensaje con Redis caido"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()["message"], "Mensaje con Redis caido")
+        self.assertEqual(StreamChatMessage.objects.count(), 1)
+
     def test_wowza_live_chat_requires_subscription_for_regular_user(self):
         WowzaApplication.objects.create(
             name="eventozlive",
@@ -370,6 +395,46 @@ class WowzaManagementTests(TestCase):
         message.refresh_from_db()
         self.assertEqual(message.is_deleted, True)
         self.assertEqual(message.deleted_by, self.staff_admin)
+
+    def test_wowza_live_chat_allows_staff_to_ban_message_author(self):
+        app = WowzaApplication.objects.create(
+            name="eventozlive",
+            schedule_id="schedule-live",
+            created_by=self.admin,
+            storage_dir=f"/nas/{self.admin.id}",
+        )
+        message = StreamChatMessage.objects.create(stream=app, user=self.user, message="Mensaje ofensivo")
+        self.client.force_login(self.staff_admin)
+
+        response = self.client.post(
+            f"/api/v1/wowza_live/eventozlive/chat/{message.id}",
+            data=json.dumps({"action": "ban"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(StreamChatBan.objects.filter(stream=app, user=self.user, is_active=True).exists())
+        message.refresh_from_db()
+        self.assertEqual(message.is_deleted, True)
+
+    def test_wowza_live_chat_blocks_banned_user_from_posting(self):
+        app = WowzaApplication.objects.create(
+            name="eventozlive",
+            schedule_id="schedule-live",
+            created_by=self.admin,
+            storage_dir=f"/nas/{self.admin.id}",
+        )
+        StreamChatBan.objects.create(stream=app, user=self.admin, banned_by=self.staff_admin)
+        self.client.force_login(self.admin)
+
+        response = self.client.post(
+            "/api/v1/wowza_live/eventozlive/chat",
+            data=json.dumps({"message": "No deberia salir"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(StreamChatMessage.objects.count(), 0)
 
     def test_generate_wowza_token_uses_configured_hash_query_prefix(self):
         token = generate_wowza_token("eventozlive/live", "a3e69479cda106ac", token_name="wowzatoken")

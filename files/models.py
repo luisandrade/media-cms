@@ -1085,6 +1085,29 @@ class StreamChatMessage(models.Model):
         return f"{self.user} en {self.stream}: {self.message[:40]}"
 
 
+class StreamChatBan(models.Model):
+    """User blocked from writing in a Wowza live stream chat."""
+
+    stream = models.ForeignKey(WowzaApplication, on_delete=models.CASCADE, related_name="chat_bans")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="stream_chat_bans")
+    banned_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, related_name="issued_stream_chat_bans", null=True, blank=True)
+    reason = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    is_active = models.BooleanField(default=True, db_index=True)
+
+    class Meta:
+        ordering = ["-created_at", "-id"]
+        constraints = [
+            models.UniqueConstraint(fields=["stream", "user"], condition=models.Q(is_active=True), name="unique_active_stream_chat_ban"),
+        ]
+        indexes = [
+            models.Index(fields=["stream", "user", "is_active"]),
+        ]
+
+    def __str__(self):
+        return f"{self.user} baneado en {self.stream}"
+
+
 class License(models.Model):
     """A Base license model to be used in Media"""
 

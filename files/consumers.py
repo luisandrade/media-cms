@@ -97,11 +97,11 @@ class WowzaLiveChatConsumer(AsyncJsonWebsocketConsumer):
 
     @database_sync_to_async
     def get_permissions(self):
-        stream_exists = WowzaApplication.objects.filter(id=self.stream_id, is_active=True).exists()
-        can_access = stream_exists and user_can_access_live_chat(self.user)
+        stream = WowzaApplication.objects.filter(id=self.stream_id, is_active=True).first()
+        can_access = bool(stream) and user_can_access_live_chat(self.user)
         return {
             "can_access": can_access,
-            "can_write": can_access and user_can_write_live_chat(self.user),
+            "can_write": can_access and user_can_write_live_chat(self.user, stream),
             "can_moderate": user_can_moderate_live_chat(self.user),
         }
 
@@ -111,6 +111,8 @@ class WowzaLiveChatConsumer(AsyncJsonWebsocketConsumer):
         try:
             message = create_chat_message(stream=stream, user=self.user, message=message_text)
         except ValueError as exc:
+            return {"error": str(exc)}
+        except PermissionError as exc:
             return {"error": str(exc)}
         return {"message": serialize_chat_message(message)}
 

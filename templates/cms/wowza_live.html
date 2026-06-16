@@ -25,6 +25,7 @@
         data-ws-url="{{ chat_ws_url }}"
         data-can-write="{% if chat_can_write %}true{% else %}false{% endif %}"
         data-can-moderate="{% if chat_can_moderate %}true{% else %}false{% endif %}"
+        data-user-id="{{ request.user.id }}"
     >
         <button class="wowza-live-chat-head" type="button" data-chat-toggle aria-expanded="true">
             <span>
@@ -41,7 +42,22 @@
                 <form class="wowza-live-chat-form" data-chat-form>
                     {% csrf_token %}
                     <textarea data-chat-input maxlength="500" rows="2" placeholder="Escribe un mensaje"></textarea>
-                    <button type="submit">Enviar</button>
+                    <button class="wowza-live-chat-emoji-toggle" type="button" data-chat-emoji-toggle aria-label="Agregar emoticono" aria-expanded="false">☺</button>
+                    <button class="wowza-live-chat-submit" type="submit">Enviar</button>
+                    <div class="wowza-live-chat-emoji-picker" data-chat-emoji-picker hidden>
+                        <button type="button" data-chat-emoji="😀">😀</button>
+                        <button type="button" data-chat-emoji="😂">😂</button>
+                        <button type="button" data-chat-emoji="😍">😍</button>
+                        <button type="button" data-chat-emoji="😎">😎</button>
+                        <button type="button" data-chat-emoji="🥳">🥳</button>
+                        <button type="button" data-chat-emoji="👏">👏</button>
+                        <button type="button" data-chat-emoji="👍">👍</button>
+                        <button type="button" data-chat-emoji="🔥">🔥</button>
+                        <button type="button" data-chat-emoji="❤️">❤️</button>
+                        <button type="button" data-chat-emoji="🤠">🤠</button>
+                        <button type="button" data-chat-emoji="🎥">🎥</button>
+                        <button type="button" data-chat-emoji="🏆">🏆</button>
+                    </div>
                 </form>
                 <p class="wowza-live-chat-feedback" data-chat-feedback></p>
                 {% else %}
@@ -324,6 +340,29 @@
     line-height: 1;
 }
 
+.wowza-live-chat-ban {
+    position: absolute;
+    top: 8px;
+    right: 34px;
+    border: 0;
+    background: transparent;
+    color: rgba(68, 68, 68, 0.68);
+    cursor: pointer;
+    font-size: 0.72rem;
+    font-weight: 800;
+    line-height: 1;
+    text-transform: uppercase;
+}
+
+.dark_theme .wowza-live-chat-ban {
+    color: rgba(203, 209, 234, 0.72);
+}
+
+.wowza-live-chat-ban:hover {
+    background: rgba(255, 18, 31, 0.12);
+    color: #ff121f;
+}
+
 .dark_theme .wowza-live-chat-delete {
     color: rgba(203, 209, 234, 0.72);
 }
@@ -334,8 +373,9 @@
 }
 
 .wowza-live-chat-form {
+    position: relative;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto auto;
     align-items: start;
     gap: 8px;
     padding: 12px 14px 14px;
@@ -387,6 +427,64 @@
     color: #ffffff;
     cursor: pointer;
     font-weight: 900;
+}
+
+.wowza-live-chat-form .wowza-live-chat-emoji-toggle {
+    width: 44px;
+    min-width: 44px;
+    padding: 0;
+    background: #f1f1f1;
+    color: #222222;
+    font-size: 1.25rem;
+}
+
+.dark_theme .wowza-live-chat-form .wowza-live-chat-emoji-toggle {
+    background: #232738;
+    color: #ffffff;
+}
+
+.wowza-live-chat-form .wowza-live-chat-emoji-toggle:hover,
+.wowza-live-chat-form .wowza-live-chat-emoji-toggle[aria-expanded="true"] {
+    background: #ff121f;
+    color: #ffffff;
+}
+
+.wowza-live-chat-emoji-picker {
+    position: absolute;
+    right: 104px;
+    bottom: 64px;
+    z-index: 4;
+    display: grid;
+    grid-template-columns: repeat(6, 34px);
+    gap: 6px;
+    padding: 8px;
+    border: 1px solid #e2e2e2;
+    border-radius: 8px;
+    background: #ffffff;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
+}
+
+.dark_theme .wowza-live-chat-emoji-picker {
+    border-color: #3b4054;
+    background: #171a27;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.34);
+}
+
+.wowza-live-chat-form .wowza-live-chat-emoji-picker button {
+    width: 34px;
+    min-width: 34px;
+    height: 34px;
+    min-height: 34px;
+    padding: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: inherit;
+    font-size: 1.2rem;
+    font-weight: 400;
+}
+
+.wowza-live-chat-form .wowza-live-chat-emoji-picker button:hover {
+    background: rgba(255, 18, 31, 0.12);
 }
 
 .wowza-live-chat-form button:disabled {
@@ -469,6 +567,11 @@
     .wowza-live-chat-body {
         min-height: 360px;
     }
+
+    .wowza-live-chat-emoji-picker {
+        right: 14px;
+        grid-template-columns: repeat(4, 34px);
+    }
 }
 </style>
 
@@ -483,6 +586,7 @@
     const wsUrl = root.dataset.wsUrl;
     const canWrite = root.dataset.canWrite === 'true';
     const canModerate = root.dataset.canModerate === 'true';
+    const currentUserId = Number(root.dataset.userId || 0);
     const messagesEl = root.querySelector('[data-chat-messages]');
     const emptyEl = root.querySelector('[data-chat-empty]');
     const statusEl = root.querySelector('[data-chat-status]');
@@ -491,6 +595,8 @@
     const feedback = root.querySelector('[data-chat-feedback]');
     const toggle = root.querySelector('[data-chat-toggle]');
     const csrfInput = root.querySelector('input[name="csrfmiddlewaretoken"]');
+    const emojiToggle = root.querySelector('[data-chat-emoji-toggle]');
+    const emojiPicker = root.querySelector('[data-chat-emoji-picker]');
     const seen = new Set();
     let socket = null;
     let pollingTimer = null;
@@ -505,6 +611,39 @@
         if (feedback) {
             feedback.textContent = text || '';
         }
+    }
+
+    function setEmojiPickerOpen(isOpen) {
+        if (!emojiPicker || !emojiToggle) {
+            return;
+        }
+        emojiPicker.hidden = !isOpen;
+        emojiToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    }
+
+    function insertEmoji(emoji) {
+        if (!input || !emoji) {
+            return;
+        }
+        const start = input.selectionStart || 0;
+        const end = input.selectionEnd || start;
+        const before = input.value.slice(0, start);
+        const after = input.value.slice(end);
+        input.value = before + emoji + after;
+        const cursor = start + emoji.length;
+        input.focus();
+        input.setSelectionRange(cursor, cursor);
+    }
+
+    function disableChatWriting(message) {
+        if (!form) {
+            return;
+        }
+        form.querySelectorAll('textarea, button').forEach(function (element) {
+            element.disabled = true;
+        });
+        setEmojiPickerOpen(false);
+        setFeedback(message || 'No puedes escribir en este chat.');
     }
 
     function formatTime(value) {
@@ -549,6 +688,16 @@
         item.appendChild(text);
 
         if (canModerate) {
+            const ban = document.createElement('button');
+            ban.type = 'button';
+            ban.className = 'wowza-live-chat-ban';
+            ban.setAttribute('aria-label', 'Banear usuario');
+            ban.textContent = 'Banear';
+            ban.addEventListener('click', function () {
+                banUser(message.id);
+            });
+            item.appendChild(ban);
+
             const remove = document.createElement('button');
             remove.type = 'button';
             remove.className = 'wowza-live-chat-delete';
@@ -639,6 +788,12 @@
                 renderMessage(payload.message);
             } else if (payload.type === 'message.deleted') {
                 removeMessage(payload.id);
+            } else if (payload.type === 'user.banned') {
+                if (Number(payload.user_id) === currentUserId) {
+                    disableChatWriting('Has sido bloqueado para escribir en este chat.');
+                } else if (canModerate) {
+                    setFeedback('Usuario baneado del chat.');
+                }
             } else if (payload.type === 'chat.error') {
                 setFeedback(payload.detail);
             }
@@ -651,6 +806,26 @@
 
         socket.addEventListener('error', function () {
             setStatus('Actualizando');
+            });
+    }
+
+    function readJsonResponse(response, fallbackMessage) {
+        return response.text().then(function (text) {
+            let data = {};
+            if (text) {
+                try {
+                    data = JSON.parse(text);
+                } catch (error) {
+                    if (!response.ok) {
+                        throw new Error(fallbackMessage);
+                    }
+                    throw error;
+                }
+            }
+            if (!response.ok) {
+                throw new Error(data.detail || fallbackMessage);
+            }
+            return data;
         });
     }
 
@@ -664,12 +839,7 @@
             },
             body: JSON.stringify({ message: message }),
         }).then(function (response) {
-            return response.json().then(function (data) {
-                if (!response.ok) {
-                    throw new Error(data.detail || 'No fue posible enviar el mensaje.');
-                }
-                return data;
-            });
+            return readJsonResponse(response, 'No fue posible enviar el mensaje.');
         });
     }
 
@@ -687,7 +857,56 @@
         });
     }
 
+    function banUser(messageId) {
+        if (!window.confirm('¿Banear a este usuario del chat? No podrá seguir escribiendo en esta señal.')) {
+            return;
+        }
+        fetch(apiUrl + '/' + messageId, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfInput ? csrfInput.value : '',
+            },
+            body: JSON.stringify({ action: 'ban', reason: 'Moderación del chat' }),
+        }).then(function (response) {
+            return readJsonResponse(response, 'No fue posible banear al usuario.');
+        }).then(function () {
+            removeMessage(messageId);
+            setFeedback('Usuario baneado del chat.');
+        }).catch(function (error) {
+            setFeedback(error.message);
+        });
+    }
+
     if (form && input && canWrite) {
+        if (emojiToggle && emojiPicker) {
+            emojiToggle.addEventListener('click', function () {
+                setEmojiPickerOpen(emojiPicker.hidden);
+            });
+
+            emojiPicker.addEventListener('click', function (event) {
+                const button = event.target.closest('[data-chat-emoji]');
+                if (!button) {
+                    return;
+                }
+                insertEmoji(button.dataset.chatEmoji);
+                setEmojiPickerOpen(false);
+            });
+
+            document.addEventListener('click', function (event) {
+                if (!root.contains(event.target)) {
+                    setEmojiPickerOpen(false);
+                }
+            });
+
+            input.addEventListener('keydown', function (event) {
+                if (event.key === 'Escape') {
+                    setEmojiPickerOpen(false);
+                }
+            });
+        }
+
         form.addEventListener('submit', function (event) {
             event.preventDefault();
             const message = input.value.trim();
