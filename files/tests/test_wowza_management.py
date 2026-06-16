@@ -300,6 +300,26 @@ class WowzaManagementTests(TestCase):
         self.assertEqual(response.status_code, 403)
         self.assertContains(response, "suscripciones", status_code=403)
 
+    @patch("files.wowza_views.WowzaClient")
+    def test_wowza_live_page_shows_banned_chat_message(self, wowza_client_cls):
+        app = WowzaApplication.objects.create(
+            name="eventozlive",
+            schedule_id="schedule-live",
+            created_by=self.admin,
+            storage_dir=f"/nas/{self.admin.id}",
+        )
+        StreamChatBan.objects.create(stream=app, user=self.admin, banned_by=self.staff_admin)
+        wowza_client = Mock()
+        wowza_client.incoming_streams.return_value = {"incomingStreams": []}
+        wowza_client_cls.return_value = wowza_client
+        self.client.force_login(self.admin)
+
+        response = self.client.get("/live/eventozlive")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Has sido bloqueado para escribir en este chat.")
+        self.assertNotContains(response, "Necesitas una suscripción activa para escribir en el chat.")
+
     def test_wowza_live_chat_allows_authorized_user_to_post_and_list_messages(self):
         WowzaApplication.objects.create(
             name="eventozlive",
@@ -434,6 +454,52 @@ class WowzaManagementTests(TestCase):
         message.refresh_from_db()
         self.assertEqual(message.is_deleted, True)
 
+    def test_wowza_live_chat_allows_staff_to_list_banned_users(self):
+        app = WowzaApplication.objects.create(
+            name="eventozlive",
+            schedule_id="schedule-live",
+            created_by=self.admin,
+            storage_dir=f"/nas/{self.admin.id}",
+        )
+        StreamChatBan.objects.create(stream=app, user=self.user, banned_by=self.staff_admin, reason="Spam")
+        self.client.force_login(self.staff_admin)
+
+        response = self.client.get("/api/v1/wowza_live/eventozlive/chat/bans")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["results"][0]["user"]["id"], self.user.id)
+        self.assertEqual(response.json()["results"][0]["reason"], "Spam")
+
+    def test_wowza_live_chat_rejects_regular_user_listing_bans(self):
+        app = WowzaApplication.objects.create(
+            name="eventozlive",
+            schedule_id="schedule-live",
+            created_by=self.admin,
+            storage_dir=f"/nas/{self.admin.id}",
+        )
+        StreamChatBan.objects.create(stream=app, user=self.admin, banned_by=self.staff_admin)
+        self.client.force_login(self.user)
+
+        response = self.client.get("/api/v1/wowza_live/eventozlive/chat/bans")
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_wowza_live_chat_allows_staff_to_unban_user(self):
+        app = WowzaApplication.objects.create(
+            name="eventozlive",
+            schedule_id="schedule-live",
+            created_by=self.admin,
+            storage_dir=f"/nas/{self.admin.id}",
+        )
+        ban = StreamChatBan.objects.create(stream=app, user=self.user, banned_by=self.staff_admin)
+        self.client.force_login(self.staff_admin)
+
+        response = self.client.delete(f"/api/v1/wowza_live/eventozlive/chat/bans/{ban.id}")
+
+        self.assertEqual(response.status_code, 204)
+        ban.refresh_from_db()
+        self.assertEqual(ban.is_active, False)
+
     def test_wowza_live_chat_rejects_staff_banning_self(self):
         app = WowzaApplication.objects.create(
             name="eventozlive",
@@ -473,6 +539,7 @@ class WowzaManagementTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.json()["detail"], "Has sido bloqueado para escribir en este chat.")
         self.assertEqual(StreamChatMessage.objects.count(), 0)
 
     def test_generate_wowza_token_uses_configured_hash_query_prefix(self):

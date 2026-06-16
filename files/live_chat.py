@@ -73,6 +73,27 @@ def serialize_chat_message(message):
     }
 
 
+def serialize_chat_ban(ban):
+    user = ban.user
+    banned_by = ban.banned_by
+    return {
+        "id": ban.id,
+        "reason": ban.reason,
+        "created_at": ban.created_at.isoformat(),
+        "user": {
+            "id": user.id,
+            "username": getattr(user, "username", "") or getattr(user, "email", "") or "Usuario",
+            "email": getattr(user, "email", "") or "",
+        },
+        "banned_by": {
+            "id": banned_by.id,
+            "username": getattr(banned_by, "username", "") or getattr(banned_by, "email", "") or "Moderador",
+        }
+        if banned_by
+        else None,
+    }
+
+
 def ban_user_from_live_chat(*, stream, user, banned_by, reason=""):
     ban, _created = StreamChatBan.objects.update_or_create(
         stream=stream,
@@ -83,6 +104,12 @@ def ban_user_from_live_chat(*, stream, user, banned_by, reason=""):
             "reason": (reason or "").strip()[:255],
         },
     )
+    return ban
+
+
+def unban_user_from_live_chat(*, ban, unbanned_by):
+    ban.is_active = False
+    ban.save(update_fields=["is_active"])
     return ban
 
 

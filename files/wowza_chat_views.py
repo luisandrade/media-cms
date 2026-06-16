@@ -8,13 +8,16 @@ from .live_chat import (
     broadcast_chat_event,
     create_chat_message,
     list_chat_messages,
+    serialize_chat_ban,
     serialize_chat_message,
     soft_delete_chat_message,
+    unban_user_from_live_chat,
     user_can_access_live_chat,
     user_can_moderate_live_chat,
+    user_is_banned_from_live_chat,
     user_can_write_live_chat,
 )
-from .models import StreamChatMessage, WowzaApplication
+from .models import StreamChatBan, StreamChatMessage, WowzaApplication
 
 
 class WowzaLiveChatMessagesView(APIView):
@@ -37,6 +40,8 @@ class WowzaLiveChatMessagesView(APIView):
 
     def post(self, request, app_name):
         app = get_object_or_404(WowzaApplication, name=app_name, is_active=True)
+        if user_is_banned_from_live_chat(request.user, app):
+            return Response({"detail": "Has sido bloqueado para escribir en este chat."}, status=status.HTTP_403_FORBIDDEN)
         if not user_can_write_live_chat(request.user, app):
             return Response({"detail": "No puedes escribir en este chat."}, status=status.HTTP_403_FORBIDDEN)
 
@@ -89,4 +94,34 @@ class WowzaLiveChatMessageDetailView(APIView):
         message = get_object_or_404(StreamChatMessage, id=message_id, stream=app)
         soft_delete_chat_message(message=message, deleted_by=request.user)
         broadcast_chat_event(app.id, {"type": "message.deleted", "id": message.id})
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class WowzaLiveChatBansView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def get(self, request, app_name):
+        app = get_object_or_404(WowzaApplication, name=app_name, is_active=True)
+        if not user_can_moderate_live_chat(request.user):
+            return Response({"detail": "No tienes permisos para moderar este chat."}, status=status.HTTP_403_FORBIDDEN)
+
+        bans = (
+            StreamChatBan.objects.select_related("user", "banned_by")
+            .filter(stream=app, is_active=True)
+            .order_by("-created_at", "-id")
+        )
+        return Response({"results": [serialize_chat_ban(ban) for ban in bans]})
+
+
+class WowzaLiveChatBanDetailView(APIView):
+    permission_classes = (permissions.IsAuthenticated,)
+
+    def delete(self, request, app_name, ban_id):
+        app = get_object_or_404(WowzaApplication, name=app_name, is_active=True)
+        if not user_can_moderate_live_chat(request.user):
+            return Response({"detail": "No tienes permisos para moderar este chat."}, status=status.HTTP_403_FORBIDDEN)
+
+        ban = get_object_or_404(StreamChatBan.objects.select_related("user"), id=ban_id, stream=app, is_active=True)
+        unban_user_from_live_chat(ban=ban, unbanned_by=request.user)
+        broadcast_chat_event(app.id, {"type": "user.unbanned", "user_id": ban.user_id})
         return Response(status=status.HTTP_204_NO_CONTENT)

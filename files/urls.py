@@ -76,6 +76,12 @@ urlpatterns = [
     re_path(r"^api/v1/live$", views.LiveList.as_view()),
     re_path(r"^api/v1/wowza_live$", wowza_views.WowzaLiveApplicationListView.as_view()),
     re_path(r"^api/v1/wowza_live/(?P<app_name>[^/]+)/chat$", wowza_chat_views.WowzaLiveChatMessagesView.as_view(), name="wowza_live_chat_messages"),
+    re_path(r"^api/v1/wowza_live/(?P<app_name>[^/]+)/chat/bans$", wowza_chat_views.WowzaLiveChatBansView.as_view(), name="wowza_live_chat_bans"),
+    re_path(
+        r"^api/v1/wowza_live/(?P<app_name>[^/]+)/chat/bans/(?P<ban_id>\d+)$",
+        wowza_chat_views.WowzaLiveChatBanDetailView.as_view(),
+        name="wowza_live_chat_ban_detail",
+    ),
     re_path(
         r"^api/v1/wowza_live/(?P<app_name>[^/]+)/chat/(?P<message_id>\d+)$",
         wowza_chat_views.WowzaLiveChatMessageDetailView.as_view(),

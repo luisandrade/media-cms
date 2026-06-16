@@ -22,11 +22,13 @@
         class="wowza-live-chat"
         data-live-chat
         data-api-url="{{ chat_api_url }}"
+        data-bans-url="{{ chat_bans_url }}"
         data-ws-url="{{ chat_ws_url }}"
         data-can-write="{% if chat_can_write %}true{% else %}false{% endif %}"
         data-can-moderate="{% if chat_can_moderate %}true{% else %}false{% endif %}"
         data-user-id="{{ request.user.id }}"
     >
+        <div hidden>{% csrf_token %}</div>
         <button class="wowza-live-chat-head" type="button" data-chat-toggle aria-expanded="true">
             <span>
                 <strong>Chat en vivo</strong>
@@ -61,7 +63,18 @@
                 </form>
                 <p class="wowza-live-chat-feedback" data-chat-feedback></p>
                 {% else %}
-                <p class="wowza-live-chat-locked">Necesitas una suscripción activa para escribir en el chat.</p>
+                <p class="wowza-live-chat-locked">{{ chat_locked_message }}</p>
+                {% endif %}
+                {% if chat_can_moderate %}
+                <div class="wowza-live-chat-bans" data-chat-bans-panel>
+                    <div class="wowza-live-chat-bans-head">
+                        <strong>Usuarios baneados</strong>
+                        <button type="button" data-chat-bans-refresh>Actualizar</button>
+                    </div>
+                    <div class="wowza-live-chat-bans-list" data-chat-bans-list>
+                        <p class="wowza-live-chat-bans-empty">Cargando baneados...</p>
+                    </div>
+                </div>
                 {% endif %}
         </div>
     </section>
@@ -510,6 +523,105 @@
     border-color: #31364a;
 }
 
+.wowza-live-chat-bans {
+    padding: 12px 14px 14px;
+    border-top: 1px solid #e5e5e5;
+}
+
+.dark_theme .wowza-live-chat-bans {
+    border-color: #31364a;
+}
+
+.wowza-live-chat-bans-head,
+.wowza-live-chat-ban-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.wowza-live-chat-bans-head {
+    margin-bottom: 10px;
+}
+
+.wowza-live-chat-bans-head strong {
+    color: #222222;
+    font-size: 0.82rem;
+    line-height: 1.2;
+}
+
+.dark_theme .wowza-live-chat-bans-head strong {
+    color: #ffffff;
+}
+
+.wowza-live-chat-bans-head button,
+.wowza-live-chat-unban {
+    border: 0;
+    border-radius: 5px;
+    background: #f1f1f1;
+    color: #222222;
+    cursor: pointer;
+    font-size: 0.72rem;
+    font-weight: 800;
+    line-height: 1;
+    padding: 8px 10px;
+}
+
+.dark_theme .wowza-live-chat-bans-head button,
+.dark_theme .wowza-live-chat-unban {
+    background: #232738;
+    color: #ffffff;
+}
+
+.wowza-live-chat-bans-head button:hover,
+.wowza-live-chat-unban:hover {
+    background: #ff121f;
+    color: #ffffff;
+}
+
+.wowza-live-chat-ban-row {
+    padding: 8px 0;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.dark_theme .wowza-live-chat-ban-row {
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.wowza-live-chat-ban-user {
+    min-width: 0;
+}
+
+.wowza-live-chat-ban-user strong,
+.wowza-live-chat-ban-user small,
+.wowza-live-chat-bans-empty {
+    display: block;
+}
+
+.wowza-live-chat-ban-user strong {
+    color: #222222;
+    font-size: 0.82rem;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+.dark_theme .wowza-live-chat-ban-user strong {
+    color: #ffffff;
+}
+
+.wowza-live-chat-ban-user small,
+.wowza-live-chat-bans-empty {
+    margin: 2px 0 0;
+    color: rgba(68, 68, 68, 0.62);
+    font-size: 0.74rem;
+    line-height: 1.3;
+}
+
+.dark_theme .wowza-live-chat-ban-user small,
+.dark_theme .wowza-live-chat-bans-empty {
+    color: rgba(203, 209, 234, 0.62);
+}
+
 .wowza-live-debug {
     margin-top: 24px;
     padding: 18px;
@@ -587,6 +699,7 @@
     }
 
     const apiUrl = root.dataset.apiUrl;
+    const bansUrl = root.dataset.bansUrl;
     const wsUrl = root.dataset.wsUrl;
     const canWrite = root.dataset.canWrite === 'true';
     const canModerate = root.dataset.canModerate === 'true';
@@ -601,6 +714,8 @@
     const csrfInput = root.querySelector('input[name="csrfmiddlewaretoken"]');
     const emojiToggle = root.querySelector('[data-chat-emoji-toggle]');
     const emojiPicker = root.querySelector('[data-chat-emoji-picker]');
+    const bansList = root.querySelector('[data-chat-bans-list]');
+    const bansRefresh = root.querySelector('[data-chat-bans-refresh]');
     const seen = new Set();
     let socket = null;
     let pollingTimer = null;
@@ -660,6 +775,14 @@
             return '';
         }
         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function formatDateTime(value) {
+        const date = new Date(value);
+        if (Number.isNaN(date.getTime())) {
+            return '';
+        }
+        return date.toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
     }
 
     function renderMessage(message) {
@@ -739,6 +862,72 @@
         }
     }
 
+    function renderBans(bans) {
+        if (!bansList) {
+            return;
+        }
+        bansList.innerHTML = '';
+        if (!bans || !bans.length) {
+            const empty = document.createElement('p');
+            empty.className = 'wowza-live-chat-bans-empty';
+            empty.textContent = 'No hay usuarios baneados.';
+            bansList.appendChild(empty);
+            return;
+        }
+
+        bans.forEach(function (ban) {
+            const row = document.createElement('div');
+            row.className = 'wowza-live-chat-ban-row';
+            row.dataset.banId = ban.id;
+
+            const userInfo = document.createElement('div');
+            userInfo.className = 'wowza-live-chat-ban-user';
+
+            const name = document.createElement('strong');
+            name.textContent = (ban.user && ban.user.username) || 'Usuario';
+
+            const details = document.createElement('small');
+            const email = ban.user && ban.user.email ? ban.user.email : '';
+            const date = formatDateTime(ban.created_at);
+            details.textContent = [email, date].filter(Boolean).join(' · ');
+
+            userInfo.appendChild(name);
+            userInfo.appendChild(details);
+
+            const unban = document.createElement('button');
+            unban.type = 'button';
+            unban.className = 'wowza-live-chat-unban';
+            unban.textContent = 'Desbanear';
+            unban.addEventListener('click', function () {
+                unbanUser(ban.id);
+            });
+
+            row.appendChild(userInfo);
+            row.appendChild(unban);
+            bansList.appendChild(row);
+        });
+    }
+
+    function loadBans() {
+        if (!canModerate || !bansUrl || !bansList) {
+            return;
+        }
+        fetch(bansUrl, {
+            method: 'GET',
+            credentials: 'same-origin',
+        }).then(function (response) {
+            return readJsonResponse(response, 'No fue posible cargar usuarios baneados.');
+        }).then(function (data) {
+            renderBans(data.results || []);
+        }).catch(function (error) {
+            bansList.innerHTML = '';
+            const empty = document.createElement('p');
+            empty.className = 'wowza-live-chat-bans-empty';
+            empty.textContent = error.message;
+            bansList.appendChild(empty);
+        });
+    }
+
     function loadMessages() {
         fetch(apiUrl, { credentials: 'same-origin' })
             .then(function (response) {
@@ -805,6 +994,14 @@
                 } else if (canModerate) {
                     setFeedback('Usuario baneado del chat.');
                 }
+                loadBans();
+            } else if (payload.type === 'user.unbanned') {
+                if (Number(payload.user_id) === currentUserId) {
+                    setFeedback('Has sido desbloqueado. Recarga la página para volver a escribir.');
+                } else if (canModerate) {
+                    setFeedback('Usuario desbaneado del chat.');
+                }
+                loadBans();
             } else if (payload.type === 'chat.error') {
                 setFeedback(payload.detail);
             }
@@ -885,6 +1082,27 @@
         }).then(function () {
             removeMessage(messageId);
             setFeedback('Usuario baneado del chat.');
+            loadBans();
+        }).catch(function (error) {
+            setFeedback(error.message);
+        });
+    }
+
+    function unbanUser(banId) {
+        fetch(bansUrl + '/' + banId, {
+            method: 'DELETE',
+            credentials: 'same-origin',
+            headers: {
+                'X-CSRFToken': csrfInput ? csrfInput.value : '',
+            },
+        }).then(function (response) {
+            if (!response.ok) {
+                return readJsonResponse(response, 'No fue posible desbanear al usuario.');
+            }
+            return {};
+        }).then(function () {
+            setFeedback('Usuario desbaneado del chat.');
+            loadBans();
         }).catch(function (error) {
             setFeedback(error.message);
         });
@@ -964,7 +1182,12 @@
         });
     }
 
+    if (bansRefresh) {
+        bansRefresh.addEventListener('click', loadBans);
+    }
+
     loadMessages();
+    loadBans();
     connectSocket();
 })();
 </script>
