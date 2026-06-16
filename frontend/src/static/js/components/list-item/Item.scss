@@ -199,7 +199,8 @@ a.item-thumb {
 }
 
 .item-live-countdown {
-  display: inline-flex;
+  clear: both;
+  display: flex;
   align-items: center;
   width: fit-content;
   min-height: 24px;
