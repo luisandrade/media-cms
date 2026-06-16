@@ -68,6 +68,20 @@ function withCacheBuster(url, cacheKey) {
   return `${url}${-1 === url.indexOf('?') ? '?' : '&'}refresh=${cacheKey}`;
 }
 
+function toDateTimeLocalInput(value) {
+  if (!value) {
+    return '';
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+
+  const pad = (number) => String(number).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
 export class ManageWowzaPage extends Page {
   constructor(props) {
     super(props, 'manage-wowza');
@@ -94,6 +108,12 @@ export class ManageWowzaPage extends Page {
       connectionSignalRefreshKey: 0,
       copiedConnectionField: '',
       visiblePasswords: {},
+      metadataApplicationId: null,
+      metadataTitle: '',
+      metadataCountdownAt: '',
+      metadataPosterFile: null,
+      metadataRemovePoster: false,
+      savingMetadataApplicationId: null,
       error: null,
       validationError: '',
     };
@@ -109,6 +129,10 @@ export class ManageWowzaPage extends Page {
     this.onCopyConnectionValue = this.onCopyConnectionValue.bind(this);
     this.onRefreshConnectionSignal = this.onRefreshConnectionSignal.bind(this);
     this.onConnectionSignalReady = this.onConnectionSignalReady.bind(this);
+    this.onShowMetadata = this.onShowMetadata.bind(this);
+    this.onMetadataInputChange = this.onMetadataInputChange.bind(this);
+    this.onMetadataFileChange = this.onMetadataFileChange.bind(this);
+    this.onSaveMetadata = this.onSaveMetadata.bind(this);
   }
 
   componentDidMount() {
@@ -286,8 +310,9 @@ export class ManageWowzaPage extends Page {
 
       this.setState({
         deletingApplicationId: null,
-        activeAppName: this.state.activeAppName === app.name ? '' : this.state.activeAppName,
-        connectionApplicationId: this.state.connectionApplicationId === app.id ? null : this.state.connectionApplicationId,
+      activeAppName: this.state.activeAppName === app.name ? '' : this.state.activeAppName,
+      connectionApplicationId: this.state.connectionApplicationId === app.id ? null : this.state.connectionApplicationId,
+      metadataApplicationId: this.state.metadataApplicationId === app.id ? null : this.state.metadataApplicationId,
       });
       this.loadApplications(this.state.applicationsPage);
       this.loadStatus();
@@ -435,6 +460,92 @@ export class ManageWowzaPage extends Page {
     }
   }
 
+  onShowMetadata(app) {
+    this.setState({
+      metadataApplicationId: app.id,
+      metadataTitle: app.stream_title || '',
+      metadataCountdownAt: toDateTimeLocalInput(app.countdown_at),
+      metadataPosterFile: null,
+      metadataRemovePoster: false,
+      error: null,
+      result: null,
+    });
+  }
+
+  onMetadataInputChange(ev) {
+    const { name, value, checked, type } = ev.currentTarget;
+    this.setState({
+      [name]: type === 'checkbox' ? checked : value,
+      error: null,
+      result: null,
+    });
+  }
+
+  onMetadataFileChange(ev) {
+    this.setState({
+      metadataPosterFile: ev.currentTarget.files && ev.currentTarget.files[0] ? ev.currentTarget.files[0] : null,
+      metadataRemovePoster: false,
+      error: null,
+      result: null,
+    });
+  }
+
+  async onSaveMetadata(ev) {
+    ev.preventDefault();
+
+    const appId = this.state.metadataApplicationId;
+    if (!appId) {
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('stream_title', this.state.metadataTitle);
+    formData.append('countdown_at', this.state.metadataCountdownAt);
+    if (this.state.metadataPosterFile) {
+      formData.append('poster_image', this.state.metadataPosterFile);
+    }
+    if (this.state.metadataRemovePoster) {
+      formData.append('remove_poster', '1');
+    }
+
+    this.setState({
+      savingMetadataApplicationId: appId,
+      error: null,
+      result: null,
+    });
+
+    try {
+      const response = await fetch(`${ApiUrlContext._currentValue.manage.wowzaApplications}/${appId}`, {
+        method: 'PATCH',
+        credentials: 'same-origin',
+        headers: {
+          'X-CSRFToken': csrfToken(),
+        },
+        body: formData,
+      });
+      const payload = await response.json();
+
+      if (!response.ok || false === payload.success) {
+        throw new Error(payload.message || 'No fue posible guardar los datos del stream.');
+      }
+
+      const updatedApp = payload.wowza_application;
+      this.setState({
+        applications: this.state.applications.map((app) => (app.id === appId ? { ...app, ...updatedApp } : app)),
+        savingMetadataApplicationId: null,
+        metadataPosterFile: null,
+        metadataRemovePoster: false,
+        result: payload,
+        error: null,
+      });
+    } catch (error) {
+      this.setState({
+        savingMetadataApplicationId: null,
+        error: getErrorMessage(error),
+      });
+    }
+  }
+
   renderConnectionField(app, field, label, icon, hint) {
     const value = connectionValue(app, field);
     const copied = this.state.copiedConnectionField === `${app.id}-${field}`;
@@ -493,7 +604,18 @@ export class ManageWowzaPage extends Page {
             onCanPlay={this.onConnectionSignalReady}
             onPlaying={this.onConnectionSignalReady}
           />
-          <div className={`manage-wowza-signal-placeholder ${this.state.connectionSignalReady ? 'manage-wowza-signal-placeholder-hidden' : ''}`}>
+          <div
+            className={`manage-wowza-signal-placeholder ${app.poster_image_url ? 'manage-wowza-signal-placeholder-poster' : ''} ${
+              this.state.connectionSignalReady ? 'manage-wowza-signal-placeholder-hidden' : ''
+            }`}
+            style={
+              app.poster_image_url
+                ? {
+                    backgroundImage: `linear-gradient(180deg, rgba(5, 6, 10, 0.24), rgba(5, 6, 10, 0.72)), url("${app.poster_image_url}")`,
+                  }
+                : null
+            }
+          >
             <span className="manage-wowza-live-icon">
               <MaterialIcon type="radio_button_checked" />
             </span>
@@ -512,6 +634,83 @@ export class ManageWowzaPage extends Page {
             </React.Fragment>
           ))}
         </div>
+      </section>
+    );
+  }
+
+  renderMetadataPanel(app) {
+    if (!app) {
+      return null;
+    }
+
+    const isSaving = this.state.savingMetadataApplicationId === app.id;
+
+    return (
+      <section className="manage-wowza-metadata">
+        <div className="manage-wowza-connection-head">
+          <div>
+            <h2>Datos públicos de {app.name}</h2>
+            <span>Título, portada y fecha para la cuenta regresiva de esta señal.</span>
+          </div>
+          <div className="manage-wowza-connection-head-actions">
+            <button type="button" onClick={() => this.setState({ metadataApplicationId: null })} title="Cerrar edición">
+              <MaterialIcon type="close" />
+            </button>
+          </div>
+        </div>
+
+        <form className="manage-wowza-metadata-form" onSubmit={this.onSaveMetadata}>
+          <div className="manage-wowza-metadata-grid">
+            <label>
+              Título del stream
+              <input
+                name="metadataTitle"
+                value={this.state.metadataTitle}
+                onChange={this.onMetadataInputChange}
+                maxLength="160"
+                placeholder={app.name}
+              />
+            </label>
+
+            <label>
+              Fecha de cuenta regresiva
+              <input
+                name="metadataCountdownAt"
+                type="datetime-local"
+                value={this.state.metadataCountdownAt}
+                onChange={this.onMetadataInputChange}
+              />
+            </label>
+
+            <label>
+              Imagen de portada
+              <input type="file" accept="image/*" onChange={this.onMetadataFileChange} />
+            </label>
+
+            <label className="manage-wowza-metadata-check">
+              <input
+                name="metadataRemovePoster"
+                type="checkbox"
+                checked={this.state.metadataRemovePoster}
+                onChange={this.onMetadataInputChange}
+                disabled={!app.poster_image_url}
+              />
+              Quitar imagen actual
+            </label>
+          </div>
+
+          {app.poster_image_url ? (
+            <div className="manage-wowza-metadata-poster">
+              <img src={app.poster_image_url} alt={`Portada de ${app.name}`} />
+              <span>Imagen actual</span>
+            </div>
+          ) : null}
+
+          <button className="manage-wowza-submit manage-wowza-metadata-submit" type="submit" disabled={isSaving}>
+            {isSaving ? <SpinnerLoader size="tiny" /> : <MaterialIcon type="save" />}
+            <span>{isSaving ? 'Guardando' : 'Guardar datos del stream'}</span>
+          </button>
+        </form>
       </section>
     );
   }
@@ -535,6 +734,7 @@ export class ManageWowzaPage extends Page {
       deletingApplicationId,
       recordingApplicationId,
       connectionApplicationId,
+      metadataApplicationId,
       visiblePasswords,
       error,
       validationError,
@@ -542,6 +742,7 @@ export class ManageWowzaPage extends Page {
     const previewAppName = appName.trim() || 'nombre_app';
     const previewScheduleId = scheduleId.trim() || previewAppName;
     const connectionApplication = applications.find((app) => app.id === connectionApplicationId);
+    const metadataApplication = applications.find((app) => app.id === metadataApplicationId);
     const currentAppName = appName.trim();
     const isExistingApplication = applications.some((app) => app.name === currentAppName);
     const hasApplicationLimit = maxApplications > 0;
@@ -730,6 +931,10 @@ export class ManageWowzaPage extends Page {
                             <MaterialIcon type="settings_input_hdmi" />
                             <span>Conexión</span>
                           </button>
+                          <button className="manage-wowza-metadata-button" type="button" onClick={() => this.onShowMetadata(app)} title="Editar datos públicos">
+                            <MaterialIcon type="edit" />
+                            <span>Stream</span>
+                          </button>
                           <button
                             className="manage-wowza-delete"
                             type="button"
@@ -768,6 +973,7 @@ export class ManageWowzaPage extends Page {
           </section>
 
           {this.renderConnectionPanel(connectionApplication)}
+          {this.renderMetadataPanel(metadataApplication)}
 
           {result ? (
             <section className="manage-wowza-result">

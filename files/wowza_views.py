@@ -2,6 +2,8 @@ from django.conf import settings
 from django.core.paginator import EmptyPage, Paginator
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
+from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 import requests
 import time
 from rest_framework import permissions
@@ -149,7 +151,52 @@ class WowzaApplicationCreateView(APIView):
 
 class WowzaApplicationDetailView(APIView):
     permission_classes = (IsMediacmsAdmin,)
-    parser_classes = (JSONParser,)
+    parser_classes = (JSONParser, FormParser, MultiPartParser)
+
+    def patch(self, request, app_id, format=None):
+        app = get_object_or_404(WowzaApplication, id=app_id)
+        stream_title = str(request.data.get("stream_title") or "").strip()
+        countdown_raw = str(request.data.get("countdown_at") or "").strip()
+        poster_image = request.FILES.get("poster_image")
+        remove_poster = str(request.data.get("remove_poster") or "").lower() in {"1", "true", "yes"}
+
+        if len(stream_title) > 160:
+            return Response(
+                {"success": False, "message": "El título no puede superar 160 caracteres."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        countdown_at = None
+        if countdown_raw:
+            countdown_at = parse_datetime(countdown_raw)
+            if countdown_at is None:
+                return Response(
+                    {"success": False, "message": "La fecha de cuenta regresiva no es válida."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            if timezone.is_naive(countdown_at):
+                countdown_at = timezone.make_aware(countdown_at, timezone.get_current_timezone())
+
+        old_poster = app.poster_image.name if app.poster_image else ""
+        old_poster_storage = app.poster_image.storage if app.poster_image else None
+        app.stream_title = stream_title
+        app.countdown_at = countdown_at
+        if remove_poster and app.poster_image:
+            app.poster_image.delete(save=False)
+            app.poster_image = None
+        if poster_image:
+            if old_poster and old_poster_storage and old_poster_storage.exists(old_poster):
+                old_poster_storage.delete(old_poster)
+            app.poster_image = poster_image
+        app.save(update_fields=["stream_title", "poster_image", "countdown_at", "update_date"])
+
+        return Response(
+            {
+                "success": True,
+                "message": "Datos del stream actualizados correctamente.",
+                "wowza_application": serialize_wowza_application(app),
+            }
+        )
 
     def delete(self, request, app_id, format=None):
         app = get_object_or_404(WowzaApplication, id=app_id)
@@ -442,21 +489,23 @@ def paginated_url(request, page):
 
 
 def serialize_public_wowza_live_application(app, *, request, is_live=False):
+    poster_url = app.poster_image.url if app.poster_image else ""
     return {
         "id": f"wowza-{app.id}",
-        "title": app.name,
+        "title": app.stream_title or app.name,
         "description": "Señal en vivo",
         "url": request.build_absolute_uri(reverse("wowza_live_view", args=[app.name])),
         "media_type": "video",
         "duration": None,
         "views": 0,
-        "thumbnail_url": "",
-        "preview_url": "",
+        "thumbnail_url": request.build_absolute_uri(poster_url) if poster_url else "",
+        "preview_url": request.build_absolute_uri(poster_url) if poster_url else "",
         "stream": "",
         "is_live": is_live,
         "author_name": app.created_by.username if app.created_by else "",
         "author_profile": request.build_absolute_uri("/") if app.created_by else "",
         "add_date": app.add_date.isoformat() if app.add_date else "",
+        "countdown_at": app.countdown_at.isoformat() if app.countdown_at else "",
     }
 
 
@@ -469,6 +518,9 @@ def serialize_wowza_application(app, *, is_live=False, recording_status=None):
         "id": app.id,
         "name": app.name,
         "schedule_id": app.schedule_id,
+        "stream_title": app.stream_title,
+        "poster_image_url": app.poster_image.url if app.poster_image else "",
+        "countdown_at": app.countdown_at.isoformat() if app.countdown_at else "",
         "app_type": app.app_type,
         "storage_dir": app.storage_dir,
         "publish_username": app.publish_username,

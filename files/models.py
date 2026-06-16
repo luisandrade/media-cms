@@ -90,6 +90,12 @@ def original_media_file_path(instance, filename):
     return settings.MEDIA_UPLOAD_DIR + "user/{0}/{1}".format(instance.user.username, file_name)
 
 
+def wowza_poster_file_path(instance, filename):
+    """Helper function to place Wowza live poster images."""
+    file_name = "{0}.{1}".format(uuid.uuid4().hex, helpers.get_file_name(filename))
+    return settings.MEDIA_UPLOAD_DIR + "wowza/posters/{0}".format(file_name)
+
+
 def encoding_media_file_path(instance, filename):
     """Helper function to place encoded media file"""
 
@@ -1045,6 +1051,9 @@ class WowzaApplication(models.Model):
     storage_dir = models.CharField(max_length=255, blank=True)
     publish_username = models.CharField(max_length=80, blank=True)
     publish_password = models.CharField(max_length=128, blank=True)
+    stream_title = models.CharField(max_length=160, blank=True)
+    poster_image = models.ImageField(upload_to=wowza_poster_file_path, blank=True, null=True, max_length=500)
+    countdown_at = models.DateTimeField(null=True, blank=True)
     is_active = models.BooleanField(default=True, db_index=True)
     created_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, related_name="wowza_applications", null=True, blank=True)
     add_date = models.DateTimeField(auto_now_add=True, db_index=True)

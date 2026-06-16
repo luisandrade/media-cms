@@ -1,8 +1,11 @@
 import json
+from datetime import datetime, timezone as datetime_timezone
 from unittest.mock import Mock, patch
 
 from django.conf import settings
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
+from django.test.client import BOUNDARY, MULTIPART_CONTENT, encode_multipart
 from django.urls import reverse
 
 from files.models import StreamChatBan, StreamChatMessage, WowzaApplication
@@ -133,6 +136,77 @@ class WowzaManagementTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["success"], True)
         self.assertEqual(response.json()["count"], 2)
+
+    def test_update_application_stream_metadata(self):
+        app = WowzaApplication.objects.create(
+            name="eventozmeta",
+            schedule_id="schedule-meta",
+            created_by=self.admin,
+            storage_dir=f"/nas/{self.admin.id}",
+        )
+        image = SimpleUploadedFile("poster.gif", b"GIF87a\x01\x00\x01\x00\x80\x01\x00\x00\x00\x00ccc,\x00\x00\x00\x00\x01\x00\x01\x00\x00\x02\x02D\x01\x00;", content_type="image/gif")
+        self.client.force_login(self.admin)
+
+        response = self.client.patch(
+            f"/api/v1/manage_wowza/applications/{app.id}",
+            data=encode_multipart(BOUNDARY, {
+                "stream_title": "Gran final nocturna",
+                "countdown_at": "2026-06-20T20:30",
+                "poster_image": image,
+            }),
+            content_type=MULTIPART_CONTENT,
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["success"], True)
+        app.refresh_from_db()
+        self.assertEqual(app.stream_title, "Gran final nocturna")
+        self.assertIsNotNone(app.countdown_at)
+        self.assertTrue(app.poster_image.name)
+        self.assertEqual(response.json()["wowza_application"]["stream_title"], "Gran final nocturna")
+        self.assertTrue(response.json()["wowza_application"]["poster_image_url"])
+
+    @patch("files.wowza_views.WowzaClient")
+    def test_public_live_list_uses_stream_metadata(self, wowza_client_cls):
+        WowzaApplication.objects.create(
+            name="eventozpublic",
+            schedule_id="schedule-public",
+            stream_title="Rodeo familiar",
+            countdown_at=datetime(2026, 6, 20, 20, 0, tzinfo=datetime_timezone.utc),
+            created_by=self.admin,
+            storage_dir=f"/nas/{self.admin.id}",
+        )
+        wowza_client = Mock()
+        wowza_client.incoming_streams.return_value = {"incomingStreams": []}
+        wowza_client_cls.return_value = wowza_client
+        self.client.force_login(self.admin)
+
+        response = self.client.get("/api/v1/wowza_live")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["results"][0]["title"], "Rodeo familiar")
+        self.assertTrue(response.json()["results"][0]["countdown_at"])
+
+    @patch("files.wowza_views.WowzaClient")
+    def test_wowza_live_page_renders_stream_title_and_countdown(self, wowza_client_cls):
+        WowzaApplication.objects.create(
+            name="eventozcount",
+            schedule_id="schedule-count",
+            stream_title="Final con cuenta regresiva",
+            countdown_at=datetime(2026, 6, 20, 20, 0, tzinfo=datetime_timezone.utc),
+            created_by=self.admin,
+            storage_dir=f"/nas/{self.admin.id}",
+        )
+        wowza_client = Mock()
+        wowza_client.incoming_streams.return_value = {"incomingStreams": []}
+        wowza_client_cls.return_value = wowza_client
+        self.client.force_login(self.admin)
+
+        response = self.client.get("/live/eventozcount")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Final con cuenta regresiva")
+        self.assertContains(response, "data-live-countdown")
         self.assertEqual(response.json()["max_applications"], 10)
         self.assertEqual(response.json()["available_applications"], 8)
         self.assertEqual(response.json()["page"], 1)

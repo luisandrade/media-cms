@@ -5,13 +5,22 @@
 {% block content %}
 <div class="wowza-live-page">
     <section class="wowza-live-hero">
+        <h1 class="wowza-live-title">{{ stream_title }}</h1>
         <div class="wowza-live-player">
             {% if hls_url %}
-            <video controls playsinline autoplay src="{{ hls_url }}"></video>
+            <video controls playsinline autoplay src="{{ hls_url }}"{% if stream_poster_url %} poster="{{ stream_poster_url }}"{% endif %}></video>
             {% else %}
-            <div class="wowza-live-placeholder">
+            <div class="wowza-live-placeholder{% if stream_poster_url %} wowza-live-placeholder-has-poster{% endif %}"{% if stream_poster_url %} style="background-image: linear-gradient(180deg, rgba(5, 6, 10, 0.22), rgba(5, 6, 10, 0.74)), url('{{ stream_poster_url }}');"{% endif %}>
                 <span>OFFLINE</span>
-                <strong>Esperando señal de streaming...</strong>
+                <strong>{{ stream_title }}</strong>
+                {% if stream_countdown_at %}
+                <div class="wowza-live-countdown" data-live-countdown="{{ stream_countdown_at }}">
+                    <small>Comienza en</small>
+                    <strong data-live-countdown-value>Calculando...</strong>
+                </div>
+                {% else %}
+                <em>Esperando señal de streaming...</em>
+                {% endif %}
             </div>
             {% endif %}
         </div>
@@ -118,6 +127,18 @@
     display: block;
 }
 
+.wowza-live-title {
+    margin: 0 0 14px;
+    color: #1f1f1f;
+    font-size: 1.35rem;
+    line-height: 1.2;
+    font-weight: 900;
+}
+
+.dark_theme .wowza-live-title {
+    color: #ffffff;
+}
+
 .wowza-live-player {
     position: relative;
     width: 100%;
@@ -144,8 +165,16 @@
     align-items: center;
     justify-content: center;
     flex-direction: column;
+    gap: 14px;
     color: #ffffff;
     background: linear-gradient(135deg, #10131d 0%, #242936 58%, #111111 100%);
+    background-position: center;
+    background-size: cover;
+    text-align: center;
+}
+
+.wowza-live-placeholder-has-poster {
+    background-color: #05060a;
 }
 
 .wowza-live-placeholder span,
@@ -172,10 +201,47 @@
 }
 
 .wowza-live-placeholder strong {
-    margin-top: 16px;
+    max-width: min(760px, calc(100% - 48px));
+    margin: 0;
     font-size: 1.35rem;
     line-height: 1.25;
-    text-align: center;
+    text-shadow: 0 2px 18px rgba(0, 0, 0, 0.45);
+}
+
+.wowza-live-placeholder em {
+    max-width: min(520px, calc(100% - 48px));
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 0.95rem;
+    font-style: normal;
+    line-height: 1.4;
+}
+
+.wowza-live-countdown {
+    display: inline-flex;
+    align-items: center;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 210px;
+    padding: 12px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.26);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.34);
+    backdrop-filter: blur(8px);
+}
+
+.wowza-live-countdown small {
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 0.72rem;
+    line-height: 1;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+.wowza-live-countdown strong {
+    max-width: none;
+    font-size: 1.2rem;
+    line-height: 1.15;
 }
 
 .wowza-live-chat {
@@ -692,6 +758,44 @@
 </style>
 
 <script>
+(function () {
+    const countdown = document.querySelector('[data-live-countdown]');
+    if (!countdown) {
+        return;
+    }
+
+    const valueEl = countdown.querySelector('[data-live-countdown-value]');
+    const target = new Date(countdown.dataset.liveCountdown);
+    if (!valueEl || Number.isNaN(target.getTime())) {
+        return;
+    }
+
+    function renderCountdown() {
+        const diff = target.getTime() - Date.now();
+        if (diff <= 0) {
+            valueEl.textContent = 'La señal comienza pronto';
+            return;
+        }
+
+        const totalSeconds = Math.floor(diff / 1000);
+        const days = Math.floor(totalSeconds / 86400);
+        const hours = Math.floor((totalSeconds % 86400) / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        const parts = [];
+        if (days) {
+            parts.push(days + 'd');
+        }
+        parts.push(String(hours).padStart(2, '0') + 'h');
+        parts.push(String(minutes).padStart(2, '0') + 'm');
+        parts.push(String(seconds).padStart(2, '0') + 's');
+        valueEl.textContent = parts.join(' ');
+    }
+
+    renderCountdown();
+    window.setInterval(renderCountdown, 1000);
+})();
+
 (function () {
     const root = document.querySelector('[data-live-chat]');
     if (!root) {

@@ -927,6 +927,9 @@ def view_wowza_live(request, app_name):
         chat_locked_message = "Necesitas una suscripción activa para escribir en el chat."
     context = {
         "app": app,
+        "stream_title": app.stream_title or app.name,
+        "stream_poster_url": app.poster_image.url if app.poster_image else "",
+        "stream_countdown_at": app.countdown_at.isoformat() if app.countdown_at else "",
         "is_live": is_live,
         "hls_url": debug_hls_url if is_live or force_debug_player else "",
         "show_wowza_debug": show_wowza_debug,
