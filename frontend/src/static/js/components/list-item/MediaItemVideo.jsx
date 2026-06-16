@@ -52,7 +52,7 @@ function LiveCountdown(props) {
     return () => window.clearInterval(timer);
   }, [props.value]);
 
-  return text ? <span className="item-live-countdown">Comienza en {text}</span> : null;
+  return text ? <span className="item-live-countdown">{'Ha comenzado' === text ? text : `Comienza en ${text}`}</span> : null;
 }
 
 export function MediaItemVideo(props) {

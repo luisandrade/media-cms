@@ -821,9 +821,13 @@
         countdowns.forEach(function (element) {
             const targetValue = element.dataset.liveCountdown || element.dataset.liveCountdownTitle;
             const valueEl = element.querySelector('[data-live-countdown-value]') || element;
-            const text = countdownText(targetValue, 'La señal comienza pronto');
+            const text = countdownText(targetValue, 'Ha comenzado');
             if (text) {
                 valueEl.textContent = text;
+                const labelEl = element.querySelector('small');
+                if (labelEl) {
+                    labelEl.textContent = text === 'Ha comenzado' ? 'Estado' : 'Comienza en';
+                }
             }
         });
     }
