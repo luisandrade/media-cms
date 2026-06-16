@@ -464,6 +464,10 @@
     box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
 }
 
+.wowza-live-chat-emoji-picker[hidden] {
+    display: none !important;
+}
+
 .dark_theme .wowza-live-chat-emoji-picker {
     border-color: #3b4054;
     background: #171a27;
@@ -619,6 +623,10 @@
         }
         emojiPicker.hidden = !isOpen;
         emojiToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    }
+
+    function emojiPickerIsOpen() {
+        return emojiPicker && !emojiPicker.hasAttribute('hidden');
     }
 
     function insertEmoji(emoji) {
@@ -887,7 +895,7 @@
             emojiToggle.addEventListener('click', function (event) {
                 event.preventDefault();
                 event.stopPropagation();
-                setEmojiPickerOpen(emojiPicker.hidden);
+                setEmojiPickerOpen(!emojiPickerIsOpen());
             });
 
             emojiPicker.addEventListener('click', function (event) {

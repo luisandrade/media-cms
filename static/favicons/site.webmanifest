@@ -1,6 +1,6 @@
 {
-    "name": "MediaVMS",
-    "short_name": "MediaVMS",
+    "name": "MediaCMS",
+    "short_name": "MediaCMS",
     "icons": [
         {
             "src": "logo-icon.svg",
