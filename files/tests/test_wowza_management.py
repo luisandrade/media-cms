@@ -7,6 +7,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
 from django.test.client import BOUNDARY, MULTIPART_CONTENT, encode_multipart
 from django.urls import reverse
+from django.utils import timezone as django_timezone
 
 from files.models import StreamChatBan, StreamChatMessage, WowzaApplication
 from files.tests.user_utils import create_account
@@ -189,11 +190,12 @@ class WowzaManagementTests(TestCase):
 
     @patch("files.wowza_views.WowzaClient")
     def test_wowza_live_page_renders_stream_title_and_countdown(self, wowza_client_cls):
+        countdown_at = datetime(2026, 6, 20, 20, 0, tzinfo=datetime_timezone.utc)
         WowzaApplication.objects.create(
             name="eventozcount",
             schedule_id="schedule-count",
             stream_title="Final con cuenta regresiva",
-            countdown_at=datetime(2026, 6, 20, 20, 0, tzinfo=datetime_timezone.utc),
+            countdown_at=countdown_at,
             created_by=self.admin,
             storage_dir=f"/nas/{self.admin.id}",
         )
@@ -206,6 +208,7 @@ class WowzaManagementTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Final con cuenta regresiva")
+        self.assertContains(response, django_timezone.localtime(countdown_at).strftime("%d/%m/%Y %H:%M"))
         self.assertContains(response, "data-live-countdown")
         self.assertEqual(response.json()["max_applications"], 10)
         self.assertEqual(response.json()["available_applications"], 8)

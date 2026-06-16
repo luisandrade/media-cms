@@ -12,6 +12,7 @@ from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render, redirect
 from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from drf_yasg import openapi as openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -925,11 +926,13 @@ def view_wowza_live(request, app_name):
         chat_locked_message = "Has sido bloqueado para escribir en este chat."
     elif chat_enabled and not chat_user_can_write:
         chat_locked_message = "Necesitas una suscripción activa para escribir en el chat."
+    stream_countdown_label = timezone.localtime(app.countdown_at).strftime("%d/%m/%Y %H:%M") if app.countdown_at else ""
     context = {
         "app": app,
         "stream_title": app.stream_title or app.name,
         "stream_poster_url": app.poster_image.url if app.poster_image else "",
         "stream_countdown_at": app.countdown_at.isoformat() if app.countdown_at else "",
+        "stream_countdown_label": stream_countdown_label,
         "is_live": is_live,
         "hls_url": debug_hls_url if is_live or force_debug_player else "",
         "show_wowza_debug": show_wowza_debug,

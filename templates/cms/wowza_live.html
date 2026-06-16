@@ -5,7 +5,12 @@
 {% block content %}
 <div class="wowza-live-page">
     <section class="wowza-live-hero">
-        <h1 class="wowza-live-title">{{ stream_title }}</h1>
+        <h1 class="wowza-live-title">
+            <span>{{ stream_title }}</span>
+            {% if stream_countdown_label %}
+            <small>{{ stream_countdown_label }}</small>
+            {% endif %}
+        </h1>
         <div class="wowza-live-player">
             {% if hls_url %}
             <video controls playsinline autoplay src="{{ hls_url }}"{% if stream_poster_url %} poster="{{ stream_poster_url }}"{% endif %}></video>
@@ -128,6 +133,10 @@
 }
 
 .wowza-live-title {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px 12px;
     margin: 0 0 14px;
     color: #1f1f1f;
     font-size: 1.35rem;
@@ -135,8 +144,26 @@
     font-weight: 900;
 }
 
+.wowza-live-title small {
+    display: inline-flex;
+    align-items: center;
+    min-height: 26px;
+    padding: 0 9px;
+    border-radius: 4px;
+    color: #a3121b;
+    background: #fff1f2;
+    font-size: 0.78rem;
+    line-height: 1;
+    font-weight: 900;
+}
+
 .dark_theme .wowza-live-title {
     color: #ffffff;
+}
+
+.dark_theme .wowza-live-title small {
+    color: #ff9aa0;
+    background: rgba(255, 18, 31, 0.14);
 }
 
 .wowza-live-player {

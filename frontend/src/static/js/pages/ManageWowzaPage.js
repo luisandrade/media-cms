@@ -82,6 +82,25 @@ function toDateTimeLocalInput(value) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 
+function formatStreamCountdownDate(value) {
+  if (!value) {
+    return '';
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+
+  return date.toLocaleString([], {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 export class ManageWowzaPage extends Page {
   constructor(props) {
     super(props, 'manage-wowza');
@@ -878,7 +897,11 @@ export class ManageWowzaPage extends Page {
                     <div className={`manage-wowza-app-row ${connectionApplicationId === app.id || activeAppName === app.name ? 'manage-wowza-app-row-active' : ''}`} key={app.id || app.name}>
                       <span>
                         <MaterialIcon type={connectionApplicationId === app.id || activeAppName === app.name ? 'radio_button_checked' : 'radio_button_unchecked'} />
-                        <strong>{app.name}</strong>
+                        <span className="manage-wowza-app-name">
+                          <strong>{app.stream_title || app.name}</strong>
+                          <small>{app.name}</small>
+                          {app.countdown_at ? <em>{formatStreamCountdownDate(app.countdown_at)}</em> : null}
+                        </span>
                       </span>
                       <span>
                         <button
