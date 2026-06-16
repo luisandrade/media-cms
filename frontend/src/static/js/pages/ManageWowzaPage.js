@@ -129,7 +129,6 @@ export class ManageWowzaPage extends Page {
     this.onCopyConnectionValue = this.onCopyConnectionValue.bind(this);
     this.onRefreshConnectionSignal = this.onRefreshConnectionSignal.bind(this);
     this.onConnectionSignalReady = this.onConnectionSignalReady.bind(this);
-    this.onShowMetadata = this.onShowMetadata.bind(this);
     this.onMetadataInputChange = this.onMetadataInputChange.bind(this);
     this.onMetadataFileChange = this.onMetadataFileChange.bind(this);
     this.onSaveMetadata = this.onSaveMetadata.bind(this);
@@ -465,18 +464,6 @@ export class ManageWowzaPage extends Page {
     }
   }
 
-  onShowMetadata(app) {
-    this.setState({
-      metadataApplicationId: app.id,
-      metadataTitle: app.stream_title || '',
-      metadataCountdownAt: toDateTimeLocalInput(app.countdown_at),
-      metadataPosterFile: null,
-      metadataRemovePoster: false,
-      error: null,
-      result: null,
-    });
-  }
-
   onMetadataInputChange(ev) {
     const { name, value, checked, type } = ev.currentTarget;
     this.setState({
@@ -593,7 +580,7 @@ export class ManageWowzaPage extends Page {
             <button type="button" onClick={this.onRefreshConnectionSignal} title="Refrescar señal">
               <MaterialIcon type="refresh" />
             </button>
-            <button type="button" onClick={() => this.setState({ connectionApplicationId: null })} title="Cerrar conexión">
+            <button type="button" onClick={() => this.setState({ connectionApplicationId: null, metadataApplicationId: null })} title="Cerrar conexión">
               <MaterialIcon type="close" />
             </button>
           </div>
@@ -935,10 +922,6 @@ export class ManageWowzaPage extends Page {
                           <button className="manage-wowza-connect" type="button" onClick={() => this.onShowConnection(app)} title="Ver conexión">
                             <MaterialIcon type="settings_input_hdmi" />
                             <span>Conexión</span>
-                          </button>
-                          <button className="manage-wowza-metadata-button" type="button" onClick={() => this.onShowMetadata(app)} title="Editar datos públicos">
-                            <MaterialIcon type="edit" />
-                            <span>Stream</span>
                           </button>
                           <button
                             className="manage-wowza-delete"

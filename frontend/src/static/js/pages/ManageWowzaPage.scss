@@ -549,7 +549,6 @@
 
 .manage-wowza-record,
 .manage-wowza-connect,
-.manage-wowza-metadata-button,
 .manage-wowza-delete {
   min-height: 34px;
   display: inline-flex;
@@ -685,24 +684,6 @@
 
     &:hover:not(:disabled) {
       background: rgba(62, 166, 255, 0.22);
-    }
-  }
-}
-
-.manage-wowza-metadata-button {
-  color: #7c3aed;
-  background: #f4f0ff;
-
-  &:hover:not(:disabled) {
-    background: #e9ddff;
-  }
-
-  .dark_theme & {
-    color: #c7b5ff;
-    background: rgba(124, 58, 237, 0.16);
-
-    &:hover:not(:disabled) {
-      background: rgba(124, 58, 237, 0.24);
     }
   }
 }
