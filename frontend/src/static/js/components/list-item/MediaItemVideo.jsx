@@ -19,7 +19,7 @@ function countdownText(value) {
 
   const diff = target.getTime() - Date.now();
   if (diff <= 0) {
-    return 'La señal comienza pronto';
+    return 'Ha comenzado';
   }
 
   const totalSeconds = Math.floor(diff / 1000);
