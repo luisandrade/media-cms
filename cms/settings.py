@@ -16,7 +16,7 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 0
 # is also shown on several places as emails
 PORTAL_NAME = "MediaVMS"
 PORTAL_DESCRIPTION = ""
-TIME_ZONE = "Europe/London"
+TIME_ZONE = "America/Santiago"
 
 # who can add media
 # valid options include 'all', 'email_verified', 'advancedUser'
