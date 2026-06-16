@@ -490,9 +490,12 @@ export class ManageWowzaPage extends Page {
       return;
     }
 
+    const form = ev.currentTarget;
+    const streamTitle = form.elements.metadataTitle ? form.elements.metadataTitle.value : this.state.metadataTitle;
+    const countdownAt = form.elements.metadataCountdownAt ? form.elements.metadataCountdownAt.value : this.state.metadataCountdownAt;
     const formData = new FormData();
-    formData.append('stream_title', this.state.metadataTitle);
-    formData.append('countdown_at', this.state.metadataCountdownAt);
+    formData.append('stream_title', streamTitle);
+    formData.append('countdown_at', countdownAt);
     if (this.state.metadataPosterFile) {
       formData.append('poster_image', this.state.metadataPosterFile);
     }
@@ -525,6 +528,8 @@ export class ManageWowzaPage extends Page {
       this.setState({
         applications: this.state.applications.map((app) => (app.id === appId ? { ...app, ...updatedApp } : app)),
         savingMetadataApplicationId: null,
+        metadataTitle: updatedApp.stream_title || '',
+        metadataCountdownAt: toDateTimeLocalInput(updatedApp.countdown_at),
         metadataPosterFile: null,
         metadataRemovePoster: false,
         result: payload,
@@ -671,6 +676,7 @@ export class ManageWowzaPage extends Page {
                 type="datetime-local"
                 value={this.state.metadataCountdownAt}
                 onChange={this.onMetadataInputChange}
+                onInput={this.onMetadataInputChange}
               />
             </label>
 
