@@ -7,8 +7,8 @@
     <section class="wowza-live-hero">
         <h1 class="wowza-live-title">
             <span>{{ stream_title }}</span>
-            {% if stream_countdown_label %}
-            <small>{{ stream_countdown_label }}</small>
+            {% if stream_countdown_at %}
+            <small data-live-countdown-title="{{ stream_countdown_at }}">Calculando...</small>
             {% endif %}
         </h1>
         <div class="wowza-live-player">
@@ -786,22 +786,20 @@
 
 <script>
 (function () {
-    const countdown = document.querySelector('[data-live-countdown]');
-    if (!countdown) {
+    const countdowns = Array.from(document.querySelectorAll('[data-live-countdown], [data-live-countdown-title]'));
+    if (!countdowns.length) {
         return;
     }
 
-    const valueEl = countdown.querySelector('[data-live-countdown-value]');
-    const target = new Date(countdown.dataset.liveCountdown);
-    if (!valueEl || Number.isNaN(target.getTime())) {
-        return;
-    }
+    function countdownText(value, expiredText) {
+        const target = new Date(value);
+        if (Number.isNaN(target.getTime())) {
+            return '';
+        }
 
-    function renderCountdown() {
         const diff = target.getTime() - Date.now();
         if (diff <= 0) {
-            valueEl.textContent = 'La señal comienza pronto';
-            return;
+            return expiredText;
         }
 
         const totalSeconds = Math.floor(diff / 1000);
@@ -816,7 +814,18 @@
         parts.push(String(hours).padStart(2, '0') + 'h');
         parts.push(String(minutes).padStart(2, '0') + 'm');
         parts.push(String(seconds).padStart(2, '0') + 's');
-        valueEl.textContent = parts.join(' ');
+        return parts.join(' ');
+    }
+
+    function renderCountdown() {
+        countdowns.forEach(function (element) {
+            const targetValue = element.dataset.liveCountdown || element.dataset.liveCountdownTitle;
+            const valueEl = element.querySelector('[data-live-countdown-value]') || element;
+            const text = countdownText(targetValue, 'La señal comienza pronto');
+            if (text) {
+                valueEl.textContent = text;
+            }
+        });
     }
 
     renderCountdown();

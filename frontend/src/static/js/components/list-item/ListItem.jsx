@@ -211,6 +211,7 @@ export function listItemProps(props, item, index) {
       initials: livePreviewInitials(livePreviewName),
       accent: isLiveOnline ? livePreviewColor(livePreviewName) : '#6b7280',
     },
+    countdownAt: item.countdown_at || '',
   };
 
   args.hasMediaViewerDescr = args.hasMediaViewer && !!props.firstItemDescr;
@@ -299,6 +300,7 @@ export function ListItem(props) {
       args.isLiveStream = props.isLiveStream;
       args.isLiveOnline = props.isLiveOnline;
       args.livePreview = props.livePreview;
+      args.countdownAt = props.countdownAt;
       break;
     case 'audio':
       isMediaItem = true;

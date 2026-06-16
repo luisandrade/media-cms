@@ -412,8 +412,7 @@
   gap: 4px 7px;
 
   strong,
-  small,
-  em {
+  small {
     min-width: 0;
   }
 
@@ -424,28 +423,9 @@
     line-height: 1.2;
   }
 
-  em {
-    display: inline-flex;
-    align-items: center;
-    min-height: 22px;
-    padding: 0 7px;
-    border-radius: 4px;
-    color: #a3121b;
-    background: #fff1f2;
-    font-size: 0.72rem;
-    font-style: normal;
-    font-weight: 900;
-    line-height: 1;
-  }
-
   .dark_theme & {
     small {
       color: rgba(203, 209, 234, 0.58);
-    }
-
-    em {
-      color: #ff9aa0;
-      background: rgba(255, 18, 31, 0.14);
     }
   }
 }

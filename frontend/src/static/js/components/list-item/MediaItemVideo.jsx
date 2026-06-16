@@ -7,6 +7,54 @@ import { MediaPlaylistOptions } from '../media-playlist-options/MediaPlaylistOpt
 import { MediaItemVideoPlayer, MediaItemDuration, MediaItemVideoPreviewer, MediaItemPlaylistIndex, itemClassname } from './includes/items/';
 import { MediaItem } from './MediaItem';
 
+function countdownText(value) {
+  if (!value) {
+    return '';
+  }
+
+  const target = new Date(value);
+  if (Number.isNaN(target.getTime())) {
+    return '';
+  }
+
+  const diff = target.getTime() - Date.now();
+  if (diff <= 0) {
+    return 'La señal comienza pronto';
+  }
+
+  const totalSeconds = Math.floor(diff / 1000);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const parts = [];
+  if (days) {
+    parts.push(days + 'd');
+  }
+  parts.push(String(hours).padStart(2, '0') + 'h');
+  parts.push(String(minutes).padStart(2, '0') + 'm');
+  parts.push(String(seconds).padStart(2, '0') + 's');
+  return parts.join(' ');
+}
+
+function LiveCountdown(props) {
+  const [text, setText] = React.useState(() => countdownText(props.value));
+
+  React.useEffect(() => {
+    if (!props.value) {
+      setText('');
+      return undefined;
+    }
+
+    const update = () => setText(countdownText(props.value));
+    update();
+    const timer = window.setInterval(update, 1000);
+    return () => window.clearInterval(timer);
+  }, [props.value]);
+
+  return text ? <span className="item-live-countdown">Comienza en {text}</span> : null;
+}
+
 export function MediaItemVideo(props) {
 
   const type = props.type;
@@ -108,6 +156,7 @@ export function MediaItemVideo(props) {
 
         <UnderThumbWrapper title={props.title} link={props.link}>
           {titleComponent()}
+          {props.isLiveStream ? <LiveCountdown value={props.countdownAt} /> : null}
           {metaComponents()}
           {descriptionComponent()}
         </UnderThumbWrapper>

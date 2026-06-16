@@ -198,6 +198,26 @@ a.item-thumb {
   background-color: #6b7280;
 }
 
+.item-live-countdown {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 24px;
+  margin: 0 0 8px;
+  padding: 0 8px;
+  border-radius: 4px;
+  color: #a3121b;
+  background: #fff1f2;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.dark_theme .item-live-countdown {
+  color: #ff9aa0;
+  background: rgba(255, 18, 31, 0.14);
+}
+
 .item-live-preview {
   --live-accent: #ff121f;
   position: absolute;
