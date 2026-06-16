@@ -65,6 +65,8 @@ class WowzaLiveChatMessageDetailView(APIView):
             return Response({"detail": "Acción no soportada."}, status=status.HTTP_400_BAD_REQUEST)
 
         message = get_object_or_404(StreamChatMessage.objects.select_related("user"), id=message_id, stream=app)
+        if message.user_id == request.user.id:
+            return Response({"detail": "No puedes banearte a ti mismo."}, status=status.HTTP_400_BAD_REQUEST)
         if user_can_moderate_live_chat(message.user):
             return Response({"detail": "No puedes banear a otro moderador."}, status=status.HTTP_400_BAD_REQUEST)
 

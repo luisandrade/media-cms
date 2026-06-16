@@ -688,15 +688,18 @@
         item.appendChild(text);
 
         if (canModerate) {
-            const ban = document.createElement('button');
-            ban.type = 'button';
-            ban.className = 'wowza-live-chat-ban';
-            ban.setAttribute('aria-label', 'Banear usuario');
-            ban.textContent = 'Banear';
-            ban.addEventListener('click', function () {
-                banUser(message.id);
-            });
-            item.appendChild(ban);
+            const messageUserId = Number((message.user && message.user.id) || 0);
+            if (messageUserId !== currentUserId) {
+                const ban = document.createElement('button');
+                ban.type = 'button';
+                ban.className = 'wowza-live-chat-ban';
+                ban.setAttribute('aria-label', 'Banear usuario');
+                ban.textContent = 'Banear';
+                ban.addEventListener('click', function () {
+                    banUser(message.id);
+                });
+                item.appendChild(ban);
+            }
 
             const remove = document.createElement('button');
             remove.type = 'button';
@@ -881,7 +884,9 @@
 
     if (form && input && canWrite) {
         if (emojiToggle && emojiPicker) {
-            emojiToggle.addEventListener('click', function () {
+            emojiToggle.addEventListener('click', function (event) {
+                event.preventDefault();
+                event.stopPropagation();
                 setEmojiPickerOpen(emojiPicker.hidden);
             });
 

@@ -396,6 +396,23 @@ class WowzaManagementTests(TestCase):
         self.assertEqual(message.is_deleted, True)
         self.assertEqual(message.deleted_by, self.staff_admin)
 
+    def test_wowza_live_chat_rejects_regular_user_delete_messages(self):
+        app = WowzaApplication.objects.create(
+            name="eventozlive",
+            schedule_id="schedule-live",
+            created_by=self.admin,
+            storage_dir=f"/nas/{self.admin.id}",
+        )
+        message = StreamChatMessage.objects.create(stream=app, user=self.admin, message="Mensaje protegido")
+        self.client.force_login(self.user)
+
+        response = self.client.delete(f"/api/v1/wowza_live/eventozlive/chat/{message.id}")
+
+        self.assertEqual(response.status_code, 403)
+        message.refresh_from_db()
+        self.assertEqual(message.is_deleted, False)
+        self.assertIsNone(message.deleted_by)
+
     def test_wowza_live_chat_allows_staff_to_ban_message_author(self):
         app = WowzaApplication.objects.create(
             name="eventozlive",
@@ -416,6 +433,28 @@ class WowzaManagementTests(TestCase):
         self.assertTrue(StreamChatBan.objects.filter(stream=app, user=self.user, is_active=True).exists())
         message.refresh_from_db()
         self.assertEqual(message.is_deleted, True)
+
+    def test_wowza_live_chat_rejects_staff_banning_self(self):
+        app = WowzaApplication.objects.create(
+            name="eventozlive",
+            schedule_id="schedule-live",
+            created_by=self.admin,
+            storage_dir=f"/nas/{self.admin.id}",
+        )
+        message = StreamChatMessage.objects.create(stream=app, user=self.staff_admin, message="Mensaje propio")
+        self.client.force_login(self.staff_admin)
+
+        response = self.client.post(
+            f"/api/v1/wowza_live/eventozlive/chat/{message.id}",
+            data=json.dumps({"action": "ban"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["detail"], "No puedes banearte a ti mismo.")
+        self.assertFalse(StreamChatBan.objects.filter(stream=app, user=self.staff_admin, is_active=True).exists())
+        message.refresh_from_db()
+        self.assertEqual(message.is_deleted, False)
 
     def test_wowza_live_chat_blocks_banned_user_from_posting(self):
         app = WowzaApplication.objects.create(
