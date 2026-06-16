@@ -404,6 +404,11 @@ export class ManageWowzaPage extends Page {
   onShowConnection(app) {
     this.setState({
       connectionApplicationId: app.id,
+      metadataApplicationId: app.id,
+      metadataTitle: app.stream_title || '',
+      metadataCountdownAt: toDateTimeLocalInput(app.countdown_at),
+      metadataPosterFile: null,
+      metadataRemovePoster: false,
       connectionSignalReady: false,
       connectionSignalRefreshKey: Date.now(),
       copiedConnectionField: '',
