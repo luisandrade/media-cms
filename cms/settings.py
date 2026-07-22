@@ -205,7 +205,7 @@ MASK_IPS_FOR_ACTIONS = True
 
 # --- CDN balancer (GeoLite2 ASN + City) ---
 # Habilita balanceo por IP para hosts VOD/LIVE (ver files/cdn_balancer.py)
-CDN_BALANCER_ENABLED = True
+CDN_BALANCER_ENABLED = False
 CDN_BALANCER_CACHE_TTL_SECONDS = 60 * 60  # 1 hora
 CDN_BALANCER_FALLBACK_TO_CDN = os.getenv("CDN_BALANCER_FALLBACK_TO_CDN", "true").lower() in ("1", "true", "yes", "on")
 CDN_BALANCER_FALLBACK_VOD_HOST = os.getenv("CDN_BALANCER_FALLBACK_VOD_HOST", "claro-vtrlolla-vod.cl.cdnz.cl")
