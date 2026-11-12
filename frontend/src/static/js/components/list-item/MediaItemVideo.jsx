@@ -196,6 +196,6 @@ MediaItemVideo.defaultProps = {
   livePreview: {
     title: 'Señal en vivo',
     initials: 'LV',
-    accent: '#ff121f',
+    accent: '#2a5293',
   },
 };

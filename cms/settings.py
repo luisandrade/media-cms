@@ -30,7 +30,7 @@ CAN_COMMENT = "advancedUser"
 PORTAL_WORKFLOW = "private"
 
 # valid values: 'light', 'dark'.
-DEFAULT_THEME = "dark"
+DEFAULT_THEME = "light"
 
 
 # These are passed on every request

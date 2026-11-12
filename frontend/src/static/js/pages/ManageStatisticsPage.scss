@@ -91,7 +91,7 @@
 }
 
 .manage-top-rated-link {
-  color: #ff121f;
+  color: var(--brand-accent-color);
   font-size: 0.85rem;
   font-weight: 800;
   text-decoration: none;
@@ -266,7 +266,7 @@
 }
 
 .manage-top-categories-title-icon {
-  color: #ff121f;
+  color: var(--brand-accent-color);
 
   .material-icons {
     font-size: 1.8rem;
@@ -274,7 +274,7 @@
 }
 
 .manage-top-categories-link {
-  color: #ff121f;
+  color: var(--brand-accent-color);
   font-size: 0.85rem;
   font-weight: 800;
   text-decoration: none;
@@ -302,7 +302,7 @@
 }
 
 .manage-top-categories-item-icon {
-  color: #ff121f;
+  color: var(--brand-accent-color);
   margin-bottom: 18px;
 
   .material-icons {
@@ -371,7 +371,7 @@
 }
 
 .manage-recent-activity-link {
-  color: #ff121f;
+  color: var(--brand-accent-color);
   font-size: 0.85rem;
   font-weight: 800;
   text-decoration: none;

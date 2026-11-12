@@ -672,7 +672,7 @@
 
     .actions {
       button {
-        color: #ff121f;
+        color: var(--brand-accent-color);
         font-size: 13px;
         font-weight: 700;
       }
@@ -681,7 +681,7 @@
     input[type='checkbox'] {
       width: 16px;
       height: 16px;
-      accent-color: #ff121f;
+      accent-color: var(--primary-color);
       cursor: pointer;
     }
 
@@ -742,7 +742,7 @@
 
           .mi-col-sort-icons {
             .material-icons {
-              color: #ff121f;
+              color: var(--brand-accent-color);
             }
           }
         }
@@ -983,7 +983,7 @@
 
     button,
     .mi-delete-button {
-      color: #ff121f;
+      color: var(--brand-accent-color);
       font-size: 13px;
       font-weight: 700;
       border: 0;
@@ -993,7 +993,7 @@
     input[type='checkbox'] {
       width: 16px;
       height: 16px;
-      accent-color: #ff121f;
+      accent-color: var(--primary-color);
       cursor: pointer;
     }
 
@@ -1038,7 +1038,7 @@
 
           .mi-col-sort-icons {
             .material-icons {
-              color: #ff121f;
+              color: var(--brand-accent-color);
             }
           }
         }

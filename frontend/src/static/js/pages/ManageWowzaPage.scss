@@ -189,7 +189,7 @@
   }
 
   .material-icons {
-    color: #ff121f;
+    color: var(--brand-accent-color);
     font-size: 1.55rem;
   }
 }
@@ -220,8 +220,8 @@
     outline: none;
 
     &:focus {
-      border-color: #ff121f;
-      box-shadow: 0 0 0 2px rgba(255, 18, 31, 0.12);
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(42, 82, 147, 0.15);
     }
 
     .dark_theme & {
@@ -511,7 +511,7 @@
   font-size: 0.9rem;
 
   .material-icons {
-    color: #ff121f;
+    color: var(--brand-accent-color);
   }
 
   .dark_theme & {
@@ -584,8 +584,8 @@
   padding: 0 10px;
   border: 0;
   border-radius: 4px;
-  color: #a3121b;
-  background: #fff1f2;
+  color: #24417f;
+  background: #eaf1fb;
   font-size: 0.82rem;
   font-weight: 800;
   cursor: pointer;
@@ -596,7 +596,7 @@
   }
 
   &:hover:not(:disabled) {
-    background: #ffdfe2;
+    background: #d9e6f7;
   }
 
   .material-icons {
@@ -606,6 +606,24 @@
 
   .spinner-loader {
     margin: 0;
+  }
+
+  .dark_theme & {
+    color: #9cc3f0;
+    background: rgba(105, 165, 235, 0.14);
+
+    &:hover:not(:disabled) {
+      background: rgba(105, 165, 235, 0.22);
+    }
+  }
+}
+
+.manage-wowza-delete {
+  color: #a3121b;
+  background: #fff1f2;
+
+  &:hover:not(:disabled) {
+    background: #ffdfe2;
   }
 
   .dark_theme & {
@@ -829,8 +847,8 @@
     outline: none;
 
     &:focus {
-      border-color: #ff121f;
-      box-shadow: 0 0 0 2px rgba(255, 18, 31, 0.12);
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(42, 82, 147, 0.15);
     }
 
     .dark_theme & {

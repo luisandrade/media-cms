@@ -1,6 +1,6 @@
 {
-    "name": "MediaCMS",
-    "short_name": "MediaCMS",
+    "name": "Laboratorios Saval",
+    "short_name": "Saval",
     "icons": [
         {
             "src": "logo-icon.svg",
@@ -19,7 +19,7 @@
             "type": "image/png"
         }
     ],
-    "theme_color": "#ffffff",
+    "theme_color": "#2a5293",
     "background_color": "#ffffff",
     "display": "standalone"
 }

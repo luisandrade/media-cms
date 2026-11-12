@@ -19,7 +19,7 @@ module.exports = {
       { rel: 'apple-touch-icon', sizes: '180x180', href: 'static/favicons/apple-touch-icon.png' },
       { rel: 'icon', type: 'image/png', sizes: '32x32', href: 'static/favicons/favicon-32x32.png' },
       { rel: 'icon', type: 'image/png', sizes: '16x16', href: 'static/favicons/favicon-16x16.png' },
-      { rel: 'mask-icon', href: 'static/favicons/safari-pinned-tab.svg', color: '#fafafa' },
+      { rel: 'mask-icon', href: 'static/favicons/safari-pinned-tab.svg', color: '#2a5293' },
       { rel: 'shortcut icon', href: 'static/favicons/favicon.ico' },
       /**
        * Stylesheet links
@@ -31,9 +31,9 @@ module.exports = {
       { rel: 'preload', href: 'static/lib/material-icons/material-icons.css', as: 'style' },
       { rel: 'stylesheet', href: 'static/lib/material-icons/material-icons.css' },
 
-      // 'https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,500,500i,700,700i&display=swap
-      { rel: 'preload', href: 'static/lib/gfonts/gfonts.css', as: 'style' },
-      { rel: 'stylesheet', href: 'static/lib/gfonts/gfonts.css' },
+      // Tipografías corporativas Saval (Open Sans + Barlow), servidas localmente
+      { rel: 'preload', href: 'static/lib/gfonts/saval-fonts.css', as: 'style' },
+      { rel: 'stylesheet', href: 'static/lib/gfonts/saval-fonts.css' },
     ],
     scripts: [],
   },

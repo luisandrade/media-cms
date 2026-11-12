@@ -1,6 +1,6 @@
 body.dark_theme {
   --body-text-color: rgba(255, 255, 255, 0.88);
-  --body-bg-color: #0f111a;
+  --body-bg-color: #0a1428;
 
   /* Active theme switcher icon color (sun/moon) */
   --theme-switcher-icon-active-color: #fffa00;
@@ -16,14 +16,14 @@ body.dark_theme {
   --input-border-color: hsl(0, 0%, 19%);
 
   /* User action form inner background */
-  --user-action-form-inner-bg-color: #1e2130;
+  --user-action-form-inner-bg-color: #12213d;
   /* Video editor card background (timeline & clip segments) */
   --video-editor-card-bg-color: #303030;
   --video-editor-card-text-color: #ffffff;
 
   /* ################################################## */
 
-  --header-bg-color: #1a1d29;
+  --header-bg-color: #0f1d38;
 
   --header-circle-button-color: #fff;
 
@@ -32,7 +32,7 @@ body.dark_theme {
 
   /* ################################################## */
 
-  --sidebar-bg-color: #1a1d29;
+  --sidebar-bg-color: #0f1d38;
 
   --sidebar-nav-border-color: rgba(255, 255, 255, 0.1);
 
@@ -47,11 +47,15 @@ body.dark_theme {
 
   /* ################################################## */
 
-  --nav-menu-active-item-bg-color: var(--primary-hover);
+  --nav-menu-active-item-bg-color: rgba(105, 165, 235, 0.16);
 
-  --nav-menu-item-hover-bg-color: var(--primary-hover);
+  --nav-menu-item-hover-bg-color: rgba(255, 255, 255, 0.06);
 
-  --in-popup-nav-menu-item-hover-bg-color: var(--primary-hover);
+  --brand-accent-color: #69a5eb;
+  --links-color: #69a5eb;
+  --border-color: #2c3f63;
+
+  --in-popup-nav-menu-item-hover-bg-color: rgba(105, 165, 235, 0.14);
 
   /* ################################################## */
 
@@ -77,12 +81,12 @@ body.dark_theme {
 
   /* ################################################## */
 
-  --popup-bg-color: #1a1d29;
+  --popup-bg-color: #13223f;
 
   --popup-hr-bg-color: rgba(255, 255, 255, 0.08);
 
   --popup-top-text-color: #fff;
-  --popup-top-bg-color: rgba(229, 9, 20, 0.15);
+  --popup-top-bg-color: rgba(42, 82, 147, 0.15);
 
   --popup-msg-title-text-color: rgba(255, 255, 255, 0.88);
   --popup-msg-main-text-color: rgba(255, 255, 255, 0.5);
@@ -344,7 +348,7 @@ body.dark_theme {
 
   /* ################################################## */
 
-  --user-action-form-inner-bg-color: #1e2130;
+  --user-action-form-inner-bg-color: #12213d;
   --user-action-form-inner-title-border-bottom-color: var(--sidebar-nav-border-color);
 
   --user-action-form-inner-input-border-color: #303030;

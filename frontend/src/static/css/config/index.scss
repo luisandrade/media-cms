@@ -3,15 +3,30 @@
 
 body {
   --default-logo-height: 32px;
-  --logo-height:45px;
+  --logo-height: 30px;
 
-  --default-theme-color: #e50914;
-  --default-brand-color: #e50914;
+  /* Paleta corporativa Laboratorios Saval (savalcorp.com) */
+  --saval-blue: #2a5293;
+  --saval-blue-dark: #24417f;
+  --saval-blue-deep: #0d3875;
+  --saval-sky: #389fda;
+  --saval-sky-dark: #177fc3;
+  --saval-sky-soft: #69a5eb;
+  --saval-gray: #414142;
+
+  --brand-font-family: 'Open Sans', 'Segoe UI', Arial, sans-serif;
+  --brand-heading-font-family: 'Barlow', 'Open Sans', 'Segoe UI', Arial, sans-serif;
+
+  --default-theme-color: #2a5293;
+  --default-brand-color: #2a5293;
+
+  /* Texto/iconos de acento (se aclara en tema oscuro para mantener contraste) */
+  --brand-accent-color: #2a5293;
 
   /* Fallback variables used by global styles (scrollbar, etc.) */
   --primary-color: var(--default-theme-color);
-  --primary-hover: #b20710;
-  --border-color: #2a2a2a;
+  --primary-hover: #24417f;
+  --border-color: #b9c6db;
   --transition-fast: 0.2s cubic-bezier(0.4,0,0.2,1);
 
   --success-color: #00a28b;

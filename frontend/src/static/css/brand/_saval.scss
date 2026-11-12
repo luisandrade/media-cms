@@ -1,0 +1,247 @@
+/* ==========================================================================
+   Identidad visual Laboratorios Saval
+   Referencia: https://www.savalcorp.com/es/
+   - Azul corporativo #2a5293 / #24417f, celeste #389fda, gris #414142
+   - Tipografía: Open Sans (texto) + Barlow (títulos, sustituto libre de DIN)
+   Este archivo se carga al final de styles.scss para tener prioridad.
+   ========================================================================== */
+
+/* ---------- Tipografía base ---------- */
+
+body,
+button,
+input,
+select,
+textarea {
+  font-family: var(--brand-font-family);
+}
+
+h1,
+h2,
+h3,
+.media-list-header h2,
+.media-title-banner h1,
+.user-action-form-inner h1,
+.user-action-form-inner h2,
+.profile-info-nav-wrap .profile-name,
+.page-main .title,
+.manage-statistics-title {
+  font-family: var(--brand-heading-font-family);
+  font-weight: 600;
+  letter-spacing: 0.1px;
+}
+
+::selection {
+  background-color: rgba(42, 82, 147, 0.18);
+}
+
+body.dark_theme ::selection {
+  background-color: rgba(105, 165, 235, 0.3);
+}
+
+/* ---------- Header ---------- */
+
+.page-header {
+  border-bottom: 1px solid #e3e9f2;
+
+  /* Franja corporativa superior (degradado azul Saval -> celeste) */
+  &:before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(90deg, var(--saval-blue-dark) 0%, var(--saval-blue) 55%, var(--saval-sky) 100%);
+  }
+
+  &:after {
+    box-shadow: inset 0px 4px 8px -3px rgba(13, 56, 117, 0.08);
+  }
+
+  .logo {
+    span > img,
+    picture {
+      margin-top: 2px;
+    }
+  }
+
+  .circle-icon-button:hover {
+    color: var(--saval-blue);
+  }
+}
+
+body.dark_theme .page-header {
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+
+  .circle-icon-button:hover {
+    color: var(--saval-sky-soft);
+  }
+}
+
+/* Buscador */
+.search-field-wrap input[type='text'],
+.search-field-wrap input[type='search'] {
+  border-radius: 4px 0 0 4px;
+}
+
+.search-field-wrap button[type='submit'] {
+  border-radius: 0 4px 4px 0;
+}
+
+.search-field-wrap input:focus {
+  border-color: var(--saval-blue);
+}
+
+/* ---------- Sidebar ---------- */
+
+.page-sidebar {
+  border-right: 1px solid var(--sidebar-nav-border-color);
+}
+
+.nav-menu li.link-item {
+  transition: background-color var(--transition-fast);
+
+  &.active {
+    font-weight: 600;
+
+    > * {
+      color: var(--brand-accent-color);
+    }
+
+    .menu-item-icon,
+    .material-icons {
+      color: var(--brand-accent-color);
+    }
+  }
+}
+
+.page-sidebar .page-sidebar-bottom a:hover {
+  color: var(--brand-accent-color) !important;
+}
+
+/* ---------- Títulos de secciones ---------- */
+
+.media-list-header h2 {
+  color: var(--saval-blue);
+  font-size: 1.15rem;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+
+  a {
+    color: inherit;
+  }
+
+  &:after {
+    content: '';
+    display: block;
+    width: 36px;
+    height: 3px;
+    margin-top: 8px;
+    border-radius: 2px;
+    background: var(--saval-sky);
+  }
+}
+
+body.dark_theme .media-list-header h2 {
+  color: #ffffff;
+}
+
+/* ---------- Tarjetas de contenido ---------- */
+
+.item-thumb,
+.item .item-thumb,
+.item-img-preview {
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.item-content-link:hover .item-title,
+.item-content a:hover .item-title,
+.item .item-title a:hover {
+  color: var(--brand-accent-color);
+}
+
+/* ---------- Botones ---------- */
+
+.button-link,
+.user-action-form-inner button[type='submit'],
+.user-action-form-inner input[type='submit'],
+.user-action-form-inner .primaryAction,
+button.primary,
+.primary-button {
+  border-radius: 4px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+  transition:
+    background-color var(--transition-fast),
+    box-shadow var(--transition-fast);
+}
+
+.user-action-form-inner button[type='submit'],
+.user-action-form-inner input[type='submit'],
+.user-action-form-inner .primaryAction {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  color: #ffffff;
+
+  &:hover,
+  &:focus {
+    background-color: var(--primary-hover);
+    border-color: var(--primary-hover);
+  }
+}
+
+.button-link:hover,
+.user-action-form-inner button[type='submit']:hover {
+  box-shadow: 0 2px 8px rgba(36, 65, 127, 0.25);
+}
+
+/* ---------- Formularios ---------- */
+
+.user-action-form-inner {
+  border-radius: 8px;
+  border-top: 4px solid var(--saval-blue);
+  box-shadow: 0 6px 24px rgba(13, 56, 117, 0.08);
+
+  input[type='text']:focus,
+  input[type='email']:focus,
+  input[type='password']:focus,
+  input[type='number']:focus,
+  input[type='url']:focus,
+  select:focus,
+  textarea:focus {
+    border-color: var(--saval-blue);
+    box-shadow: 0 0 0 3px rgba(42, 82, 147, 0.15);
+    outline: none;
+  }
+}
+
+body.dark_theme .user-action-form-inner {
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+}
+
+input[type='checkbox'],
+input[type='radio'] {
+  accent-color: var(--primary-color);
+}
+
+/* ---------- Reproductor de video ---------- */
+
+body .video-js.vjs-mediacms .vjs-progress-control .vjs-progress-holder .vjs-play-progress {
+  background-color: var(--saval-sky);
+}
+
+body .video-js.vjs-mediacms .vjs-progress-control .vjs-progress-holder .vjs-play-progress:before {
+  color: var(--saval-sky);
+}
+
+body .video-js.vjs-mediacms .vjs-big-play-button {
+  background-color: rgba(42, 82, 147, 0.85);
+}
+
+body .video-js.vjs-mediacms:hover .vjs-big-play-button {
+  background-color: var(--saval-blue);
+}

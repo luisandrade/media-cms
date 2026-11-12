@@ -1,11 +1,11 @@
 body {
-  --body-text-color: #111;
-  --body-bg-color: #fafafa;
+  --body-text-color: #1f2733;
+  --body-bg-color: #f4f6fa;
 
   /* Active theme switcher icon color (sun/moon) */
   --theme-switcher-icon-active-color: #fffa00;
 
-  --hr-color: #e1e1e1;
+  --hr-color: #e1e6ee;
 
   --dotted-outline-color: rgba(0, 0, 0, 0.4);
 
@@ -13,7 +13,7 @@ body {
 
   --input-color: hsl(0, 0%, 7%);
   --input-bg-color: hsl(0, 0%, 100%);
-  --input-border-color: hsl(0, 0%, 80%);
+  --input-border-color: #cfd7e3;
 
   /* User action form inner background */
   --user-action-form-inner-bg-color: #ffffff;
@@ -33,12 +33,12 @@ body {
 
   /* ################################################## */
 
-  --sidebar-bg-color: #f5f5f5;
+  --sidebar-bg-color: #ffffff;
 
-  --sidebar-nav-border-color: #eee;
+  --sidebar-nav-border-color: #e8edf4;
 
-  --sidebar-nav-item-text-color: rgb(13, 13, 13);
-  --sidebar-nav-item-icon-color: rgb(144, 144, 144);
+  --sidebar-nav-item-text-color: #2b3442;
+  --sidebar-nav-item-icon-color: #7a879a;
 
   --sidebar-bottom-link-color: initial;
 
@@ -48,11 +48,11 @@ body {
 
   /* ################################################## */
 
-  --nav-menu-active-item-bg-color: var(--primary-hover);
+  --nav-menu-active-item-bg-color: #e8eff9;
 
-  --nav-menu-item-hover-bg-color: var(--primary-hover);
+  --nav-menu-item-hover-bg-color: #f1f5fb;
 
-  --in-popup-nav-menu-item-hover-bg-color: var(--primary-hover);
+  --in-popup-nav-menu-item-hover-bg-color: #eef3fa;
 
   /* ################################################## */
 
@@ -83,7 +83,7 @@ body {
   --popup-hr-bg-color: #eee;
 
   --popup-top-text-color: rgb(13, 13, 13);
-  --popup-top-bg-color: rgba(229, 9, 20, 0.15);
+  --popup-top-bg-color: #e8eff9;
 
   --popup-msg-title-text-color: rgb(17, 17, 17);
   --popup-msg-main-text-color: rgba(17, 17, 17, 0.8);
@@ -118,7 +118,7 @@ body {
 
   /* ################################################## */
 
-  --item-bg-color: #fafafa;
+  --item-bg-color: var(--body-bg-color);
 
   --item-title-text-color: #111;
 
@@ -165,7 +165,7 @@ body {
 
   /* ################################################## */
 
-  --playlist-view-header-bg-color: #fafafa;
+  --playlist-view-header-bg-color: #ffffff;
 
   --playlist-view-header-toggle-text-color: rgb(96, 96, 96);
 
