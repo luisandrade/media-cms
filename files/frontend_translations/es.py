@@ -196,4 +196,7 @@ replacement_strings = {
     "weeks ago": "hace semanas",
     "year ago": "hace un año",
     "years ago": "hace años",
+    "Welcome to MediaCMS!": "¡Bienvenido a MediaCMS!",
+    "Start uploading media and sharing your work!": "¡Comienza a subir medios y compartir tu trabajo!",
+    "UPLOAD MEDIA": "SUBIR MEDIOS",
 }

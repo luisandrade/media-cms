@@ -145,4 +145,7 @@ replacement_strings = {
     "weeks ago": "",
     "year ago": "",
     "years ago": "",
+    "Welcome to MediaCMS!": "",
+    "Start uploading media and sharing your work!": "",
+    "UPLOAD MEDIA": "",
 }
