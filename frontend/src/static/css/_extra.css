@@ -78,24 +78,25 @@ body {
   display: block;
 }
 
-.ads-manage-page.user-action-form-wrap {
-  margin: 2em 1em 1em;
+.ads-manage-page .media-list-header {
+  padding-bottom: 4px;
 }
 
-.ads-manage-page .user-action-form-inner {
-  max-width: 960px;
+.ads-manage-page .ads-manage-card {
+  max-width: none;
+  margin: 0 0 1.5em;
+  padding: 24px;
 }
 
-.ads-manage-shell {
-  max-width: 900px;
-  margin: 0 auto;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+.ads-manage-page .ads-manage-results .media-list-wrapper,
+.visible-sidebar .ads-manage-page .ads-manage-results .media-list-wrapper {
+  padding: 0;
+  max-width: 100%;
 }
 
-.dark_theme .ads-manage-shell {
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.24);
+.ads-manage-page .ads-manage-results .media-list-row {
+  width: 100%;
+  max-width: 100%;
 }
 
 .ads-manage-nav {
@@ -148,7 +149,7 @@ body {
 }
 
 .ads-manage-form {
-  margin-bottom: 1.5em;
+  margin: 0;
 }
 
 .ads-manage-form .form-group {
@@ -166,7 +167,7 @@ body {
 }
 
 .ads-manage-results {
-  margin-top: 1.5em;
+  margin-top: 0;
 }
 
 a.title{
